@@ -6,16 +6,59 @@ interface TimerProps {
 }
 
 const Timer: React.FC<TimerProps> = ({ isDark }) => {
-  const [totalSeconds, setTotalSeconds] = useState(0);
-  const [remaining, setRemaining] = useState(0);
-  const [isActive, setIsActive] = useState(false);
-  const [isPaused, setIsPaused] = useState(true);
+  const [totalSeconds, setTotalSeconds] = useState(() => {
+    try {
+      return Number(localStorage.getItem('timer_totalSeconds') || '0');
+    } catch {
+      return 0;
+    }
+  });
+  const [remaining, setRemaining] = useState(() => {
+    try {
+      const savedIsActive = localStorage.getItem('timer_isActive') === 'true';
+      const savedIsPaused = localStorage.getItem('timer_isPaused') === 'true';
+      const savedEndTime = Number(localStorage.getItem('timer_endTime') || '0');
+      const savedRemaining = Number(localStorage.getItem('timer_remaining') || '0');
+
+      if (savedIsActive && !savedIsPaused && savedEndTime > 0) {
+        return Math.max(0, Math.ceil((savedEndTime - Date.now()) / 1000));
+      }
+      return savedRemaining;
+    } catch {
+      return 0;
+    }
+  });
+  const [isActive, setIsActive] = useState(() => {
+    try {
+      return localStorage.getItem('timer_isActive') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [isPaused, setIsPaused] = useState(() => {
+    try {
+      const saved = localStorage.getItem('timer_isPaused');
+      return saved === null ? true : saved === 'true';
+    } catch {
+      return true;
+    }
+  });
   
   const [inputH, setInputH] = useState(0);
   const [inputM, setInputM] = useState(0);
   const [inputS, setInputS] = useState(0);
 
-  const endTimeRef = useRef<number | null>(null);
+  const [isAlarmPlaying, setIsAlarmPlaying] = useState(false);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const initialEndTime = (() => {
+    try {
+      return Number(localStorage.getItem('timer_endTime') || '0');
+    } catch {
+      return 0;
+    }
+  })();
+  const endTimeRef = useRef<number | null>(initialEndTime);
   const timerRef = useRef<number | null>(null);
 
   // Refs for smooth wheel accumulation
@@ -32,9 +75,30 @@ const Timer: React.FC<TimerProps> = ({ isDark }) => {
     { label: '1h', s: 3600 },
   ];
 
+  // Persistence effects
+  useEffect(() => {
+    try {
+      localStorage.setItem('timer_isActive', isActive.toString());
+      localStorage.setItem('timer_isPaused', isPaused.toString());
+      localStorage.setItem('timer_totalSeconds', totalSeconds.toString());
+      localStorage.setItem('timer_remaining', remaining.toString());
+      if (endTimeRef.current) {
+        localStorage.setItem('timer_endTime', endTimeRef.current.toString());
+      }
+    } catch (e) {
+      console.warn("Timer: Failed to save to localStorage", e);
+    }
+  }, [isActive, isPaused, totalSeconds, remaining]);
+
   useEffect(() => {
     if (isActive && !isPaused) {
+      // If we just resumed or started, we need to set/update the end time
       endTimeRef.current = Date.now() + remaining * 1000;
+      try {
+        localStorage.setItem('timer_endTime', endTimeRef.current.toString());
+      } catch (e) {
+        console.warn("Timer: Failed to save endTime", e);
+      }
       
       timerRef.current = window.setInterval(() => {
         const now = Date.now();
@@ -61,26 +125,109 @@ const Timer: React.FC<TimerProps> = ({ isDark }) => {
       setRemaining(s);
       setIsActive(true);
       setIsPaused(false);
+      endTimeRef.current = Date.now() + s * 1000;
     } else {
+      if (!isPaused) {
+        // Pausing: save remaining time
+        try {
+          localStorage.setItem('timer_remaining', remaining.toString());
+        } catch (e) {
+          console.warn("Timer: Failed to save remaining time", e);
+        }
+      } else {
+        // Resuming: set new end time
+        endTimeRef.current = Date.now() + remaining * 1000;
+      }
       setIsPaused(!isPaused);
     }
   };
 
+  const playAlarm = () => {
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      audioCtxRef.current = ctx;
+      setIsAlarmPlaying(true);
+      
+      // Simple double-beep notification sound
+      const playBeep = (time: number, freq: number) => {
+        try {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, time);
+          
+          gain.gain.setValueAtTime(0, time);
+          gain.gain.linearRampToValueAtTime(0.2, time + 0.05);
+          gain.gain.linearRampToValueAtTime(0, time + 0.3);
+          
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          
+          osc.start(time);
+          osc.stop(time + 0.3);
+        } catch (err) {
+          console.warn("Timer: Failed to play beep", err);
+        }
+      };
+
+      const now = ctx.currentTime;
+      // Play double beeps every second for 5 seconds
+      for (let i = 0; i < 5; i++) {
+        playBeep(now + i, 880);
+        playBeep(now + i + 0.4, 880);
+      }
+
+      // Auto-stop state after 5.5 seconds if not stopped manually
+      setTimeout(() => {
+        stopAlarm();
+      }, 5500);
+    } catch (e) {
+      console.warn("Timer: Failed to initialize alarm sound", e);
+    }
+  };
+
+  const stopAlarm = () => {
+    if (audioCtxRef.current) {
+      if (audioCtxRef.current.state !== 'closed') {
+        audioCtxRef.current.close().catch(() => {});
+      }
+      audioCtxRef.current = null;
+    }
+    setIsAlarmPlaying(false);
+  };
+
   const handleComplete = () => {
+    playAlarm();
     setIsActive(false);
     setIsPaused(true);
+    setRemaining(0);
+    try {
+      localStorage.setItem('timer_isActive', 'false');
+      localStorage.setItem('timer_isPaused', 'true');
+      localStorage.setItem('timer_remaining', '0');
+    } catch (e) {
+      console.warn("Timer: Failed to clear storage on complete", e);
+    }
     if (timerRef.current) clearInterval(timerRef.current);
   };
 
   const handleReset = () => {
     if (isActive) {
-      // First stage of reset: stop current timer and return to setup mode
       setIsActive(false);
       setIsPaused(true);
       setRemaining(0);
+      try {
+        localStorage.setItem('timer_isActive', 'false');
+        localStorage.setItem('timer_isPaused', 'true');
+        localStorage.setItem('timer_remaining', '0');
+      } catch (e) {
+        console.warn("Timer: Failed to clear storage on reset", e);
+      }
       if (timerRef.current) clearInterval(timerRef.current);
     } else {
-      // Second stage of reset (or clicked while already in setup): reset numbers to zero
       setInputH(0);
       setInputM(0);
       setInputS(0);
@@ -131,6 +278,18 @@ const Timer: React.FC<TimerProps> = ({ isDark }) => {
 
   return (
     <div className={`flex flex-col min-h-full ${bgColor} ${textColor} p-4 md:p-8 font-['Helvetica'] overflow-y-auto`}>
+      {isAlarmPlaying && (
+        <div 
+          onClick={stopAlarm}
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/80 backdrop-blur-md cursor-pointer transition-opacity duration-300"
+        >
+          <div className="text-white text-center p-8">
+            <div className="text-8xl mb-8 animate-bounce">🔔</div>
+            <h2 className="text-4xl font-black uppercase tracking-tighter mb-4">Timer Finished</h2>
+            <p className="text-sm font-bold uppercase tracking-[0.3em] opacity-50">Tap anywhere to stop sound</p>
+          </div>
+        </div>
+      )}
       <div className="flex-none flex flex-col items-center justify-center text-center py-4">
         <h1 className="text-4xl md:text-6xl font-black mb-2">Timer</h1>
         <p className={`text-xs md:text-sm opacity-50 uppercase tracking-[0.3em] font-bold`}>

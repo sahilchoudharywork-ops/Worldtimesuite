@@ -27,10 +27,10 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, theme, onToggl
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate(Page.CONVERTER)}>
           <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold border transition-colors ${
             isDark ? 'bg-white text-black border-white' : 'bg-black text-white border-black'
-          }`}>C</div>
+          }`}>W</div>
           <span className={`text-xl font-bold tracking-tight hidden sm:inline transition-colors ${
             isDark ? 'text-white' : 'text-black'
-          }`}>ChronoMax</span>
+          }`}>worldtimesuite</span>
         </div>
 
         <nav className="flex items-center gap-1 sm:gap-4">

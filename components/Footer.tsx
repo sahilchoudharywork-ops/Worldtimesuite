@@ -17,8 +17,8 @@ const Footer: React.FC<FooterProps> = ({ theme }) => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-20">
           <div className="col-span-1 md:col-span-1">
             <div className="flex items-center gap-3 mb-6">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl border-2 ${isDark ? 'bg-white text-black border-white' : 'bg-black text-white border-black'}`}>C</div>
-              <span className="text-2xl font-black tracking-tighter">ChronoMax</span>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl border-2 ${isDark ? 'bg-white text-black border-white' : 'bg-black text-white border-black'}`}>W</div>
+              <span className="text-2xl font-black tracking-tighter">worldtimesuite</span>
             </div>
             <p className="text-sm font-bold opacity-50 leading-relaxed uppercase tracking-widest">
               Professional global productivity suite. Precision synchronization.
@@ -55,7 +55,7 @@ const Footer: React.FC<FooterProps> = ({ theme }) => {
         </div>
 
         <div className="pt-12 border-t border-current opacity-20 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-black uppercase tracking-[0.3em]">
-          <p>© {new Date().getFullYear()} CHRONOMAX PRODUCTIVITY SUITE.</p>
+          <p>© {new Date().getFullYear()} WORLDTIMESUITE PRODUCTIVITY SUITE.</p>
           <div className="flex gap-8">
             <span>GMT TO IST</span>
             <span>LDN TO IND</span>

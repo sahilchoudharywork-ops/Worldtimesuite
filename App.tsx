@@ -14,12 +14,9 @@ interface ErrorBoundaryState {
   hasError: boolean;
 }
 
-// Fix: Use the named Component import directly to ensure that TypeScript correctly identifies the base class properties like state and props
-class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  // Use explicit constructor for initialization to resolve props access issues in strict environments
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    // Fix: Explicitly initialize state which is inherited from the correctly typed Component class
     this.state = { hasError: false };
   }
 
@@ -28,11 +25,10 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("ChronoMax Uncaught Error:", error, errorInfo);
+    console.error("worldtimesuite Uncaught Error:", error, errorInfo);
   }
 
   public render() {
-    // Fix: Inherited state property is now correctly resolved by the compiler
     if (this.state.hasError) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-black text-white p-8 text-center font-['Helvetica']">
@@ -49,7 +45,6 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
         </div>
       );
     }
-    // Fix: Inherited props property is now correctly resolved by the compiler
     return this.props.children;
   }
 }
@@ -83,12 +78,20 @@ const App: React.FC = () => {
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
-    localStorage.setItem('chrono_theme', newTheme);
+    try {
+      localStorage.setItem('chrono_theme', newTheme);
+    } catch (e) {
+      console.warn("App: Failed to save theme", e);
+    }
   };
 
   const handleConsent = (settings: GDPRSettings) => {
     setGdpr(settings);
-    localStorage.setItem('chrono_gdpr', JSON.stringify(settings));
+    try {
+      localStorage.setItem('chrono_gdpr', JSON.stringify(settings));
+    } catch (e) {
+      console.warn("App: Failed to save GDPR consent", e);
+    }
   };
 
   useEffect(() => {
@@ -129,48 +132,45 @@ const App: React.FC = () => {
 
         {isFullView ? (
           <main className="flex-grow pt-16 flex flex-col overflow-y-auto relative">
-            <div className="ribbon-gradient-top sticky top-0 z-10 w-full" />
             <Suspense fallback={null}>
               {renderPage()}
             </Suspense>
-            <div className="ribbon-gradient-bottom sticky bottom-0 z-10 w-full" />
           </main>
         ) : (
           <main className={`flex-grow pt-24 pb-12 w-full mx-auto relative ${isCalendar ? 'max-w-none px-0' : 'max-w-7xl px-2 md:px-4'}`}>
             {/* Top Ad */}
             <div className="mb-8 flex justify-center">
-              <AdUnit id="top-leaderboard" type="leaderboard" className="border-none" />
+              <AdUnit id="top-leaderboard" type="leaderboard" className="border-none" isDark={isDark} />
             </div>
 
             <div className={`grid grid-cols-1 gap-4 ${isCalendar ? 'lg:grid-cols-12' : 'lg:grid-cols-12'}`}>
               {/* Left Sidebar Ad - Only visible when not on Calendar or Converter */}
               {!isCalendar && !isConverter && (
                 <aside className="hidden lg:block lg:col-span-2">
-                  <AdUnit id="left-sidebar" type="sidebar" className="border-none" />
+                  <AdUnit id="left-sidebar" type="sidebar" className="border-none" isDark={isDark} />
                 </aside>
               )}
 
               {/* Main Content Area - Expands when sidebars are hidden */}
               <div className={`${
                 isCalendar ? 'lg:col-span-12' : 
-                isConverter ? 'lg:col-span-10' : 
-                'lg:col-span-8'
+                isConverter ? 'lg:col-span-9' : 
+                'lg:col-span-7'
               } ${bgColor} min-h-[800px] overflow-hidden relative border-zinc-800/10 dark:border-zinc-200/10 transition-all duration-500`}>
-                <div className="ribbon-gradient-top absolute top-0 left-0 w-full z-10" />
                 <Suspense fallback={<div className="flex items-center justify-center h-[400px] font-black uppercase tracking-widest opacity-20">Syncing...</div>}>
                   {renderPage()}
                 </Suspense>
-                <div className="ribbon-gradient-bottom absolute bottom-0 left-0 w-full z-10" />
               </div>
 
               {/* Right Sidebar Ad */}
               {!isCalendar && (
-                <aside className={`hidden lg:block ${isConverter ? 'lg:col-span-2' : 'lg:col-span-2'} flex justify-center`}>
+                <aside className={`hidden lg:block ${isConverter ? 'lg:col-span-3' : 'lg:col-span-3'} flex justify-center`}>
                   <div className={`sticky ${isConverter ? 'top-80' : 'top-48'}`}>
                     <AdUnit 
                       id="right-sidebar" 
                       type={isConverter ? 'skyscraper' : 'sidebar'} 
                       className="border-none" 
+                      isDark={isDark}
                     />
                   </div>
                 </aside>
@@ -179,7 +179,7 @@ const App: React.FC = () => {
 
             {/* Bottom Ad */}
             <div className={`mt-8 flex justify-center ${isCalendar ? 'px-8' : ''}`}>
-              <AdUnit id="footer-leaderboard" type="footer" className="border-none" />
+              <AdUnit id="footer-leaderboard" type="footer" className="border-none" isDark={isDark} />
             </div>
           </main>
         )}

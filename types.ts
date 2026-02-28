@@ -36,6 +36,7 @@ export interface AdProps {
   id: string;
   type: 'leaderboard' | 'sidebar' | 'footer' | 'skyscraper';
   className?: string;
+  isDark?: boolean;
 }
 
 export interface GDPRSettings {

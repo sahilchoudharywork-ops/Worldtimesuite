@@ -7,17 +7,71 @@ interface StopwatchProps {
 }
 
 const Stopwatch: React.FC<StopwatchProps> = ({ isDark }) => {
-  const [isRunning, setIsRunning] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
-  const [laps, setLaps] = useState<Lap[]>([]);
+  const [isRunning, setIsRunning] = useState(() => {
+    try {
+      const saved = localStorage.getItem('stopwatch_isRunning');
+      return saved === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [elapsed, setElapsed] = useState(() => {
+    try {
+      const savedAccumulated = Number(localStorage.getItem('stopwatch_accumulatedTime') || '0');
+      const savedIsRunning = localStorage.getItem('stopwatch_isRunning') === 'true';
+      const savedStartTime = Number(localStorage.getItem('stopwatch_startTime') || '0');
+      
+      if (savedIsRunning && savedStartTime > 0) {
+        return (Date.now() - savedStartTime) + savedAccumulated;
+      }
+      return savedAccumulated;
+    } catch {
+      return 0;
+    }
+  });
+  const [laps, setLaps] = useState<Lap[]>(() => {
+    try {
+      const saved = localStorage.getItem('stopwatch_laps');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   
   const timerRef = useRef<number | null>(null);
+  const initialStartTime = (() => {
+    try {
+      return Number(localStorage.getItem('stopwatch_startTime') || '0');
+    } catch {
+      return 0;
+    }
+  })();
+  const initialAccumulated = (() => {
+    try {
+      return Number(localStorage.getItem('stopwatch_accumulatedTime') || '0');
+    } catch {
+      return 0;
+    }
+  })();
+
+  const startTimeRef = useRef<number>(initialStartTime);
+  const accumulatedRef = useRef<number>(initialAccumulated);
+
+  // Persistence effects
+  useEffect(() => {
+    try {
+      localStorage.setItem('stopwatch_isRunning', isRunning.toString());
+      localStorage.setItem('stopwatch_laps', JSON.stringify(laps));
+    } catch (e) {
+      console.warn("Stopwatch: Failed to save to localStorage", e);
+    }
+  }, [isRunning, laps]);
 
   useEffect(() => {
     if (isRunning) {
-      const start = performance.now() - elapsed;
       const tick = () => {
-        setElapsed(performance.now() - start);
+        const currentElapsed = (Date.now() - startTimeRef.current) + accumulatedRef.current;
+        setElapsed(currentElapsed);
         timerRef.current = requestAnimationFrame(tick);
       };
       timerRef.current = requestAnimationFrame(tick);
@@ -43,6 +97,32 @@ const Stopwatch: React.FC<StopwatchProps> = ({ isDark }) => {
     return `${h}${m}:${s}.${msStr}`;
   };
 
+  const handleStartStop = () => {
+    if (!isRunning) {
+      // Starting
+      const now = Date.now();
+      startTimeRef.current = now;
+      try {
+        localStorage.setItem('stopwatch_startTime', now.toString());
+      } catch (e) {
+        console.warn("Stopwatch: Failed to save startTime", e);
+      }
+      setIsRunning(true);
+    } else {
+      // Stopping
+      const currentAccumulated = (Date.now() - startTimeRef.current) + accumulatedRef.current;
+      accumulatedRef.current = currentAccumulated;
+      try {
+        localStorage.setItem('stopwatch_accumulatedTime', currentAccumulated.toString());
+        localStorage.setItem('stopwatch_startTime', '0');
+      } catch (e) {
+        console.warn("Stopwatch: Failed to save accumulated time", e);
+      }
+      startTimeRef.current = 0;
+      setIsRunning(false);
+    }
+  };
+
   const handleLap = () => {
     const cumulative = elapsed;
     const lastCumulative = laps.length > 0 ? laps[0].cumulative : 0;
@@ -58,6 +138,16 @@ const Stopwatch: React.FC<StopwatchProps> = ({ isDark }) => {
     setIsRunning(false);
     setElapsed(0);
     setLaps([]);
+    accumulatedRef.current = 0;
+    startTimeRef.current = 0;
+    try {
+      localStorage.setItem('stopwatch_isRunning', 'false');
+      localStorage.setItem('stopwatch_accumulatedTime', '0');
+      localStorage.setItem('stopwatch_startTime', '0');
+      localStorage.setItem('stopwatch_laps', '[]');
+    } catch (e) {
+      console.warn("Stopwatch: Failed to clear storage on reset", e);
+    }
   };
 
   const minMaxLaps = useMemo(() => {
@@ -105,7 +195,7 @@ const Stopwatch: React.FC<StopwatchProps> = ({ isDark }) => {
           </button>
 
           <button 
-            onClick={() => setIsRunning(!isRunning)}
+            onClick={handleStartStop}
             className={`w-24 h-24 md:w-32 md:h-32 rounded-full border-2 flex items-center justify-center text-xl font-bold transition-all active:scale-95 ${
               isRunning 
                 ? 'border-red-500 text-red-500 hover:bg-red-500 hover:text-white' 

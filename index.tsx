@@ -12,7 +12,7 @@ win.process.env.NODE_ENV = win.process.env.NODE_ENV || 'production';
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   // This helps identify if the script is running before the DOM is ready
-  console.error("ChronoMax: Root element #root not found at initialization.");
+  console.error("worldtimesuite: Root element #root not found at initialization.");
 } else {
   const root = createRoot(rootElement);
   root.render(

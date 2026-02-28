@@ -1,5 +1,6 @@
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Task } from '../types';
 
 interface CalendarProps {
@@ -7,6 +8,7 @@ interface CalendarProps {
 }
 
 const Calendar: React.FC<CalendarProps> = ({ isDark }) => {
+  const TASKS_STORAGE_KEY = 'chronomax_calendar_tasks_v1';
   const todayDate = new Date();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -23,10 +25,128 @@ const Calendar: React.FC<CalendarProps> = ({ isDark }) => {
     priority: 'medium' as 'low' | 'medium' | 'high'
   });
 
-  const [tasks, setTasks] = useState<Task[]>([
+  const notifiedRef = useRef<Set<string>>(new Set());
+  const [previewTask, setPreviewTask] = useState<Task | null>(null);
+  const [previewPos, setPreviewPos] = useState<{ top: number; left: number } | null>(null);
+
+  const defaultTasks: Task[] = [
     { id: '1', title: 'Global Sync', description: 'Review Q4 goals', dueDate: new Date(2026, 1, 8).toISOString().split('T')[0], time: '14:00', priority: 'high', completed: false, repeat: 'none' },
     { id: '2', title: 'Plan Sprint', description: 'Design updates', dueDate: new Date(2026, 1, 12).toISOString().split('T')[0], time: '10:00', priority: 'medium', completed: true, repeat: 'none' }
-  ]);
+  ];
+
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    try {
+      const raw = localStorage.getItem(TASKS_STORAGE_KEY);
+      if (!raw) return defaultTasks;
+
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : defaultTasks;
+    } catch {
+      return defaultTasks;
+    }
+  });
+
+  const toDateKey = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const todayKey = toDateKey(todayDate);
+  const selectedDateKey = toDateKey(selectedDate);
+
+  const selectedDayTasks = useMemo(() => {
+    return tasks
+      .filter(t => !t.completed && t.dueDate === selectedDateKey)
+      .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+  }, [tasks, selectedDateKey]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+    } catch {
+      // ignore storage errors (quota / private mode)
+    }
+  }, [tasks]);
+
+  const parseTaskDateTime = (task: Task) => {
+    const [y, m, d] = task.dueDate.split('-').map(Number);
+    const [hh, mm] = (task.time || '00:00').split(':').map(Number);
+    return new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0, 0, 0);
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    if (Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+
+    const notifyIfDue = (now: number, triggerAt: number, key: string, title: string, body: string) => {
+      if (now >= triggerAt && now < triggerAt + 60000 && !notifiedRef.current.has(key)) {
+        try {
+          new Notification(title, { body });
+        } catch (e) {
+          console.warn("Calendar: Failed to show notification", e);
+        }
+        notifiedRef.current.add(key);
+      }
+    };
+
+    const tick = () => {
+      const now = Date.now();
+
+      tasks.forEach(task => {
+        if (task.completed) return;
+
+        const eventTime = parseTaskDateTime(task).getTime();
+        if (!Number.isFinite(eventTime)) return;
+
+        const tenMinBefore = eventTime - 10 * 60 * 1000;
+        const twoMinBefore = eventTime - 2 * 60 * 1000;
+
+        const baseKey = `${task.id}-${task.dueDate}-${task.time || '00:00'}`;
+        const body = `${task.title} • ${task.time || '00:00'}`;
+
+        notifyIfDue(now, tenMinBefore, `${baseKey}-10m`, 'Meeting in 10 minutes', body);
+        notifyIfDue(now, twoMinBefore, `${baseKey}-2m`, 'Meeting in 2 minutes', body);
+      });
+    };
+
+    tick();
+    const interval = setInterval(tick, 30000);
+
+    return () => clearInterval(interval);
+  }, [tasks]);
+
+  const openTaskPreview = (task: Task, anchorEl: HTMLElement) => {
+    const rect = anchorEl.getBoundingClientRect();
+    const popupW = 340;
+    const popupH = 230;
+    const gap = 10;
+
+    let left = rect.right + gap;
+    if (left + popupW > window.innerWidth - 12) left = rect.left - popupW - gap;
+    if (left < 12) left = 12;
+
+    let top = rect.top;
+    if (top + popupH > window.innerHeight - 12) top = window.innerHeight - popupH - 12;
+    if (top < 12) top = 12;
+
+    setPreviewTask(task);
+    setPreviewPos({ top, left });
+  };
+
+  const closeTaskPreview = () => {
+    setPreviewTask(null);
+    setPreviewPos(null);
+  };
 
   const daysInMonth = (month: number, year: number) => new Date(year, month + 1, 0).getDate();
   const startDayOfMonth = (month: number, year: number) => new Date(year, month, 1).getDay();
@@ -221,17 +341,26 @@ const Calendar: React.FC<CalendarProps> = ({ isDark }) => {
       )}
 
       {/* Sidebar: Next Up */}
-      <aside className={`w-full lg:w-80 border-r ${borderColor} p-10 space-y-12 flex-none ${sidebarBg} transition-colors duration-500`}>
+      <aside className={`w-full lg:w-80 border-r ${borderColor} p-10 space-y-12 flex-none ${sidebarBg} transition-colors duration-500 relative z-30 overflow-visible`}>
         <div className="space-y-2">
           <h2 className="text-3xl font-black uppercase tracking-[0.1em]">NEXT UP</h2>
           <div className="h-1 w-12 bg-current opacity-20 rounded-full" />
         </div>
         <div className="space-y-6">
-          {tasks.filter(t => !t.completed).slice(0, 3).map(task => (
-            <div key={task.id} className={`p-6 rounded-[2rem] border ${borderColor} transition-all relative overflow-hidden group hover:scale-[1.02] cursor-pointer ${isDark ? 'bg-zinc-900/40' : 'bg-white shadow-sm'}`}>
+          {selectedDayTasks.slice(0, 3).map(task => (
+            <div
+              key={task.id}
+              onMouseEnter={(e) => openTaskPreview(task, e.currentTarget)}
+              onMouseLeave={closeTaskPreview}
+              onClick={(e) => {
+                e.stopPropagation();
+                openTaskPreview(task, e.currentTarget);
+              }}
+              className={`p-6 rounded-[2rem] border ${borderColor} transition-all relative overflow-visible group hover:scale-[1.02] cursor-pointer ${isDark ? 'bg-zinc-900/40' : 'bg-white shadow-sm'}`}
+            >
               <div className="flex items-center gap-3 mb-4">
                 <span className={`w-3 h-3 rounded-full ${task.priority === 'high' ? 'bg-red-600 animate-pulse' : 'bg-blue-600'}`} />
-                <span className={`text-xs font-black uppercase tracking-widest ${mutedText}`}>{task.time} {task.dueDate === todayDate.toISOString().split('T')[0] ? 'Today' : 'Upcoming'}</span>
+                <span className={`text-xs font-black uppercase tracking-widest ${mutedText}`}>{task.time} {task.dueDate === selectedDateKey ? 'Selected Day' : 'Scheduled'}</span>
               </div>
               <h4 className="font-black text-2xl mb-1 tracking-tight">{task.title}</h4>
               <p className={`text-xs ${mutedText} font-bold leading-relaxed truncate`}>{task.description}</p>
@@ -241,7 +370,7 @@ const Calendar: React.FC<CalendarProps> = ({ isDark }) => {
       </aside>
 
       {/* Main Calendar View */}
-      <div className={`flex-1 p-8 md:p-14 space-y-12 overflow-y-auto ${bgColor} transition-colors duration-500`}>
+      <div className={`flex-1 p-8 md:p-14 space-y-12 overflow-y-auto ${bgColor} transition-colors duration-500 relative z-10`}>
         <header className="flex flex-col xl:flex-row items-start xl:items-start justify-between gap-10">
           <div className="space-y-4">
             <div className="flex items-center gap-6">
@@ -287,20 +416,20 @@ const Calendar: React.FC<CalendarProps> = ({ isDark }) => {
           
           {calendarData.map((day, idx) => {
             const dateObj = day ? new Date(currentDate.getFullYear(), currentDate.getMonth(), day) : null;
-            const dateStr = dateObj ? dateObj.toISOString().split('T')[0] : '';
+            const dateStr = dateObj ? toDateKey(dateObj) : '';
             const dayTasks = tasks.filter(t => t.dueDate === dateStr);
             const isSelected = day && selectedDate.getDate() === day && selectedDate.getMonth() === currentDate.getMonth() && selectedDate.getFullYear() === currentDate.getFullYear();
-            const isActualToday = day && todayDate.getDate() === day && todayDate.getMonth() === currentDate.getMonth() && todayDate.getFullYear() === currentDate.getFullYear();
+            const isActualToday = day && dateStr === todayKey;
 
             return (
               <div 
                 key={idx} 
                 className={`min-h-[220px] p-8 rounded-[3rem] border-2 transition-all flex flex-col relative overflow-hidden group ${
-                  day 
-                    ? (isSelected 
-                        ? 'border-yellow-400 text-yellow-400 cursor-pointer shadow-[0_0_30px_rgba(250,204,21,0.15)] bg-yellow-400/5' 
-                        : (isActualToday 
-                            ? (isDark ? 'bg-white text-black border-white' : 'bg-black text-white border-black')
+                  day
+                    ? (isActualToday
+                        ? (isDark ? 'bg-white text-black border-white cursor-pointer' : 'bg-black text-white border-black cursor-pointer')
+                        : (isSelected
+                            ? 'border-yellow-400 text-yellow-400 cursor-pointer shadow-[0_0_30px_rgba(250,204,21,0.15)] bg-yellow-400/5'
                             : `${bgColor} ${textColor} ${borderColor} hover:border-yellow-400 hover:text-yellow-400 cursor-pointer`))
                     : 'border-transparent pointer-events-none'
                 }`}
@@ -329,19 +458,30 @@ const Calendar: React.FC<CalendarProps> = ({ isDark }) => {
                     </button>
 
                     <span className={`text-7xl font-black leading-none tracking-tighter mb-4 transition-colors ${
-                      isSelected ? 'text-yellow-400' : (isActualToday ? (isDark ? 'text-black' : 'text-white') : 'group-hover:text-yellow-400')
+                      isActualToday ? (isDark ? 'text-black' : 'text-white') : (isSelected ? 'text-yellow-400' : 'group-hover:text-yellow-400')
                     }`}>
                       {day}
                     </span>
                     
                     <div className="space-y-2 mt-auto pr-16">
                       {dayTasks.map(task => (
-                        <div key={task.id} className={`text-[10px] px-4 py-2 rounded-full font-black uppercase tracking-widest truncate ${
-                          isActualToday 
-                            ? (isDark ? 'bg-black text-white' : 'bg-white text-black')
-                            : (isSelected ? 'bg-yellow-400 text-black shadow-lg shadow-yellow-400/20' : (isDark ? 'bg-white text-black' : 'bg-black text-white'))
-                        }`}>
-                          {task.title}
+                        <div
+                          key={task.id}
+                          className="relative"
+                          onMouseEnter={(e) => openTaskPreview(task, e.currentTarget)}
+                          onMouseLeave={closeTaskPreview}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openTaskPreview(task, e.currentTarget);
+                          }}
+                        >
+                          <div className={`text-[10px] px-4 py-2 rounded-full font-black uppercase tracking-widest truncate cursor-pointer ${
+                            isActualToday 
+                              ? (isDark ? 'bg-black text-white' : 'bg-white text-black')
+                              : (isSelected ? 'bg-yellow-400 text-black shadow-lg shadow-yellow-400/20' : (isDark ? 'bg-white text-black' : 'bg-black text-white'))
+                          }`}>
+                            {task.title}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -352,6 +492,27 @@ const Calendar: React.FC<CalendarProps> = ({ isDark }) => {
           })}
         </div>
       </div>
+
+      {previewTask && previewPos && typeof document !== 'undefined' && createPortal(
+        <div
+          className={`fixed z-[9999] w-[340px] rounded-[2rem] p-6 border ${borderColor} shadow-2xl ${modalBg} pointer-events-none`}
+          style={{ top: previewPos.top, left: previewPos.left }}
+        >
+          <h5 className={`text-lg font-black uppercase tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>
+            {previewTask.title}
+          </h5>
+
+          <p className="text-[13px] font-black tracking-widest text-yellow-400 mt-1">
+            {previewTask.time || 'N/A'}
+          </p>
+
+          <div className="space-y-2 text-[11px] font-bold mt-4">
+            <div className={mutedText}>{previewTask.description || 'N/A'}</div>
+            <div className={mutedText}>{previewTask.location || 'N/A'}</div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };
