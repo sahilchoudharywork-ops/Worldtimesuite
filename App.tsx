@@ -193,7 +193,7 @@ const App: React.FC = () => {
   if (!cityRoute) return;
 
   const current = normalizePath(window.location.pathname);
-  const canonical = `/timezone/${cityRoute.fromSlug}-to-${cityRoute.toSlug}`;
+  const canonical = `/${cityRoute.fromSlug}-to-${cityRoute.toSlug}`;
 
   if (current !== canonical) {
     window.history.replaceState({}, '', canonical);
