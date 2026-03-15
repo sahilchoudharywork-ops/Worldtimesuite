@@ -15,14 +15,8 @@ const normalizePath = (path: string) => {
   return clean === '' ? '/timezone' : clean;
 };
 
-const getCurrentPath = () => {
-  if (typeof window === 'undefined') return '/timezone';
-  return normalizePath(decodeURIComponent(window.location.pathname || '/'));
-};
-
 const parseCityRoute = (path: string) => {
-  const clean = normalizePath(path);
-  const match = clean.match(/^\/(?:timezone\/)?([a-z0-9-]+)-to-([a-z0-9-]+)$/i);
+  const match = path.match(/^\/(?:timezone\/)?([a-z0-9-]+)-to-([a-z0-9-]+)\/?$/i);
   if (!match) return null;
 
   return {
@@ -179,27 +173,17 @@ const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>(() => {
     if (typeof window === 'undefined') return Page.CONVERTER;
 
-    const path = getCurrentPath();
+    const path = normalizePath(window.location.pathname);
     const cityMatch = parseCityRoute(path);
     if (cityMatch) return Page.CONVERTER;
 
     return pathToPage[path] || Page.CONVERTER;
   });
 
-  const currentPath = getCurrentPath();
+  const currentPath =
+    typeof window !== 'undefined' ? normalizePath(window.location.pathname) : '/timezone';
+
   const cityRoute = parseCityRoute(currentPath);
-
-  // Canonical short URL for city pages: /new-york-to-london
-  useEffect(() => {
-    if (!cityRoute) return;
-
-    const current = getCurrentPath();
-    const canonical = `/${cityRoute.fromSlug}-to-${cityRoute.toSlug}`;
-
-    if (current !== canonical) {
-      window.history.replaceState({}, '', canonical);
-    }
-  }, [cityRoute?.fromSlug, cityRoute?.toSlug]);
 
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     try {
@@ -242,9 +226,8 @@ const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentPage]);
 
-  // Keep non-dynamic routes synced with nav buttons
   useEffect(() => {
-    const path = getCurrentPath();
+    const path = normalizePath(window.location.pathname);
     const isDynamicCityRoute = !!parseCityRoute(path);
 
     if (currentPage === Page.CONVERTER && isDynamicCityRoute) return;
@@ -257,7 +240,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const onPopState = () => {
-      const path = getCurrentPath();
+      const path = normalizePath(window.location.pathname);
       const cityMatch = parseCityRoute(path);
 
       if (cityMatch) {
@@ -276,10 +259,7 @@ const App: React.FC = () => {
     const seo = seoByPage[currentPage] || seoByPage[Page.CONVERTER];
 
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://worldtimesuite.com';
-    const canonicalPath = cityRoute
-      ? `/${cityRoute.fromSlug}-to-${cityRoute.toSlug}`
-      : normalizePath(window.location.pathname);
-    const canonicalUrl = `${origin}${canonicalPath}`;
+    const canonicalUrl = `${origin}${normalizePath(window.location.pathname)}`;
 
     if (currentPage === Page.CONVERTER && cityRoute) {
       const fromName = cityRoute.fromSlug.replace(/-/g, ' ');
@@ -307,7 +287,7 @@ const App: React.FC = () => {
     upsertMeta('property', 'og:type', 'website');
     upsertMeta('name', 'twitter:card', 'summary_large_image');
     upsertLink('canonical', canonicalUrl);
-  }, [currentPage, cityRoute?.fromSlug, cityRoute?.toSlug]);
+  }, [currentPage, cityRoute]);
 
   const isDark = theme === 'dark';
   const bgColor = isDark ? 'bg-black' : 'bg-white';
