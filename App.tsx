@@ -16,7 +16,8 @@ const normalizePath = (path: string) => {
 };
 
 const parseCityRoute = (path: string) => {
-  const match = path.match(/^\/(?:timezone\/)?([a-z0-9-]+)-to-([a-z0-9-]+)\/?$/i);
+  const clean = normalizePath(path);
+  const match = clean.match(/^\/(?:timezone\/)?([a-z0-9-]+)-to-([a-z0-9-]+)$/i);
   if (!match) return null;
 
   return {
@@ -24,6 +25,13 @@ const parseCityRoute = (path: string) => {
     toSlug: match[2].toLowerCase()
   };
 };
+
+const isLegacyTimezoneCityRoute = (path: string) => {
+  const clean = normalizePath(path);
+  return /^\/timezone\/[a-z0-9-]+-to-[a-z0-9-]+$/i.test(clean);
+};
+
+const shortCityPath = (fromSlug: string, toSlug: string) => `/${fromSlug}-to-${toSlug}`;
 
 const pathToPage: Record<string, Page> = {
   '/timezone': Page.CONVERTER,
@@ -180,10 +188,19 @@ const App: React.FC = () => {
     return pathToPage[path] || Page.CONVERTER;
   });
 
-  const currentPath =
-    typeof window !== 'undefined' ? normalizePath(window.location.pathname) : '/timezone';
-
+  const currentPath = typeof window !== 'undefined' ? normalizePath(window.location.pathname) : '/timezone';
   const cityRoute = parseCityRoute(currentPath);
+
+  // Client-side canonical normalization for legacy links if they reach SPA
+  useEffect(() => {
+    if (!cityRoute) return;
+    if (!isLegacyTimezoneCityRoute(window.location.pathname)) return;
+
+    const canonical = shortCityPath(cityRoute.fromSlug, cityRoute.toSlug);
+    if (normalizePath(window.location.pathname) !== canonical) {
+      window.history.replaceState({}, '', canonical);
+    }
+  }, [cityRoute]);
 
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     try {
@@ -257,9 +274,13 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const seo = seoByPage[currentPage] || seoByPage[Page.CONVERTER];
-
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://worldtimesuite.com';
-    const canonicalUrl = `${origin}${normalizePath(window.location.pathname)}`;
+
+    const canonicalPath = cityRoute
+      ? shortCityPath(cityRoute.fromSlug, cityRoute.toSlug)
+      : normalizePath(window.location.pathname);
+
+    const canonicalUrl = `${origin}${canonicalPath}`;
 
     if (currentPage === Page.CONVERTER && cityRoute) {
       const fromName = cityRoute.fromSlug.replace(/-/g, ' ');
