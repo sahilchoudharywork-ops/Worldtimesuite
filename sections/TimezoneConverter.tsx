@@ -754,14 +754,24 @@
 //     ? getTimeDifferenceLine(sourceTz.name, sourceTz.iana, targets[0].name, targets[0].iana)
 //     : '';
 
+//   const primaryTargetName = targets[0]?.name || 'Target Timezone';
+//   const meetingButtonLabel = `Best Time to Schedule a Meeting between ${sourceTz.name} and ${primaryTargetName}`;
+
+//   const scrollToTimeline = () => {
+//     document.getElementById('timeline-section')?.scrollIntoView({
+//       behavior: 'smooth',
+//       block: 'start'
+//     });
+//   };
+
 //   return (
 //     <div className={`timezone-no-shadow p-8 space-y-12 ${bgColor} ${textColor} font-['Helvetica']`}>
 //       <header className="space-y-4 text-center">
-//         <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Timezone Converter</h1>
+//         <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">Timezone Converter</h1>
 //       </header>
 
 //       <div className="max-w-4xl mx-auto flex gap-4">
-//         <div className={`flex-grow flex items-center px-6 py-4 rounded-full border-2 ${borderClass} focus-within:border-blue-500 transition-all shadow-2xl ${inputBg}`}>
+//         <div className={`flex-grow flex items-center px-5 py-2 rounded-full border-2 ${borderClass} focus-within:border-blue-500 transition-all shadow-2xl ${inputBg}`}>
 //           <svg aria-hidden="true" className={`w-6 h-6 ${subtleText} mr-4`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
 //             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
 //           </svg>
@@ -824,6 +834,22 @@
 //             );
 //           })}
 //         </div>
+
+//         <button
+//           type="button"
+//           aria-label={meetingButtonLabel}
+//           onClick={scrollToTimeline}
+//           className={`
+//             mt-8 w-full py-4 px-6 rounded-full border font-bold uppercase text-xs tracking-[0.2em]
+//             ${borderClass}
+//             ${panelBg} ${textColor}
+//             hover:border-yellow-400 focus-visible:border-yellow-400 active:border-yellow-400
+//             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/40
+//             transition-all duration-200 active:scale-[0.99]
+//           `}
+//         >
+//           {meetingButtonLabel}
+//         </button>
 //       </div>
 
 //       {showRelatedRoutes && (
@@ -858,7 +884,7 @@
 
 //       <div className="max-w-6xl mx-auto mt-20">
 //         <div className={`flex items-center gap-4 text-xs font-black uppercase tracking-[0.3em] ${mutedText} mb-8`}>
-//           <div className="w-20 h-px bg-current"></div>Recent Sync History
+//           <div className="w-20 h-px bg-current"></div>Past Searches
 //         </div>
 //         <div className={`border ${panelBorder} rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-10`}>
 //           {history.length === 0 ? (
@@ -892,9 +918,9 @@
 //         </div>
 //       </div>
 
-//       <div className="max-w-6xl mx-auto mt-20">
+//       <div id="timeline-section" className="max-w-6xl mx-auto mt-20">
 //         <div className={`flex items-center gap-4 text-xs font-black uppercase tracking-[0.3em] ${mutedText} mb-8`}>
-//           <div className="w-20 h-px bg-current"></div>24H Interactive Timeline
+//           <div className="w-20 h-px bg-current"></div>24H Timezone Overlap
 //         </div>
 //         <div className={`border ${borderClass} rounded-xl overflow-hidden ${timelineWrapBg}`}>
 //           <div className="flex">
@@ -1073,6 +1099,8 @@
 // };
 
 // export default TimezoneConverter;
+
+// New code for Mobile UI adaption 
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import * as ct from 'countries-and-timezones';
@@ -1841,19 +1869,21 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
   };
 
   return (
-    <div className={`timezone-no-shadow p-8 space-y-12 ${bgColor} ${textColor} font-['Helvetica']`}>
-      <header className="space-y-4 text-center">
-        <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">Timezone Converter</h1>
+    <div className={`timezone-no-shadow p-4 sm:p-8 space-y-8 sm:space-y-12 ${bgColor} ${textColor} font-['Helvetica']`}>
+      <header className="space-y-2 sm:space-y-4 text-center">
+        <h1 className="text-xl sm:text-3xl md:text-5xl font-black uppercase tracking-tighter whitespace-nowrap">
+          Timezone Converter
+        </h1>
       </header>
 
-      <div className="max-w-4xl mx-auto flex gap-4">
-        <div className={`flex-grow flex items-center px-5 py-2 rounded-full border-2 ${borderClass} focus-within:border-blue-500 transition-all shadow-2xl ${inputBg}`}>
-          <svg aria-hidden="true" className={`w-6 h-6 ${subtleText} mr-4`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="max-w-4xl mx-auto flex flex-col sm:flex-row gap-4">
+        <div className={`flex-grow flex items-center px-4 sm:px-5 py-3 sm:py-2 rounded-full border-2 ${borderClass} focus-within:border-blue-500 transition-all shadow-2xl ${inputBg}`}>
+          <svg aria-hidden="true" className={`w-5 h-5 sm:w-6 sm:h-6 ${subtleText} mr-3 sm:mr-4`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
             aria-label="Timezone conversion query"
-            className="flex-grow bg-transparent border-none outline-none font-bold text-lg"
+            className="flex-grow bg-transparent border-none outline-none font-bold text-base sm:text-lg min-w-0"
             placeholder="e.g. 8 pm russia to london"
             value={naturalInput}
             onChange={e => {
@@ -1867,15 +1897,15 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
           type="button"
           aria-label="Convert timezone"
           onClick={handleConvert}
-          className={`px-10 rounded-full font-black uppercase text-sm tracking-widest transition-all active:scale-95 shadow-lg ${convertBtn}`}
+          className={`w-full sm:w-auto px-6 sm:px-10 py-4 rounded-full font-black uppercase text-xs sm:text-sm tracking-[0.2em] sm:tracking-widest transition-all active:scale-95 shadow-lg ${convertBtn}`}
         >
           {isLoading ? 'Syncing...' : 'Convert'}
         </button>
       </div>
 
       <div className="max-w-6xl mx-auto">
-        <div className={`border ${panelBorder} rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl transition-all duration-300`}>
-          <div className={`grid grid-cols-12 px-12 pt-8 pb-4 border-b ${panelBorderSoft}`}>
+        <div className={`border ${panelBorder} rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl transition-all duration-300`}>
+          <div className={`hidden sm:grid grid-cols-12 px-12 pt-8 pb-4 border-b ${panelBorderSoft}`}>
             <div className={`col-span-5 text-[10px] font-black uppercase tracking-[0.3em] ${subtleText}`}>Source Timezone</div>
             <div className={`col-span-2 text-center text-[10px] font-black uppercase tracking-[0.3em] ${subtleText}`}>Direction</div>
             <div className={`col-span-5 text-right text-[10px] font-black uppercase tracking-[0.3em] ${subtleText}`}>Target Local Time</div>
@@ -1885,26 +1915,38 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
             const srcInfo = getTzInfo(baseTime, sourceTz.iana);
             const tgtInfo = getTzInfo(baseTime, tz.iana);
             return (
-              <div key={`${tz.iana}-${idx}`} className={`grid grid-cols-12 px-12 pt-8 pb-10 items-center last:border-0 border-b ${panelBorderSofter}`}>
-                <div className="col-span-5 space-y-1">
-                  <div className={`text-4xl font-normal tracking-tight ${titleText} uppercase truncate`}>{sourceTz.name}</div>
-                  <div className={`text-[10px] font-bold uppercase tracking-tighter ${subtleText}`}>
+              <div key={`${tz.iana}-${idx}`} className={`grid grid-cols-12 px-4 sm:px-12 py-6 sm:pt-8 sm:pb-10 items-center last:border-0 border-b ${panelBorderSofter}`}>
+                <div className="col-span-5 space-y-1 text-left">
+                  <div className={`text-sm sm:text-4xl font-normal tracking-tight ${titleText} uppercase truncate`}>
+                    {sourceTz.name}
+                  </div>
+                  <div className={`text-[7px] sm:text-[10px] font-bold uppercase tracking-tight sm:tracking-tighter ${subtleText}`}>
                     {sourceTz.iana.toUpperCase()} (GMT{getOffsetString(sourceTz.iana, baseTime)})
                   </div>
-                  <div className="text-6xl font-normal tracking-tighter text-blue-500 tabular-nums">{srcInfo.time}</div>
+                  <div className="text-xl sm:text-6xl font-normal tracking-tighter text-blue-500 tabular-nums whitespace-nowrap">
+                    {srcInfo.time}
+                  </div>
                 </div>
+
                 <div className={`col-span-2 flex flex-col items-center justify-center ${subtleText}`}>
-                  <svg aria-hidden="true" className="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg aria-hidden="true" className="w-5 h-5 sm:w-10 sm:h-10 mb-1 sm:mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                   </svg>
-                  <span className="text-[10px] font-normal uppercase tracking-[0.2em]">Converted</span>
+                  <span className="text-[7px] sm:text-[10px] font-normal uppercase tracking-[0.15em] sm:tracking-[0.2em] text-center">
+                    Synced
+                  </span>
                 </div>
+
                 <div className="col-span-5 text-right space-y-1">
-                  <div className={`text-4xl font-normal tracking-tight ${titleText} uppercase truncate`}>{tz.name}</div>
-                  <div className={`text-[10px] font-bold uppercase tracking-tighter ${subtleText}`}>
+                  <div className={`text-sm sm:text-4xl font-normal tracking-tight ${titleText} uppercase truncate`}>
+                    {tz.name}
+                  </div>
+                  <div className={`text-[7px] sm:text-[10px] font-bold uppercase tracking-tight sm:tracking-tighter ${subtleText}`}>
                     {tz.iana.toUpperCase()} (GMT{getOffsetString(tz.iana, baseTime)})
                   </div>
-                  <div className="text-6xl font-normal tracking-tighter text-green-500 tabular-nums">{tgtInfo.time}</div>
+                  <div className="text-xl sm:text-6xl font-normal tracking-tighter text-green-500 tabular-nums whitespace-nowrap">
+                    {tgtInfo.time}
+                  </div>
                 </div>
               </div>
             );
@@ -1916,7 +1958,8 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
           aria-label={meetingButtonLabel}
           onClick={scrollToTimeline}
           className={`
-            mt-8 w-full py-4 px-6 rounded-full border font-bold uppercase text-xs tracking-[0.2em]
+            mt-6 sm:mt-8 w-full py-4 px-4 sm:px-6 rounded-full border font-bold uppercase
+            text-[8px] sm:text-xs tracking-[0.1em] sm:tracking-[0.2em] leading-relaxed text-center
             ${borderClass}
             ${panelBg} ${textColor}
             hover:border-yellow-400 focus-visible:border-yellow-400 active:border-yellow-400
@@ -1929,25 +1972,25 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       </div>
 
       {showRelatedRoutes && (
-        <div className="max-w-6xl mx-auto mt-20">
-          <div className={`flex items-center gap-4 text-xs font-black uppercase tracking-[0.3em] ${mutedText} mb-5`}>
-            <div className="w-20 h-px bg-current"></div>Related Routes
+        <div className="max-w-6xl mx-auto mt-12 sm:mt-20">
+          <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-4 sm:mb-5`}>
+            <div className="w-10 sm:w-20 h-px bg-current"></div>Related Routes
           </div>
 
-          <div className="text-[11px] md:text-xs font-bold tracking-wide uppercase mb-6 font-['Helvetica'] text-yellow-400">
+          <div className="text-[10px] sm:text-xs font-bold tracking-wide uppercase mb-4 sm:mb-6 font-['Helvetica'] text-yellow-400">
             {relatedRoutesDiffLine}
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             {relatedRoutes.map((route, idx) => (
               <a
                 key={route.href}
                 href={route.href}
                 onClick={() => trackRelatedRouteClick(route.href, route.label, idx + 1)}
                 className={`
-                  inline-flex items-center w-fit max-w-full px-4 py-2.5 rounded-xl border
+                  inline-flex items-center w-fit max-w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border
                   ${isDark ? 'border-zinc-700 hover:border-blue-500 hover:bg-zinc-950' : 'border-zinc-300 hover:border-blue-500 hover:bg-blue-50'}
-                  font-['Helvetica'] font-bold text-sm tracking-tight whitespace-nowrap
+                  font-['Helvetica'] font-bold text-xs sm:text-sm tracking-tight whitespace-nowrap
                   transition-all duration-200
                 `}
               >
@@ -1958,34 +2001,36 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
         </div>
       )}
 
-      <div className="max-w-6xl mx-auto mt-20">
-        <div className={`flex items-center gap-4 text-xs font-black uppercase tracking-[0.3em] ${mutedText} mb-8`}>
-          <div className="w-20 h-px bg-current"></div>Past Searches
+      <div className="max-w-6xl mx-auto mt-12 sm:mt-20">
+        <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
+          <div className="w-10 sm:w-20 h-px bg-current"></div>Past Searches
         </div>
-        <div className={`border ${panelBorder} rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-10`}>
+        <div className={`border ${panelBorder} rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-6 sm:p-10`}>
           {history.length === 0 ? (
-            <div className={`py-12 text-center text-xs font-black uppercase tracking-widest ${mutedText}`}>No recent conversions</div>
+            <div className={`py-10 sm:py-12 text-center text-xs sm:text-sm font-black uppercase tracking-[0.2em] sm:tracking-widest ${mutedText}`}>
+              No recent conversions
+            </div>
           ) : (
-            <div className="space-y-10">
+            <div className="space-y-6 sm:space-y-10">
               {history.map(item => (
-                <div key={item.id} className={`grid grid-cols-12 gap-8 items-center pb-10 border-b ${panelBorder} last:border-0 last:pb-0`}>
-                  <div className="col-span-3">
+                <div key={item.id} className={`grid grid-cols-1 sm:grid-cols-12 gap-4 sm:gap-8 items-center pb-6 sm:pb-10 border-b ${panelBorder} last:border-0 last:pb-0`}>
+                  <div className="sm:col-span-3">
                     <div className={`text-[10px] font-black uppercase tracking-widest mb-1 ${subtleText}`}>Query context</div>
-                    <div className={`text-sm font-bold truncate uppercase tracking-tight ${mutedText}`}>{item.query}</div>
+                    <div className={`text-xs sm:text-sm font-bold truncate uppercase tracking-tight ${mutedText}`}>{item.query}</div>
                   </div>
-                  <div className="col-span-3">
+                  <div className="sm:col-span-3">
                     <div className={`text-[10px] font-black uppercase tracking-widest mb-1 truncate ${subtleText}`}>{item.sourceName}</div>
-                    <div className="text-2xl font-black text-blue-500 tabular-nums tracking-tighter">{item.sourceTime}</div>
+                    <div className="text-xl sm:text-2xl font-black text-blue-500 tabular-nums tracking-tighter">{item.sourceTime}</div>
                   </div>
-                  <div className={`col-span-2 text-center ${subtleText}`}>
-                    <svg aria-hidden="true" className="w-6 h-6 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className={`sm:col-span-2 text-left sm:text-center ${subtleText}`}>
+                    <svg aria-hidden="true" className="w-5 h-5 sm:w-6 sm:h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path d="M14 5l7 7m0 0l-7 7m7-7H3" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     <div className="text-[9px] font-black uppercase tracking-widest">Synced</div>
                   </div>
-                  <div className="col-span-4 text-right">
+                  <div className="sm:col-span-4 text-left sm:text-right">
                     <div className={`text-[10px] font-black uppercase tracking-widest mb-1 truncate ${subtleText}`}>{item.targetName}</div>
-                    <div className="text-2xl font-black text-green-500 tabular-nums tracking-tighter">{item.targetTime}</div>
+                    <div className="text-xl sm:text-2xl font-black text-green-500 tabular-nums tracking-tighter">{item.targetTime}</div>
                   </div>
                 </div>
               ))}
@@ -1994,37 +2039,50 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
         </div>
       </div>
 
-      <div id="timeline-section" className="max-w-6xl mx-auto mt-20">
-        <div className={`flex items-center gap-4 text-xs font-black uppercase tracking-[0.3em] ${mutedText} mb-8`}>
-          <div className="w-20 h-px bg-current"></div>24H Timezone Overlap
+      <div id="timeline-section" className="max-w-6xl mx-auto mt-12 sm:mt-20 scroll-mt-24">
+        <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
+          <div className="w-10 sm:w-20 h-px bg-current"></div>24H Timezone Overlap
         </div>
         <div className={`border ${borderClass} rounded-xl overflow-hidden ${timelineWrapBg}`}>
-          <div className="flex">
-            <div className={`w-80 flex-none border-r ${panelBorder}`}>
+          <div className="flex flex-col lg:flex-row">
+            <div className={`w-full lg:w-80 lg:flex-none border-b lg:border-b-0 lg:border-r ${panelBorder}`}>
               {allTzs.map((tz, rowIndex) => {
                 const currentTzInfo = getTzInfo(baseTime, tz.iana);
                 const relativeOffset = getRelativeOffset(tz.iana, sourceTz.iana);
                 const isSource = rowIndex === 0;
                 return (
-                  <div key={`${tz.iana}-label-${rowIndex}`} className={`h-40 p-6 border-b ${panelBorder} last:border-0 flex flex-col justify-center relative bg-gradient-to-r ${timelineLabelBg} to-transparent group`}>
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-xl font-black tracking-tight uppercase truncate max-w-[140px]">{tz.name}</h3>
-                          <div className={`px-2 py-0.5 rounded ${timelineLabelPill} text-[10px] font-bold ${subtleText}`}>{getOffsetString(tz.iana, baseTime)}</div>
+                  <div
+                    key={`${tz.iana}-label-${rowIndex}`}
+                    className={`h-28 sm:h-40 p-4 sm:p-6 border-b ${panelBorder} last:border-0 flex flex-col justify-center relative bg-gradient-to-r ${timelineLabelBg} to-transparent group`}
+                  >
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <h3 className="text-lg sm:text-xl font-black tracking-tight uppercase truncate max-w-[120px] sm:max-w-[140px]">
+                            {tz.name}
+                          </h3>
+                          <div className={`px-2 py-0.5 rounded ${timelineLabelPill} text-[9px] sm:text-[10px] font-bold ${subtleText}`}>
+                            {getOffsetString(tz.iana, baseTime)}
+                          </div>
                         </div>
-                        <div className={`text-[10px] font-bold uppercase tracking-widest truncate ${subtleText}`}>{tz.iana.split('/')[0]}</div>
+                        <div className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest truncate ${subtleText}`}>
+                          {tz.iana.split('/')[0]}
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-black tracking-tighter leading-none">
+                      <div className="text-right shrink-0">
+                        <div className="text-lg sm:text-2xl font-black tracking-tighter leading-none whitespace-nowrap">
                           {currentTzInfo.shortTime.slice(0, -1)}
-                          <span className={`text-xs ml-0.5 font-bold ${subtleText}`}>{currentTzInfo.shortTime.slice(-1)}</span>
+                          <span className={`text-[10px] sm:text-xs ml-0.5 font-bold ${subtleText}`}>
+                            {currentTzInfo.shortTime.slice(-1)}
+                          </span>
                         </div>
-                        <div className={`text-[9px] font-black uppercase tracking-tighter mt-1 ${subtleText}`}>{currentTzInfo.date}</div>
+                        <div className={`text-[8px] sm:text-[9px] font-black uppercase tracking-tight sm:tracking-tighter mt-1 ${subtleText}`}>
+                          {currentTzInfo.date}
+                        </div>
                       </div>
                     </div>
-                    <div className={`absolute left-6 bottom-4 flex items-center gap-2 ${faintText}`}>
-                      {!isSource && <span className="text-[10px] font-black tracking-widest">{relativeOffset}H RELATIVE</span>}
+                    <div className={`absolute left-4 sm:left-6 bottom-3 sm:bottom-4 flex items-center gap-2 ${faintText}`}>
+                      {!isSource && <span className="text-[9px] sm:text-[10px] font-black tracking-widest">{relativeOffset}H RELATIVE</span>}
                       {isSource && (
                         <svg aria-hidden="true" className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z" />
@@ -2036,7 +2094,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
                         type="button"
                         aria-label={`Remove ${tz.name} from timeline`}
                         onClick={() => setTargets(prev => prev.filter((_, i) => i !== rowIndex - 1))}
-                        className={`absolute top-2 right-2 p-1 transition-opacity ${isDark ? 'opacity-0 group-hover:opacity-70 hover:opacity-100' : 'opacity-0 group-hover:opacity-80 hover:opacity-100'}`}
+                        className={`absolute top-2 right-2 p-1 transition-opacity ${isDark ? 'opacity-70 lg:opacity-0 group-hover:opacity-70 hover:opacity-100' : 'opacity-80 lg:opacity-0 group-hover:opacity-80 hover:opacity-100'}`}
                       >
                         <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -2046,13 +2104,13 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
                   </div>
                 );
               })}
-              <div className={`h-16 p-4 border-t ${panelBorder} ${addRowBg} flex items-center gap-4`}>
+              <div className={`h-20 sm:h-16 p-4 border-t ${panelBorder} ${addRowBg} flex items-center gap-3 sm:gap-4`}>
                 <div className="relative flex-grow">
                   <input
                     type="text"
                     aria-label="Add timezone to timeline"
                     placeholder="ADD TIMEZONE..."
-                    className={`w-full ${addInputBg} border rounded-lg px-4 py-2 text-[10px] font-black tracking-widest uppercase outline-none focus:border-blue-500 transition-colors`}
+                    className={`w-full ${addInputBg} border rounded-lg px-4 py-3 sm:py-2 text-[10px] font-black tracking-[0.15em] sm:tracking-widest uppercase outline-none focus:border-blue-500 transition-colors`}
                     onKeyDown={e => {
                       if (e.key === 'Enter') {
                         const val = (e.target as HTMLInputElement).value;
@@ -2068,9 +2126,9 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
                 <button
                   type="button"
                   aria-label="Add timezone"
-                  className={`w-10 h-10 flex-none rounded-lg border ${addBtnBg} flex items-center justify-center transition-colors`}
+                  className={`w-12 h-12 sm:w-10 sm:h-10 flex-none rounded-lg border ${addBtnBg} flex items-center justify-center transition-colors`}
                 >
-                  <svg aria-hidden="true" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg aria-hidden="true" className="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
                   </svg>
                 </button>
@@ -2082,7 +2140,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
                 {allTzs.map((tz, rowIndex) => {
                   const timeline = getTimelineData(tz.iana, timelineStartUtc);
                   return (
-                    <div key={`${tz.iana}-timeline-${rowIndex}`} className={`flex h-40 border-b ${panelBorder} last:border-0`}>
+                    <div key={`${tz.iana}-timeline-${rowIndex}`} className={`flex h-28 sm:h-40 border-b ${panelBorder} last:border-0`}>
                       {timeline.map((cell, cIdx) => {
                         const isFocused = timelineFocusIndex === cIdx;
                         return (
@@ -2093,7 +2151,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
                               setBaseTime(cell.fullDate);
                               setIsLive(false);
                             }}
-                            className={`w-12 flex flex-col items-center justify-center border-r ${panelBorderSofter} cursor-pointer transition-all relative group/cell
+                            className={`w-10 sm:w-12 flex flex-col items-center justify-center border-r ${panelBorderSofter} cursor-pointer transition-all relative group/cell
                               ${cell.cellType === 'night' ? (isDark ? 'bg-[#0c0c0e]' : 'bg-zinc-200/70') : (isDark ? 'bg-[#151518]' : 'bg-zinc-100')}
                               ${isFocused ? (isDark ? 'bg-indigo-900/40' : 'bg-blue-200/50') : ''}
                               ${cell.isWorkingHour ? 'ring-1 ring-zinc-700/30' : ''}
@@ -2101,20 +2159,20 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
                           >
                             {cell.isDayStart && (
                               <div className="absolute top-2 left-1 whitespace-nowrap">
-                                <div className={`text-[8px] font-black uppercase ${subtleText}`}>{cell.dayName}</div>
-                                <div className={`text-[8px] font-black ${subtleText}`}>{cell.monthDay}</div>
+                                <div className={`text-[7px] sm:text-[8px] font-black uppercase ${subtleText}`}>{cell.dayName}</div>
+                                <div className={`text-[7px] sm:text-[8px] font-black ${subtleText}`}>{cell.monthDay}</div>
                               </div>
                             )}
                             <div
-                              className={`text-xs font-black transition-colors duration-200
+                              className={`text-[10px] sm:text-xs font-black transition-colors duration-200
                               ${isFocused ? 'text-yellow-400 opacity-100 scale-110' : `${isDark ? 'text-white' : 'text-black'} opacity-100 group-hover/cell:text-yellow-400`}
-                              ${cell.isHalf ? 'text-[8px] mt-1' : ''}`}
+                              ${cell.isHalf ? 'text-[7px] sm:text-[8px] mt-1' : ''}`}
                             >
                               {cell.hourLabel}
                             </div>
                             {!cell.isHalf && (
                               <div
-                                className={`text-[8px] font-bold uppercase transition-colors duration-200
+                                className={`text-[7px] sm:text-[8px] font-bold uppercase transition-colors duration-200
                                 ${isFocused ? 'text-yellow-400/80 opacity-100' : `${subtleText} group-hover/cell:text-yellow-400/80`}`}
                               >
                                 {cell.period}
@@ -2127,14 +2185,14 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
                     </div>
                   );
                 })}
-                <div className={`h-16 border-t ${panelBorder} ${addRowBg}`}></div>
+                <div className={`h-20 sm:h-16 border-t ${panelBorder} ${addRowBg}`}></div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className={`text-center text-[10px] font-black uppercase tracking-[0.2em] pt-8 ${faintText}`}>
+      <div className={`text-center text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] pt-6 sm:pt-8 ${faintText}`}>
         Global resolution context • Wall-clock anchored drift-free engine
       </div>
 
