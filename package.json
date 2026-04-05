@@ -1,12 +1,14 @@
 {
-  "name": "worldtimesuite---timezone-&-productivity-suite",
+  "name": "worldtimesuite-timezone-productivity-suite",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build:sitemap": "tsx scripts/generate-sitemap.ts",
-    "build": "npm run build:sitemap && vite build",
+    "build:client": "vite build",
+    "build:prerender": "tsx scripts/prerender.ts",
+    "build": "npm run build:sitemap && npm run build:client && npm run build:prerender",
     "preview": "vite preview",
     "lint": "tsc --noEmit"
   },
