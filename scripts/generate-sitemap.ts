@@ -14,7 +14,7 @@ type UrlEntry = {
 };
 
 const staticUrls: UrlEntry[] = [
-  { loc: `${BASE}/timezone`, changefreq: 'weekly', priority: '0.9' },
+  { loc: `${BASE}/`, changefreq: 'weekly', priority: '0.9' },
   { loc: `${BASE}/stopwatch`, changefreq: 'weekly', priority: '0.8' },
   { loc: `${BASE}/timer`, changefreq: 'weekly', priority: '0.8' },
   { loc: `${BASE}/calendar`, changefreq: 'weekly', priority: '0.8' }

@@ -1,23 +1,32 @@
+import './index.css';
 import React from 'react';
-import { createRoot } from 'react-dom/client';
+import { hydrateRoot } from 'react-dom/client';
 import App from './App';
 
-// Robust process shim for browser environments to prevent Uncaught ReferenceErrors
-// when libraries or the SDK attempt to access process.env
-const win = window as any;
-win.process = win.process || { env: {} };
-win.process.env = win.process.env || {};
-win.process.env.NODE_ENV = win.process.env.NODE_ENV || 'production';
+const normalizePath = (path: string) => {
+  if (!path) return '/';
+  const clean = path.replace(/\/+$/, '');
+  return clean === '' ? '/' : clean;
+};
 
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  // This helps identify if the script is running before the DOM is ready
-  console.error("worldtimesuite: Root element #root not found at initialization.");
-} else {
-  const root = createRoot(rootElement);
-  root.render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
+const getLegacyRedirectPath = (path: string): string | null => {
+  const clean = normalizePath(path);
+
+  if (clean === '/timezone') return '/';
+
+  const match = clean.match(/^\/timezone\/([a-z0-9-]+)-to-([a-z0-9-]+)$/i);
+  if (!match) return null;
+
+  return `/${match[1].toLowerCase()}-to-${match[2].toLowerCase()}`;
+};
+
+const redirectPath = getLegacyRedirectPath(window.location.pathname);
+
+if (redirectPath && redirectPath !== window.location.pathname) {
+  window.history.replaceState({}, '', redirectPath);
 }
+
+hydrateRoot(
+  document.getElementById('root')!,
+  <App initialPath={redirectPath || window.location.pathname} />
+);
