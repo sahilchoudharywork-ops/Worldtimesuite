@@ -1,4 +1,3 @@
-
 // import React, { useState, useCallback, useEffect, useMemo } from 'react';
 // import * as ct from 'countries-and-timezones';
 // import { COMMON_TIMEZONES } from '../constants';
@@ -685,17 +684,17 @@
 //   const addInputBg = isDark ? 'bg-zinc-900/50 border-zinc-800' : 'bg-white border-zinc-300';
 //   const addBtnBg = isDark ? 'hover:bg-zinc-800 border-zinc-800' : 'hover:bg-zinc-200 border-zinc-300';
 
+//   const mutedText = isDark ? 'text-zinc-300' : 'text-zinc-600';
+//   const subtleText = isDark ? 'text-zinc-400' : 'text-zinc-500';
+//   const faintText = isDark ? 'text-zinc-500' : 'text-zinc-500';
+
 //   const fromRouteSlug = fromSlug?.trim() ? fromSlug.toLowerCase() : slugifyRoutePart(sourceTz.name);
 //   const toRouteSlug = toSlug?.trim() ? toSlug.toLowerCase() : slugifyRoutePart(targets[0]?.name || 'toronto');
-//   const fromCityName = humanizeSlug(fromRouteSlug);
-//   const toCityName = humanizeSlug(toRouteSlug);
 //   const currentRoute = `${fromRouteSlug}-to-${toRouteSlug}`;
 
 //   const relatedRoutes = useMemo(() => {
 //     const fromNode = ROUTE_ALIAS[fromRouteSlug] || fromRouteSlug;
 //     const toNode = ROUTE_ALIAS[toRouteSlug] || toRouteSlug;
-//     const fromSeedCities = HUB_CITY_VARIANTS[fromNode] || [fromRouteSlug];
-//     const toSeedCities = HUB_CITY_VARIANTS[toNode] || [toRouteSlug];
 
 //     const itemMap = new Map<string, RelatedRouteItem>();
 
@@ -711,14 +710,12 @@
 //       }
 //     };
 
-//     // Rule 1: same source -> different high-value targets
 //     (ROUTE_GRAPH[fromNode] || []).forEach(edge => {
 //       if (edge.to === toNode) return;
 //       const targetCandidates = HUB_CITY_VARIANTS[edge.to] || [edge.to];
 //       targetCandidates.slice(0, 2).forEach(city => addRoute(fromRouteSlug, city, edge.score));
 //     });
 
-//     // Rule 2: same target -> different sources (reverse exploration)
 //     Object.entries(ROUTE_GRAPH).forEach(([sourceNode, edges]) => {
 //       const edge = edges.find(e => e.to === toNode);
 //       if (!edge) return;
@@ -726,17 +723,14 @@
 //       sourceCandidates.slice(0, 2).forEach(city => addRoute(city, toRouteSlug, edge.score - 5));
 //     });
 
-//     // Rule 3: if target is US, expand US city variants
 //     if (toNode === 'usa' || ['new-york', 'los-angeles', 'chicago', 'seattle', 'dallas', 'san-francisco'].includes(toRouteSlug)) {
 //       ['new-york', 'los-angeles', 'chicago', 'seattle', 'dallas', 'san-francisco']
 //         .filter(city => city !== toRouteSlug)
 //         .forEach((city, idx) => addRoute(fromRouteSlug, city, 82 - idx));
 //     }
 
-//     // Rule 4: reverse route mandatory
 //     addRoute(toRouteSlug, fromRouteSlug, 120);
 
-//     // Fallback region routes if graph is sparse
 //     if (itemMap.size < 6) {
 //       const fromRegion = CITY_REGION_MAP[fromRouteSlug];
 //       const toRegion = CITY_REGION_MAP[toRouteSlug];
@@ -764,13 +758,15 @@
 //     <div className={`timezone-no-shadow p-8 space-y-12 ${bgColor} ${textColor} font-['Helvetica']`}>
 //       <header className="space-y-4 text-center">
 //         <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Timezone Converter</h1>
-//         <p className="text-sm font-bold uppercase tracking-widest opacity-30">Instant Synchronization • Professional Accuracy</p>
 //       </header>
 
 //       <div className="max-w-4xl mx-auto flex gap-4">
 //         <div className={`flex-grow flex items-center px-6 py-4 rounded-full border-2 ${borderClass} focus-within:border-blue-500 transition-all shadow-2xl ${inputBg}`}>
-//           <svg className="w-6 h-6 opacity-30 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+//           <svg aria-hidden="true" className={`w-6 h-6 ${subtleText} mr-4`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+//           </svg>
 //           <input
+//             aria-label="Timezone conversion query"
 //             className="flex-grow bg-transparent border-none outline-none font-bold text-lg"
 //             placeholder="e.g. 8 pm russia to london"
 //             value={naturalInput}
@@ -781,7 +777,12 @@
 //             onKeyDown={e => e.key === 'Enter' && handleConvert()}
 //           />
 //         </div>
-//         <button onClick={handleConvert} className={`px-10 rounded-full font-black uppercase text-sm tracking-widest transition-all active:scale-95 shadow-lg ${convertBtn}`}>
+//         <button
+//           type="button"
+//           aria-label="Convert timezone"
+//           onClick={handleConvert}
+//           className={`px-10 rounded-full font-black uppercase text-sm tracking-widest transition-all active:scale-95 shadow-lg ${convertBtn}`}
+//         >
 //           {isLoading ? 'Syncing...' : 'Convert'}
 //         </button>
 //       </div>
@@ -789,9 +790,9 @@
 //       <div className="max-w-6xl mx-auto">
 //         <div className={`border ${panelBorder} rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl transition-all duration-300`}>
 //           <div className={`grid grid-cols-12 px-12 pt-8 pb-4 border-b ${panelBorderSoft}`}>
-//             <div className="col-span-5 text-[10px] font-black uppercase tracking-[0.3em] opacity-30">Source Timezone</div>
-//             <div className="col-span-2 text-center text-[10px] font-black uppercase tracking-[0.3em] opacity-30">Direction</div>
-//             <div className="col-span-5 text-right text-[10px] font-black uppercase tracking-[0.3em] opacity-30">Target Local Time</div>
+//             <div className={`col-span-5 text-[10px] font-black uppercase tracking-[0.3em] ${subtleText}`}>Source Timezone</div>
+//             <div className={`col-span-2 text-center text-[10px] font-black uppercase tracking-[0.3em] ${subtleText}`}>Direction</div>
+//             <div className={`col-span-5 text-right text-[10px] font-black uppercase tracking-[0.3em] ${subtleText}`}>Target Local Time</div>
 //           </div>
 
 //           {targets.map((tz, idx) => {
@@ -801,16 +802,22 @@
 //               <div key={`${tz.iana}-${idx}`} className={`grid grid-cols-12 px-12 pt-8 pb-10 items-center last:border-0 border-b ${panelBorderSofter}`}>
 //                 <div className="col-span-5 space-y-1">
 //                   <div className={`text-4xl font-normal tracking-tight ${titleText} uppercase truncate`}>{sourceTz.name}</div>
-//                   <div className="text-[10px] font-bold opacity-30 uppercase tracking-tighter">{sourceTz.iana.toUpperCase()} (GMT{getOffsetString(sourceTz.iana, baseTime)})</div>
+//                   <div className={`text-[10px] font-bold uppercase tracking-tighter ${subtleText}`}>
+//                     {sourceTz.iana.toUpperCase()} (GMT{getOffsetString(sourceTz.iana, baseTime)})
+//                   </div>
 //                   <div className="text-6xl font-normal tracking-tighter text-blue-500 tabular-nums">{srcInfo.time}</div>
 //                 </div>
-//                 <div className="col-span-2 flex flex-col items-center justify-center opacity-40">
-//                   <svg className="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+//                 <div className={`col-span-2 flex flex-col items-center justify-center ${subtleText}`}>
+//                   <svg aria-hidden="true" className="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+//                   </svg>
 //                   <span className="text-[10px] font-normal uppercase tracking-[0.2em]">Converted</span>
 //                 </div>
 //                 <div className="col-span-5 text-right space-y-1">
 //                   <div className={`text-4xl font-normal tracking-tight ${titleText} uppercase truncate`}>{tz.name}</div>
-//                   <div className="text-[10px] font-bold opacity-30 uppercase tracking-tighter">{tz.iana.toUpperCase()} (GMT{getOffsetString(tz.iana, baseTime)})</div>
+//                   <div className={`text-[10px] font-bold uppercase tracking-tighter ${subtleText}`}>
+//                     {tz.iana.toUpperCase()} (GMT{getOffsetString(tz.iana, baseTime)})
+//                   </div>
 //                   <div className="text-6xl font-normal tracking-tighter text-green-500 tabular-nums">{tgtInfo.time}</div>
 //                 </div>
 //               </div>
@@ -821,7 +828,7 @@
 
 //       {showRelatedRoutes && (
 //         <div className="max-w-6xl mx-auto mt-20">
-//           <div className="flex items-center gap-4 text-xs font-black uppercase tracking-[0.3em] opacity-30 mb-5">
+//           <div className={`flex items-center gap-4 text-xs font-black uppercase tracking-[0.3em] ${mutedText} mb-5`}>
 //             <div className="w-20 h-px bg-current"></div>Related Routes
 //           </div>
 
@@ -850,30 +857,32 @@
 //       )}
 
 //       <div className="max-w-6xl mx-auto mt-20">
-//         <div className="flex items-center gap-4 text-xs font-black uppercase tracking-[0.3em] opacity-30 mb-8">
+//         <div className={`flex items-center gap-4 text-xs font-black uppercase tracking-[0.3em] ${mutedText} mb-8`}>
 //           <div className="w-20 h-px bg-current"></div>Recent Sync History
 //         </div>
 //         <div className={`border ${panelBorder} rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-10`}>
 //           {history.length === 0 ? (
-//             <div className="py-12 text-center text-xs font-black uppercase tracking-widest opacity-20">No recent conversions</div>
+//             <div className={`py-12 text-center text-xs font-black uppercase tracking-widest ${mutedText}`}>No recent conversions</div>
 //           ) : (
 //             <div className="space-y-10">
 //               {history.map(item => (
 //                 <div key={item.id} className={`grid grid-cols-12 gap-8 items-center pb-10 border-b ${panelBorder} last:border-0 last:pb-0`}>
 //                   <div className="col-span-3">
-//                     <div className="text-[10px] font-black uppercase opacity-30 tracking-widest mb-1">Query context</div>
-//                     <div className="text-sm font-bold truncate opacity-80 uppercase tracking-tight">{item.query}</div>
+//                     <div className={`text-[10px] font-black uppercase tracking-widest mb-1 ${subtleText}`}>Query context</div>
+//                     <div className={`text-sm font-bold truncate uppercase tracking-tight ${mutedText}`}>{item.query}</div>
 //                   </div>
 //                   <div className="col-span-3">
-//                     <div className="text-[10px] font-black uppercase opacity-30 tracking-widest mb-1 truncate">{item.sourceName}</div>
+//                     <div className={`text-[10px] font-black uppercase tracking-widest mb-1 truncate ${subtleText}`}>{item.sourceName}</div>
 //                     <div className="text-2xl font-black text-blue-500 tabular-nums tracking-tighter">{item.sourceTime}</div>
 //                   </div>
-//                   <div className="col-span-2 text-center opacity-20">
-//                     <svg className="w-6 h-6 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+//                   <div className={`col-span-2 text-center ${subtleText}`}>
+//                     <svg aria-hidden="true" className="w-6 h-6 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                       <path d="M14 5l7 7m0 0l-7 7m7-7H3" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+//                     </svg>
 //                     <div className="text-[9px] font-black uppercase tracking-widest">Synced</div>
 //                   </div>
 //                   <div className="col-span-4 text-right">
-//                     <div className="text-[10px] font-black uppercase opacity-30 tracking-widest mb-1 truncate">{item.targetName}</div>
+//                     <div className={`text-[10px] font-black uppercase tracking-widest mb-1 truncate ${subtleText}`}>{item.targetName}</div>
 //                     <div className="text-2xl font-black text-green-500 tabular-nums tracking-tighter">{item.targetTime}</div>
 //                   </div>
 //                 </div>
@@ -884,7 +893,7 @@
 //       </div>
 
 //       <div className="max-w-6xl mx-auto mt-20">
-//         <div className="flex items-center gap-4 text-xs font-black uppercase tracking-[0.3em] opacity-30 mb-8">
+//         <div className={`flex items-center gap-4 text-xs font-black uppercase tracking-[0.3em] ${mutedText} mb-8`}>
 //           <div className="w-20 h-px bg-current"></div>24H Interactive Timeline
 //         </div>
 //         <div className={`border ${borderClass} rounded-xl overflow-hidden ${timelineWrapBg}`}>
@@ -900,28 +909,36 @@
 //                       <div className="space-y-0.5">
 //                         <div className="flex items-center gap-2">
 //                           <h3 className="text-xl font-black tracking-tight uppercase truncate max-w-[140px]">{tz.name}</h3>
-//                           <div className={`px-2 py-0.5 rounded ${timelineLabelPill} text-[10px] font-bold opacity-60`}>{getOffsetString(tz.iana, baseTime)}</div>
+//                           <div className={`px-2 py-0.5 rounded ${timelineLabelPill} text-[10px] font-bold ${subtleText}`}>{getOffsetString(tz.iana, baseTime)}</div>
 //                         </div>
-//                         <div className="text-[10px] font-bold opacity-40 uppercase tracking-widest truncate">{tz.iana.split('/')[0]}</div>
+//                         <div className={`text-[10px] font-bold uppercase tracking-widest truncate ${subtleText}`}>{tz.iana.split('/')[0]}</div>
 //                       </div>
 //                       <div className="text-right">
 //                         <div className="text-2xl font-black tracking-tighter leading-none">
 //                           {currentTzInfo.shortTime.slice(0, -1)}
-//                           <span className="text-xs ml-0.5 opacity-60 font-bold">{currentTzInfo.shortTime.slice(-1)}</span>
+//                           <span className={`text-xs ml-0.5 font-bold ${subtleText}`}>{currentTzInfo.shortTime.slice(-1)}</span>
 //                         </div>
-//                         <div className="text-[9px] font-black opacity-30 uppercase tracking-tighter mt-1">{currentTzInfo.date}</div>
+//                         <div className={`text-[9px] font-black uppercase tracking-tighter mt-1 ${subtleText}`}>{currentTzInfo.date}</div>
 //                       </div>
 //                     </div>
-//                     <div className="absolute left-6 bottom-4 flex items-center gap-2 opacity-20">
+//                     <div className={`absolute left-6 bottom-4 flex items-center gap-2 ${faintText}`}>
 //                       {!isSource && <span className="text-[10px] font-black tracking-widest">{relativeOffset}H RELATIVE</span>}
-//                       {isSource && <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z" /></svg>}
+//                       {isSource && (
+//                         <svg aria-hidden="true" className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+//                           <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z" />
+//                         </svg>
+//                       )}
 //                     </div>
 //                     {!isSource && (
 //                       <button
+//                         type="button"
+//                         aria-label={`Remove ${tz.name} from timeline`}
 //                         onClick={() => setTargets(prev => prev.filter((_, i) => i !== rowIndex - 1))}
-//                         className="absolute top-2 right-2 p-1 opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity"
+//                         className={`absolute top-2 right-2 p-1 transition-opacity ${isDark ? 'opacity-0 group-hover:opacity-70 hover:opacity-100' : 'opacity-0 group-hover:opacity-80 hover:opacity-100'}`}
 //                       >
-//                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+//                         <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+//                         </svg>
 //                       </button>
 //                     )}
 //                   </div>
@@ -931,6 +948,7 @@
 //                 <div className="relative flex-grow">
 //                   <input
 //                     type="text"
+//                     aria-label="Add timezone to timeline"
 //                     placeholder="ADD TIMEZONE..."
 //                     className={`w-full ${addInputBg} border rounded-lg px-4 py-2 text-[10px] font-black tracking-widest uppercase outline-none focus:border-blue-500 transition-colors`}
 //                     onKeyDown={e => {
@@ -945,8 +963,14 @@
 //                     }}
 //                   />
 //                 </div>
-//                 <button className={`w-10 h-10 flex-none rounded-lg border ${addBtnBg} flex items-center justify-center transition-colors`}>
-//                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" /></svg>
+//                 <button
+//                   type="button"
+//                   aria-label="Add timezone"
+//                   className={`w-10 h-10 flex-none rounded-lg border ${addBtnBg} flex items-center justify-center transition-colors`}
+//                 >
+//                   <svg aria-hidden="true" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+//                   </svg>
 //                 </button>
 //               </div>
 //             </div>
@@ -975,18 +999,22 @@
 //                           >
 //                             {cell.isDayStart && (
 //                               <div className="absolute top-2 left-1 whitespace-nowrap">
-//                                 <div className="text-[8px] font-black opacity-40 uppercase">{cell.dayName}</div>
-//                                 <div className="text-[8px] font-black opacity-40">{cell.monthDay}</div>
+//                                 <div className={`text-[8px] font-black uppercase ${subtleText}`}>{cell.dayName}</div>
+//                                 <div className={`text-[8px] font-black ${subtleText}`}>{cell.monthDay}</div>
 //                               </div>
 //                             )}
-//                             <div className={`text-xs font-black transition-colors duration-200
+//                             <div
+//                               className={`text-xs font-black transition-colors duration-200
 //                               ${isFocused ? 'text-yellow-400 opacity-100 scale-110' : `${isDark ? 'text-white' : 'text-black'} opacity-100 group-hover/cell:text-yellow-400`}
-//                               ${cell.isHalf ? 'text-[8px] mt-1' : ''}`}>
+//                               ${cell.isHalf ? 'text-[8px] mt-1' : ''}`}
+//                             >
 //                               {cell.hourLabel}
 //                             </div>
 //                             {!cell.isHalf && (
-//                               <div className={`text-[8px] font-bold uppercase transition-colors duration-200
-//                                 ${isFocused ? 'text-yellow-400/80 opacity-100' : `${isDark ? 'text-white' : 'text-black'} opacity-40 group-hover/cell:text-yellow-400/80`}`}>
+//                               <div
+//                                 className={`text-[8px] font-bold uppercase transition-colors duration-200
+//                                 ${isFocused ? 'text-yellow-400/80 opacity-100' : `${subtleText} group-hover/cell:text-yellow-400/80`}`}
+//                               >
 //                                 {cell.period}
 //                               </div>
 //                             )}
@@ -1004,7 +1032,7 @@
 //         </div>
 //       </div>
 
-//       <div className="text-center opacity-20 text-[10px] font-black uppercase tracking-[0.2em] pt-8">
+//       <div className={`text-center text-[10px] font-black uppercase tracking-[0.2em] pt-8 ${faintText}`}>
 //         Global resolution context • Wall-clock anchored drift-free engine
 //       </div>
 
@@ -1802,14 +1830,24 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
     ? getTimeDifferenceLine(sourceTz.name, sourceTz.iana, targets[0].name, targets[0].iana)
     : '';
 
+  const primaryTargetName = targets[0]?.name || 'Target Timezone';
+  const meetingButtonLabel = `Best Time to Schedule a Meeting between ${sourceTz.name} and ${primaryTargetName}`;
+
+  const scrollToTimeline = () => {
+    document.getElementById('timeline-section')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+  };
+
   return (
     <div className={`timezone-no-shadow p-8 space-y-12 ${bgColor} ${textColor} font-['Helvetica']`}>
       <header className="space-y-4 text-center">
-        <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Timezone Converter</h1>
+        <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">Timezone Converter</h1>
       </header>
 
       <div className="max-w-4xl mx-auto flex gap-4">
-        <div className={`flex-grow flex items-center px-6 py-4 rounded-full border-2 ${borderClass} focus-within:border-blue-500 transition-all shadow-2xl ${inputBg}`}>
+        <div className={`flex-grow flex items-center px-5 py-2 rounded-full border-2 ${borderClass} focus-within:border-blue-500 transition-all shadow-2xl ${inputBg}`}>
           <svg aria-hidden="true" className={`w-6 h-6 ${subtleText} mr-4`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
@@ -1872,6 +1910,22 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
             );
           })}
         </div>
+
+        <button
+          type="button"
+          aria-label={meetingButtonLabel}
+          onClick={scrollToTimeline}
+          className={`
+            mt-8 w-full py-4 px-6 rounded-full border font-bold uppercase text-xs tracking-[0.2em]
+            ${borderClass}
+            ${panelBg} ${textColor}
+            hover:border-yellow-400 focus-visible:border-yellow-400 active:border-yellow-400
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/40
+            transition-all duration-200 active:scale-[0.99]
+          `}
+        >
+          {meetingButtonLabel}
+        </button>
       </div>
 
       {showRelatedRoutes && (
@@ -1906,7 +1960,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
 
       <div className="max-w-6xl mx-auto mt-20">
         <div className={`flex items-center gap-4 text-xs font-black uppercase tracking-[0.3em] ${mutedText} mb-8`}>
-          <div className="w-20 h-px bg-current"></div>Recent Sync History
+          <div className="w-20 h-px bg-current"></div>Past Searches
         </div>
         <div className={`border ${panelBorder} rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-10`}>
           {history.length === 0 ? (
@@ -1940,9 +1994,9 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto mt-20">
+      <div id="timeline-section" className="max-w-6xl mx-auto mt-20">
         <div className={`flex items-center gap-4 text-xs font-black uppercase tracking-[0.3em] ${mutedText} mb-8`}>
-          <div className="w-20 h-px bg-current"></div>24H Interactive Timeline
+          <div className="w-20 h-px bg-current"></div>24H Timezone Overlap
         </div>
         <div className={`border ${borderClass} rounded-xl overflow-hidden ${timelineWrapBg}`}>
           <div className="flex">
