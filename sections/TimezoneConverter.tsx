@@ -765,19 +765,21 @@
 //   };
 
 //   return (
-//     <div className={`timezone-no-shadow p-8 space-y-12 ${bgColor} ${textColor} font-['Helvetica']`}>
-//       <header className="space-y-4 text-center">
-//         <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">Timezone Converter</h1>
+//     <div className={`timezone-no-shadow p-4 sm:p-8 space-y-8 sm:space-y-12 ${bgColor} ${textColor} font-['Helvetica']`}>
+//       <header className="space-y-2 sm:space-y-4 text-center">
+//         <h1 className="text-xl sm:text-3xl md:text-5xl font-black uppercase tracking-tighter whitespace-nowrap">
+//           Timezone Converter
+//         </h1>
 //       </header>
 
-//       <div className="max-w-4xl mx-auto flex gap-4">
-//         <div className={`flex-grow flex items-center px-5 py-2 rounded-full border-2 ${borderClass} focus-within:border-blue-500 transition-all shadow-2xl ${inputBg}`}>
-//           <svg aria-hidden="true" className={`w-6 h-6 ${subtleText} mr-4`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//       <div className="max-w-4xl mx-auto flex flex-col sm:flex-row gap-4">
+//         <div className={`flex-grow flex items-center px-4 sm:px-5 py-3 sm:py-2 rounded-full border-2 ${borderClass} focus-within:border-blue-500 transition-all shadow-2xl ${inputBg}`}>
+//           <svg aria-hidden="true" className={`w-5 h-5 sm:w-6 sm:h-6 ${subtleText} mr-3 sm:mr-4`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
 //             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
 //           </svg>
 //           <input
 //             aria-label="Timezone conversion query"
-//             className="flex-grow bg-transparent border-none outline-none font-bold text-lg"
+//             className="flex-grow bg-transparent border-none outline-none font-bold text-base sm:text-lg min-w-0"
 //             placeholder="e.g. 8 pm russia to london"
 //             value={naturalInput}
 //             onChange={e => {
@@ -791,15 +793,15 @@
 //           type="button"
 //           aria-label="Convert timezone"
 //           onClick={handleConvert}
-//           className={`px-10 rounded-full font-black uppercase text-sm tracking-widest transition-all active:scale-95 shadow-lg ${convertBtn}`}
+//           className={`w-full sm:w-auto px-6 sm:px-10 py-4 rounded-full font-black uppercase text-xs sm:text-sm tracking-[0.2em] sm:tracking-widest transition-all active:scale-95 shadow-lg ${convertBtn}`}
 //         >
 //           {isLoading ? 'Syncing...' : 'Convert'}
 //         </button>
 //       </div>
 
 //       <div className="max-w-6xl mx-auto">
-//         <div className={`border ${panelBorder} rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl transition-all duration-300`}>
-//           <div className={`grid grid-cols-12 px-12 pt-8 pb-4 border-b ${panelBorderSoft}`}>
+//         <div className={`border ${panelBorder} rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl transition-all duration-300`}>
+//           <div className={`hidden sm:grid grid-cols-12 px-12 pt-8 pb-4 border-b ${panelBorderSoft}`}>
 //             <div className={`col-span-5 text-[10px] font-black uppercase tracking-[0.3em] ${subtleText}`}>Source Timezone</div>
 //             <div className={`col-span-2 text-center text-[10px] font-black uppercase tracking-[0.3em] ${subtleText}`}>Direction</div>
 //             <div className={`col-span-5 text-right text-[10px] font-black uppercase tracking-[0.3em] ${subtleText}`}>Target Local Time</div>
@@ -809,26 +811,38 @@
 //             const srcInfo = getTzInfo(baseTime, sourceTz.iana);
 //             const tgtInfo = getTzInfo(baseTime, tz.iana);
 //             return (
-//               <div key={`${tz.iana}-${idx}`} className={`grid grid-cols-12 px-12 pt-8 pb-10 items-center last:border-0 border-b ${panelBorderSofter}`}>
-//                 <div className="col-span-5 space-y-1">
-//                   <div className={`text-4xl font-normal tracking-tight ${titleText} uppercase truncate`}>{sourceTz.name}</div>
-//                   <div className={`text-[10px] font-bold uppercase tracking-tighter ${subtleText}`}>
+//               <div key={`${tz.iana}-${idx}`} className={`grid grid-cols-12 px-4 sm:px-12 py-6 sm:pt-8 sm:pb-10 items-center last:border-0 border-b ${panelBorderSofter}`}>
+//                 <div className="col-span-5 space-y-1 text-left">
+//                   <div className={`text-sm sm:text-4xl font-normal tracking-tight ${titleText} uppercase truncate`}>
+//                     {sourceTz.name}
+//                   </div>
+//                   <div className={`text-[7px] sm:text-[10px] font-bold uppercase tracking-tight sm:tracking-tighter ${subtleText}`}>
 //                     {sourceTz.iana.toUpperCase()} (GMT{getOffsetString(sourceTz.iana, baseTime)})
 //                   </div>
-//                   <div className="text-6xl font-normal tracking-tighter text-blue-500 tabular-nums">{srcInfo.time}</div>
+//                   <div className="text-xl sm:text-6xl font-normal tracking-tighter text-blue-500 tabular-nums whitespace-nowrap">
+//                     {srcInfo.time}
+//                   </div>
 //                 </div>
+
 //                 <div className={`col-span-2 flex flex-col items-center justify-center ${subtleText}`}>
-//                   <svg aria-hidden="true" className="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                   <svg aria-hidden="true" className="w-5 h-5 sm:w-10 sm:h-10 mb-1 sm:mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 //                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
 //                   </svg>
-//                   <span className="text-[10px] font-normal uppercase tracking-[0.2em]">Converted</span>
+//                   <span className="text-[7px] sm:text-[10px] font-normal uppercase tracking-[0.15em] sm:tracking-[0.2em] text-center">
+//                     Synced
+//                   </span>
 //                 </div>
+
 //                 <div className="col-span-5 text-right space-y-1">
-//                   <div className={`text-4xl font-normal tracking-tight ${titleText} uppercase truncate`}>{tz.name}</div>
-//                   <div className={`text-[10px] font-bold uppercase tracking-tighter ${subtleText}`}>
+//                   <div className={`text-sm sm:text-4xl font-normal tracking-tight ${titleText} uppercase truncate`}>
+//                     {tz.name}
+//                   </div>
+//                   <div className={`text-[7px] sm:text-[10px] font-bold uppercase tracking-tight sm:tracking-tighter ${subtleText}`}>
 //                     {tz.iana.toUpperCase()} (GMT{getOffsetString(tz.iana, baseTime)})
 //                   </div>
-//                   <div className="text-6xl font-normal tracking-tighter text-green-500 tabular-nums">{tgtInfo.time}</div>
+//                   <div className="text-xl sm:text-6xl font-normal tracking-tighter text-green-500 tabular-nums whitespace-nowrap">
+//                     {tgtInfo.time}
+//                   </div>
 //                 </div>
 //               </div>
 //             );
@@ -840,7 +854,8 @@
 //           aria-label={meetingButtonLabel}
 //           onClick={scrollToTimeline}
 //           className={`
-//             mt-8 w-full py-4 px-6 rounded-full border font-bold uppercase text-xs tracking-[0.2em]
+//             mt-6 sm:mt-8 w-full py-4 px-4 sm:px-6 rounded-full border font-bold uppercase
+//             text-[8px] sm:text-xs tracking-[0.1em] sm:tracking-[0.2em] leading-relaxed text-center
 //             ${borderClass}
 //             ${panelBg} ${textColor}
 //             hover:border-yellow-400 focus-visible:border-yellow-400 active:border-yellow-400
@@ -853,25 +868,25 @@
 //       </div>
 
 //       {showRelatedRoutes && (
-//         <div className="max-w-6xl mx-auto mt-20">
-//           <div className={`flex items-center gap-4 text-xs font-black uppercase tracking-[0.3em] ${mutedText} mb-5`}>
-//             <div className="w-20 h-px bg-current"></div>Related Routes
+//         <div className="max-w-6xl mx-auto mt-12 sm:mt-20">
+//           <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-4 sm:mb-5`}>
+//             <div className="w-10 sm:w-20 h-px bg-current"></div>Related Routes
 //           </div>
 
-//           <div className="text-[11px] md:text-xs font-bold tracking-wide uppercase mb-6 font-['Helvetica'] text-yellow-400">
+//           <div className="text-[10px] sm:text-xs font-bold tracking-wide uppercase mb-4 sm:mb-6 font-['Helvetica'] text-yellow-400">
 //             {relatedRoutesDiffLine}
 //           </div>
 
-//           <div className="flex flex-wrap gap-3">
+//           <div className="flex flex-wrap gap-2 sm:gap-3">
 //             {relatedRoutes.map((route, idx) => (
 //               <a
 //                 key={route.href}
 //                 href={route.href}
 //                 onClick={() => trackRelatedRouteClick(route.href, route.label, idx + 1)}
 //                 className={`
-//                   inline-flex items-center w-fit max-w-full px-4 py-2.5 rounded-xl border
+//                   inline-flex items-center w-fit max-w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border
 //                   ${isDark ? 'border-zinc-700 hover:border-blue-500 hover:bg-zinc-950' : 'border-zinc-300 hover:border-blue-500 hover:bg-blue-50'}
-//                   font-['Helvetica'] font-bold text-sm tracking-tight whitespace-nowrap
+//                   font-['Helvetica'] font-bold text-xs sm:text-sm tracking-tight whitespace-nowrap
 //                   transition-all duration-200
 //                 `}
 //               >
@@ -882,34 +897,36 @@
 //         </div>
 //       )}
 
-//       <div className="max-w-6xl mx-auto mt-20">
-//         <div className={`flex items-center gap-4 text-xs font-black uppercase tracking-[0.3em] ${mutedText} mb-8`}>
-//           <div className="w-20 h-px bg-current"></div>Past Searches
+//       <div className="max-w-6xl mx-auto mt-12 sm:mt-20">
+//         <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
+//           <div className="w-10 sm:w-20 h-px bg-current"></div>Past Searches
 //         </div>
-//         <div className={`border ${panelBorder} rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-10`}>
+//         <div className={`border ${panelBorder} rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-6 sm:p-10`}>
 //           {history.length === 0 ? (
-//             <div className={`py-12 text-center text-xs font-black uppercase tracking-widest ${mutedText}`}>No recent conversions</div>
+//             <div className={`py-10 sm:py-12 text-center text-xs sm:text-sm font-black uppercase tracking-[0.2em] sm:tracking-widest ${mutedText}`}>
+//               No recent conversions
+//             </div>
 //           ) : (
-//             <div className="space-y-10">
+//             <div className="space-y-6 sm:space-y-10">
 //               {history.map(item => (
-//                 <div key={item.id} className={`grid grid-cols-12 gap-8 items-center pb-10 border-b ${panelBorder} last:border-0 last:pb-0`}>
-//                   <div className="col-span-3">
+//                 <div key={item.id} className={`grid grid-cols-1 sm:grid-cols-12 gap-4 sm:gap-8 items-center pb-6 sm:pb-10 border-b ${panelBorder} last:border-0 last:pb-0`}>
+//                   <div className="sm:col-span-3">
 //                     <div className={`text-[10px] font-black uppercase tracking-widest mb-1 ${subtleText}`}>Query context</div>
-//                     <div className={`text-sm font-bold truncate uppercase tracking-tight ${mutedText}`}>{item.query}</div>
+//                     <div className={`text-xs sm:text-sm font-bold truncate uppercase tracking-tight ${mutedText}`}>{item.query}</div>
 //                   </div>
-//                   <div className="col-span-3">
+//                   <div className="sm:col-span-3">
 //                     <div className={`text-[10px] font-black uppercase tracking-widest mb-1 truncate ${subtleText}`}>{item.sourceName}</div>
-//                     <div className="text-2xl font-black text-blue-500 tabular-nums tracking-tighter">{item.sourceTime}</div>
+//                     <div className="text-xl sm:text-2xl font-black text-blue-500 tabular-nums tracking-tighter">{item.sourceTime}</div>
 //                   </div>
-//                   <div className={`col-span-2 text-center ${subtleText}`}>
-//                     <svg aria-hidden="true" className="w-6 h-6 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                   <div className={`sm:col-span-2 text-left sm:text-center ${subtleText}`}>
+//                     <svg aria-hidden="true" className="w-5 h-5 sm:w-6 sm:h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 //                       <path d="M14 5l7 7m0 0l-7 7m7-7H3" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
 //                     </svg>
 //                     <div className="text-[9px] font-black uppercase tracking-widest">Synced</div>
 //                   </div>
-//                   <div className="col-span-4 text-right">
+//                   <div className="sm:col-span-4 text-left sm:text-right">
 //                     <div className={`text-[10px] font-black uppercase tracking-widest mb-1 truncate ${subtleText}`}>{item.targetName}</div>
-//                     <div className="text-2xl font-black text-green-500 tabular-nums tracking-tighter">{item.targetTime}</div>
+//                     <div className="text-xl sm:text-2xl font-black text-green-500 tabular-nums tracking-tighter">{item.targetTime}</div>
 //                   </div>
 //                 </div>
 //               ))}
@@ -918,37 +935,50 @@
 //         </div>
 //       </div>
 
-//       <div id="timeline-section" className="max-w-6xl mx-auto mt-20">
-//         <div className={`flex items-center gap-4 text-xs font-black uppercase tracking-[0.3em] ${mutedText} mb-8`}>
-//           <div className="w-20 h-px bg-current"></div>24H Timezone Overlap
+//       <div id="timeline-section" className="max-w-6xl mx-auto mt-12 sm:mt-20 scroll-mt-24">
+//         <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
+//           <div className="w-10 sm:w-20 h-px bg-current"></div>24H Timezone Overlap
 //         </div>
 //         <div className={`border ${borderClass} rounded-xl overflow-hidden ${timelineWrapBg}`}>
-//           <div className="flex">
-//             <div className={`w-80 flex-none border-r ${panelBorder}`}>
+//           <div className="flex flex-col lg:flex-row">
+//             <div className={`w-full lg:w-80 lg:flex-none border-b lg:border-b-0 lg:border-r ${panelBorder}`}>
 //               {allTzs.map((tz, rowIndex) => {
 //                 const currentTzInfo = getTzInfo(baseTime, tz.iana);
 //                 const relativeOffset = getRelativeOffset(tz.iana, sourceTz.iana);
 //                 const isSource = rowIndex === 0;
 //                 return (
-//                   <div key={`${tz.iana}-label-${rowIndex}`} className={`h-40 p-6 border-b ${panelBorder} last:border-0 flex flex-col justify-center relative bg-gradient-to-r ${timelineLabelBg} to-transparent group`}>
-//                     <div className="flex justify-between items-start">
-//                       <div className="space-y-0.5">
-//                         <div className="flex items-center gap-2">
-//                           <h3 className="text-xl font-black tracking-tight uppercase truncate max-w-[140px]">{tz.name}</h3>
-//                           <div className={`px-2 py-0.5 rounded ${timelineLabelPill} text-[10px] font-bold ${subtleText}`}>{getOffsetString(tz.iana, baseTime)}</div>
+//                   <div
+//                     key={`${tz.iana}-label-${rowIndex}`}
+//                     className={`h-28 sm:h-40 p-4 sm:p-6 border-b ${panelBorder} last:border-0 flex flex-col justify-center relative bg-gradient-to-r ${timelineLabelBg} to-transparent group`}
+//                   >
+//                     <div className="flex justify-between items-start gap-3">
+//                       <div className="space-y-1 min-w-0">
+//                         <div className="flex items-center gap-2 min-w-0">
+//                           <h3 className="text-lg sm:text-xl font-black tracking-tight uppercase truncate max-w-[120px] sm:max-w-[140px]">
+//                             {tz.name}
+//                           </h3>
+//                           <div className={`px-2 py-0.5 rounded ${timelineLabelPill} text-[9px] sm:text-[10px] font-bold ${subtleText}`}>
+//                             {getOffsetString(tz.iana, baseTime)}
+//                           </div>
 //                         </div>
-//                         <div className={`text-[10px] font-bold uppercase tracking-widest truncate ${subtleText}`}>{tz.iana.split('/')[0]}</div>
+//                         <div className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest truncate ${subtleText}`}>
+//                           {tz.iana.split('/')[0]}
+//                         </div>
 //                       </div>
-//                       <div className="text-right">
-//                         <div className="text-2xl font-black tracking-tighter leading-none">
+//                       <div className="text-right shrink-0">
+//                         <div className="text-lg sm:text-2xl font-black tracking-tighter leading-none whitespace-nowrap">
 //                           {currentTzInfo.shortTime.slice(0, -1)}
-//                           <span className={`text-xs ml-0.5 font-bold ${subtleText}`}>{currentTzInfo.shortTime.slice(-1)}</span>
+//                           <span className={`text-[10px] sm:text-xs ml-0.5 font-bold ${subtleText}`}>
+//                             {currentTzInfo.shortTime.slice(-1)}
+//                           </span>
 //                         </div>
-//                         <div className={`text-[9px] font-black uppercase tracking-tighter mt-1 ${subtleText}`}>{currentTzInfo.date}</div>
+//                         <div className={`text-[8px] sm:text-[9px] font-black uppercase tracking-tight sm:tracking-tighter mt-1 ${subtleText}`}>
+//                           {currentTzInfo.date}
+//                         </div>
 //                       </div>
 //                     </div>
-//                     <div className={`absolute left-6 bottom-4 flex items-center gap-2 ${faintText}`}>
-//                       {!isSource && <span className="text-[10px] font-black tracking-widest">{relativeOffset}H RELATIVE</span>}
+//                     <div className={`absolute left-4 sm:left-6 bottom-3 sm:bottom-4 flex items-center gap-2 ${faintText}`}>
+//                       {!isSource && <span className="text-[9px] sm:text-[10px] font-black tracking-widest">{relativeOffset}H RELATIVE</span>}
 //                       {isSource && (
 //                         <svg aria-hidden="true" className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
 //                           <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z" />
@@ -960,7 +990,7 @@
 //                         type="button"
 //                         aria-label={`Remove ${tz.name} from timeline`}
 //                         onClick={() => setTargets(prev => prev.filter((_, i) => i !== rowIndex - 1))}
-//                         className={`absolute top-2 right-2 p-1 transition-opacity ${isDark ? 'opacity-0 group-hover:opacity-70 hover:opacity-100' : 'opacity-0 group-hover:opacity-80 hover:opacity-100'}`}
+//                         className={`absolute top-2 right-2 p-1 transition-opacity ${isDark ? 'opacity-70 lg:opacity-0 group-hover:opacity-70 hover:opacity-100' : 'opacity-80 lg:opacity-0 group-hover:opacity-80 hover:opacity-100'}`}
 //                       >
 //                         <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 //                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -970,13 +1000,13 @@
 //                   </div>
 //                 );
 //               })}
-//               <div className={`h-16 p-4 border-t ${panelBorder} ${addRowBg} flex items-center gap-4`}>
+//               <div className={`h-20 sm:h-16 p-4 border-t ${panelBorder} ${addRowBg} flex items-center gap-3 sm:gap-4`}>
 //                 <div className="relative flex-grow">
 //                   <input
 //                     type="text"
 //                     aria-label="Add timezone to timeline"
 //                     placeholder="ADD TIMEZONE..."
-//                     className={`w-full ${addInputBg} border rounded-lg px-4 py-2 text-[10px] font-black tracking-widest uppercase outline-none focus:border-blue-500 transition-colors`}
+//                     className={`w-full ${addInputBg} border rounded-lg px-4 py-3 sm:py-2 text-[10px] font-black tracking-[0.15em] sm:tracking-widest uppercase outline-none focus:border-blue-500 transition-colors`}
 //                     onKeyDown={e => {
 //                       if (e.key === 'Enter') {
 //                         const val = (e.target as HTMLInputElement).value;
@@ -992,9 +1022,9 @@
 //                 <button
 //                   type="button"
 //                   aria-label="Add timezone"
-//                   className={`w-10 h-10 flex-none rounded-lg border ${addBtnBg} flex items-center justify-center transition-colors`}
+//                   className={`w-12 h-12 sm:w-10 sm:h-10 flex-none rounded-lg border ${addBtnBg} flex items-center justify-center transition-colors`}
 //                 >
-//                   <svg aria-hidden="true" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                   <svg aria-hidden="true" className="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 //                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
 //                   </svg>
 //                 </button>
@@ -1006,7 +1036,7 @@
 //                 {allTzs.map((tz, rowIndex) => {
 //                   const timeline = getTimelineData(tz.iana, timelineStartUtc);
 //                   return (
-//                     <div key={`${tz.iana}-timeline-${rowIndex}`} className={`flex h-40 border-b ${panelBorder} last:border-0`}>
+//                     <div key={`${tz.iana}-timeline-${rowIndex}`} className={`flex h-28 sm:h-40 border-b ${panelBorder} last:border-0`}>
 //                       {timeline.map((cell, cIdx) => {
 //                         const isFocused = timelineFocusIndex === cIdx;
 //                         return (
@@ -1017,7 +1047,7 @@
 //                               setBaseTime(cell.fullDate);
 //                               setIsLive(false);
 //                             }}
-//                             className={`w-12 flex flex-col items-center justify-center border-r ${panelBorderSofter} cursor-pointer transition-all relative group/cell
+//                             className={`w-10 sm:w-12 flex flex-col items-center justify-center border-r ${panelBorderSofter} cursor-pointer transition-all relative group/cell
 //                               ${cell.cellType === 'night' ? (isDark ? 'bg-[#0c0c0e]' : 'bg-zinc-200/70') : (isDark ? 'bg-[#151518]' : 'bg-zinc-100')}
 //                               ${isFocused ? (isDark ? 'bg-indigo-900/40' : 'bg-blue-200/50') : ''}
 //                               ${cell.isWorkingHour ? 'ring-1 ring-zinc-700/30' : ''}
@@ -1025,20 +1055,20 @@
 //                           >
 //                             {cell.isDayStart && (
 //                               <div className="absolute top-2 left-1 whitespace-nowrap">
-//                                 <div className={`text-[8px] font-black uppercase ${subtleText}`}>{cell.dayName}</div>
-//                                 <div className={`text-[8px] font-black ${subtleText}`}>{cell.monthDay}</div>
+//                                 <div className={`text-[7px] sm:text-[8px] font-black uppercase ${subtleText}`}>{cell.dayName}</div>
+//                                 <div className={`text-[7px] sm:text-[8px] font-black ${subtleText}`}>{cell.monthDay}</div>
 //                               </div>
 //                             )}
 //                             <div
-//                               className={`text-xs font-black transition-colors duration-200
+//                               className={`text-[10px] sm:text-xs font-black transition-colors duration-200
 //                               ${isFocused ? 'text-yellow-400 opacity-100 scale-110' : `${isDark ? 'text-white' : 'text-black'} opacity-100 group-hover/cell:text-yellow-400`}
-//                               ${cell.isHalf ? 'text-[8px] mt-1' : ''}`}
+//                               ${cell.isHalf ? 'text-[7px] sm:text-[8px] mt-1' : ''}`}
 //                             >
 //                               {cell.hourLabel}
 //                             </div>
 //                             {!cell.isHalf && (
 //                               <div
-//                                 className={`text-[8px] font-bold uppercase transition-colors duration-200
+//                                 className={`text-[7px] sm:text-[8px] font-bold uppercase transition-colors duration-200
 //                                 ${isFocused ? 'text-yellow-400/80 opacity-100' : `${subtleText} group-hover/cell:text-yellow-400/80`}`}
 //                               >
 //                                 {cell.period}
@@ -1051,14 +1081,14 @@
 //                     </div>
 //                   );
 //                 })}
-//                 <div className={`h-16 border-t ${panelBorder} ${addRowBg}`}></div>
+//                 <div className={`h-20 sm:h-16 border-t ${panelBorder} ${addRowBg}`}></div>
 //               </div>
 //             </div>
 //           </div>
 //         </div>
 //       </div>
 
-//       <div className={`text-center text-[10px] font-black uppercase tracking-[0.2em] pt-8 ${faintText}`}>
+//       <div className={`text-center text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] pt-6 sm:pt-8 ${faintText}`}>
 //         Global resolution context • Wall-clock anchored drift-free engine
 //       </div>
 
@@ -1100,7 +1130,8 @@
 
 // export default TimezoneConverter;
 
-// New code for Mobile UI adaption 
+
+// TESTING FAQ Feature 
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import * as ct from 'countries-and-timezones';
@@ -1533,20 +1564,47 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
     }
   };
 
+  const getLongTimeZoneName = (iana: string, date: Date = new Date()) => {
+    try {
+      const parts = new Intl.DateTimeFormat('en-US', { timeZone: iana, timeZoneName: 'long' }).formatToParts(date);
+      return parts.find(p => p.type === 'timeZoneName')?.value || iana;
+    } catch {
+      return iana;
+    }
+  };
+
+  const getOffsetHours = (iana: string, date: Date = new Date()) => {
+    try {
+      const parts = new Intl.DateTimeFormat('en-US', { timeZone: iana, timeZoneName: 'longOffset' }).formatToParts(date);
+      const offsetStr = parts.find(p => p.type === 'timeZoneName')?.value || 'GMT+0';
+      const match = offsetStr.match(/GMT([+-])(\d{1,2})(?::(\d{2}))?/);
+      if (!match) return 0;
+      const sign = match[1] === '-' ? -1 : 1;
+      const h = parseInt(match[2], 10);
+      const m = match[3] ? parseInt(match[3], 10) : 0;
+      return sign * (h + m / 60);
+    } catch {
+      return 0;
+    }
+  };
+
+  const formatHourRange = (start: number, end: number) => {
+    const formatPoint = (value: number) => {
+      const whole = Math.floor(value);
+      const minute = Math.round((value - whole) * 60);
+      const normalizedHour = ((whole % 24) + 24) % 24;
+      const hour12 = ((normalizedHour + 11) % 12) + 1;
+      const suffix = normalizedHour < 12 ? 'am' : 'pm';
+      if (minute === 0) return `${hour12}${suffix}`;
+      return `${hour12}:${String(minute).padStart(2, '0')}${suffix}`;
+    };
+    return `${formatPoint(start)}-${formatPoint(end)}`;
+  };
+
   const getRelativeOffset = (iana: string, refIana: string) => {
     try {
       const now = new Date();
-      const getOffset = (tz: string) => {
-        const parts = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'longOffset' }).formatToParts(now);
-        const offsetStr = parts.find(p => p.type === 'timeZoneName')?.value || 'GMT+0';
-        const match = offsetStr.match(/([-+])(\d+):?(\d+)?/);
-        if (!match) return 0;
-        const sign = match[1] === '-' ? -1 : 1;
-        const h = parseInt(match[2]);
-        const m = match[3] ? parseInt(match[3]) : 0;
-        return sign * (h + m / 60);
-      };
-      const diff = getOffset(iana) - getOffset(refIana);
+      const diff = getOffsetHours(iana, now) - getOffsetHours(refIana, now);
       return diff === 0 ? '0' : diff > 0 ? `+${diff}` : `${diff}`;
     } catch {
       return '0';
@@ -1687,9 +1745,9 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
     const timeMatch = text.match(/\b(\d{1,2})(?::(\d{2}))?(?::(\d{2}))?\s*(AM|PM)?\b/i);
 
     if (timeMatch) {
-      let h = parseInt(timeMatch[1]);
-      const m = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
-      const s = timeMatch[3] ? parseInt(timeMatch[3]) : 0;
+      let h = parseInt(timeMatch[1], 10);
+      const m = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
+      const s = timeMatch[3] ? parseInt(timeMatch[3], 10) : 0;
       const period = timeMatch[4];
 
       if (period === 'PM' && h < 12) h += 12;
@@ -1852,6 +1910,52 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       .sort((a, b) => b.score - a.score)
       .slice(0, 6);
   }, [fromRouteSlug, toRouteSlug, currentRoute]);
+
+  const faqData = useMemo(() => {
+    const target = targets[0];
+    if (!target) return null;
+
+    const srcOffsetHours = getOffsetHours(sourceTz.iana, baseTime);
+    const tgtOffsetHours = getOffsetHours(target.iana, baseTime);
+    const diff = srcOffsetHours - tgtOffsetHours;
+    const absDiff = Math.abs(diff);
+
+    const srcLongName = getLongTimeZoneName(sourceTz.iana, baseTime);
+    const tgtLongName = getLongTimeZoneName(target.iana, baseTime);
+
+    const srcTime = getTzInfo(baseTime, sourceTz.iana).time;
+    const tgtTime = getTzInfo(baseTime, target.iana).time;
+
+    const businessStart = 9;
+    const businessEnd = 17;
+    const targetBusinessInSourceStart = businessStart + diff;
+    const targetBusinessInSourceEnd = businessEnd + diff;
+
+    const overlapStart = Math.max(businessStart, targetBusinessInSourceStart);
+    const overlapEnd = Math.min(businessEnd, targetBusinessInSourceEnd);
+
+    const overlap =
+      overlapStart < overlapEnd
+        ? {
+            srcRange: formatHourRange(overlapStart, overlapEnd),
+            tgtRange: formatHourRange(overlapStart - diff, overlapEnd - diff)
+          }
+        : null;
+
+    return {
+      srcName: sourceTz.name,
+      tgtName: target.name,
+      srcLongName,
+      tgtLongName,
+      srcTime,
+      tgtTime,
+      srcOffset: getOffsetString(sourceTz.iana, baseTime),
+      tgtOffset: getOffsetString(target.iana, baseTime),
+      diffHours: Number.isInteger(absDiff) ? String(absDiff) : absDiff.toFixed(1).replace(/\.0$/, ''),
+      isAhead: diff > 0,
+      overlap
+    };
+  }, [sourceTz, targets, baseTime, getTzInfo]);
 
   const showRelatedRoutes = hasSearchedConversion && relatedRoutes.length > 0;
   const relatedRoutesDiffLine = targets[0]
@@ -2191,6 +2295,162 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
           </div>
         </div>
       </div>
+
+            {faqData && (
+        <div className="max-w-6xl mx-auto mt-12 sm:mt-16">
+          <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
+            <div className="w-10 sm:w-20 h-px bg-current"></div>Timezone Conversion FAQ and Fact
+          </div>
+
+          <div className={`border ${panelBorder} rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-6 sm:p-10 space-y-8`}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12">
+              <div className="space-y-4">
+                <h4 className="text-xs font-black uppercase tracking-widest text-blue-500">Time Difference</h4>
+                <div className="space-y-2">
+                  <p className="text-sm sm:text-base lg:text-xl font-bold leading-relaxed">
+                    {faqData.srcLongName} is {faqData.diffHours} hours {faqData.isAhead ? 'ahead of' : 'behind'} {faqData.tgtLongName}
+                  </p>
+                  <p className={`text-xs sm:text-sm ${subtleText} leading-relaxed`}>
+                    {faqData.srcTime} in {faqData.srcName} is {faqData.tgtTime} in {faqData.tgtName}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="text-xs font-black uppercase tracking-widest text-green-500">
+                  {faqData.srcName} to {faqData.tgtName} Call Time
+                </h4>
+                <div className="space-y-2">
+                  {faqData.overlap ? (
+                    <p className="text-sm sm:text-base lg:text-xl font-bold leading-relaxed">
+                      Best time for a conference call or a meeting is between {faqData.overlap.srcRange} in {faqData.srcName} which corresponds to {faqData.overlap.tgtRange} in {faqData.tgtName}
+                    </p>
+                  ) : (
+                    <p className={`text-sm sm:text-base lg:text-xl font-bold leading-relaxed ${subtleText}`}>
+                      No standard business hour overlap found. Consider scheduling during early morning or late evening.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className={`pt-8 border-t ${panelBorderSoft} grid grid-cols-1 md:grid-cols-2 gap-6`}>
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center flex-none">
+                  <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className={`text-[10px] font-black uppercase tracking-widest ${subtleText}`}>
+                    {faqData.srcName} ({faqData.srcLongName})
+                  </div>
+                  <div className="text-sm sm:text-lg font-bold">Offset {faqData.srcOffset}</div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center flex-none">
+                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className={`text-[10px] font-black uppercase tracking-widest ${subtleText}`}>
+                    {faqData.tgtName} ({faqData.tgtLongName})
+                  </div>
+                  <div className="text-sm sm:text-lg font-bold">Offset {faqData.tgtOffset}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center pt-4">
+              <div className={`inline-block px-4 py-2 rounded-full ${isDark ? 'bg-zinc-500/5' : 'bg-zinc-900/5'} text-[10px] font-black uppercase tracking-widest ${faintText}`}>
+                {faqData.srcTime} {faqData.srcName} / {faqData.tgtTime} {faqData.tgtName}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      
+      
+      {/* {faqData && (
+        <div className="max-w-6xl mx-auto mt-12 sm:mt-16">
+          <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
+            <div className="w-10 sm:w-20 h-px bg-current"></div>Timezone FAQ & Facts
+          </div>
+
+          <div className={`border ${panelBorder} rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-6 sm:p-10 space-y-8`}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12">
+              <div className="space-y-4">
+                <h4 className="text-xs font-black uppercase tracking-widest text-blue-500">Time Difference</h4>
+                <div className="space-y-2">
+                  <p className="text-sm sm:text-base lg:text-2xl font-bold leading-relaxed">
+                    {faqData.srcLongName} is {faqData.diffHours} hours {faqData.isAhead ? 'ahead of' : 'behind'} {faqData.tgtLongName}
+                  </p>
+                  <p className={`text-xs sm:text-sm ${subtleText} leading-relaxed`}>
+                    {faqData.srcTime} in {faqData.srcName} is {faqData.tgtTime} in {faqData.tgtName}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="text-xs font-black uppercase tracking-widest text-green-500">
+                  {faqData.srcName} to {faqData.tgtName} Call Time
+                </h4>
+                <div className="space-y-2">
+                  {faqData.overlap ? (
+                    <p className="text-sm sm:text-base lg:text-2xl font-bold leading-relaxed">
+                      Best time for a conference call or a meeting is between {faqData.overlap.srcRange} in {faqData.srcName} which corresponds to {faqData.overlap.tgtRange} in {faqData.tgtName}
+                    </p>
+                  ) : (
+                    <p className={`text-sm sm:text-base lg:text-2xl font-bold leading-relaxed ${subtleText}`}>
+                      No standard business hour overlap found. Consider scheduling during early morning or late evening.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className={`pt-8 border-t ${panelBorderSoft} grid grid-cols-1 md:grid-cols-2 gap-6`}>
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center flex-none">
+                  <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className={`text-[10px] font-black uppercase tracking-widest ${subtleText}`}>
+                    {faqData.srcName} ({faqData.srcLongName})
+                  </div>
+                  <div className="text-sm sm:text-lg font-bold">Offset {faqData.srcOffset}</div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center flex-none">
+                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className={`text-[10px] font-black uppercase tracking-widest ${subtleText}`}>
+                    {faqData.tgtName} ({faqData.tgtLongName})
+                  </div>
+                  <div className="text-sm sm:text-lg font-bold">Offset {faqData.tgtOffset}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center pt-4">
+              <div className={`inline-block px-4 py-2 rounded-full ${isDark ? 'bg-zinc-500/5' : 'bg-zinc-900/5'} text-[10px] font-black uppercase tracking-widest ${faintText}`}>
+                {faqData.srcTime} {faqData.srcName} / {faqData.tgtTime} {faqData.tgtName}
+              </div>
+            </div>
+          </div>
+        </div>
+      )} */}
 
       <div className={`text-center text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] pt-6 sm:pt-8 ${faintText}`}>
         Global resolution context • Wall-clock anchored drift-free engine
