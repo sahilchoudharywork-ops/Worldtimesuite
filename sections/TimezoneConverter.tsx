@@ -1472,8 +1472,18 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
     d.setSeconds(0, 0);
     return d;
   });
-  const [sourceTz, setSourceTz] = useState<Timezone>(COMMON_TIMEZONES[3]);
-  const [targets, setTargets] = useState<Timezone[]>([{ name: 'Toronto', iana: 'America/Toronto', offset: -5 }]);
+  const [sourceTz, setSourceTz] = useState<Timezone>({
+  name: 'London',
+  iana: 'Europe/London',
+  offset: 0
+});
+  // const [sourceTz, setSourceTz] = useState<Timezone>(COMMON_TIMEZONES[3]);
+  const [targets, setTargets] = useState<Timezone[]>([
+  { name: 'New York', iana: 'America/New_York', offset: -5 }
+]);
+
+  
+  // const [targets, setTargets] = useState<Timezone[]>([{ name: 'Toronto', iana: 'America/Toronto', offset: -5 }]);
   const [history, setHistory] = useState<ConversionHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLive, setIsLive] = useState(true);
@@ -1988,7 +1998,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
           <input
             aria-label="Timezone conversion query"
             className="flex-grow bg-transparent border-none outline-none font-bold text-base sm:text-lg min-w-0"
-            placeholder="e.g. 8 pm russia to london"
+            placeholder={!fromSlug && !toSlug ? '5 pm London to New York' : 'e.g. 8 pm russia to london'}
             value={naturalInput}
             onChange={e => {
               setNaturalInput(e.target.value);
@@ -2145,7 +2155,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
 
       <div id="timeline-section" className="max-w-6xl mx-auto mt-12 sm:mt-20 scroll-mt-24">
         <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
-          <div className="w-10 sm:w-20 h-px bg-current"></div>24H Timezone Overlap
+          <div className="w-10 sm:w-20 h-px bg-current"></div>Business Hour Overlap
         </div>
         <div className={`border ${borderClass} rounded-xl overflow-hidden ${timelineWrapBg}`}>
           <div className="flex flex-col lg:flex-row">
