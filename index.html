@@ -27,28 +27,22 @@
 
   <link rel="canonical" href="https://worldtimesuite.com/">
 
-  <!-- <link rel="icon" href="/favicon.ico" sizes="any">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png">
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png"> -->
-
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png">
   <link rel="shortcut icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-  <style>
-    @import url('https://fonts.cdnfonts.com/css/helvetica-neue-9');
+  <link rel="preconnect" href="https://fonts.cdnfonts.com">
+  <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/helvetica-neue-9">
 
+  <style>
     html, body {
       height: 100%;
       margin: 0;
       padding: 0;
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      background-color: #ffffff;
+      background-color: #000000;
       color: #000000;
     }
 
@@ -98,10 +92,52 @@
       0% { background-position: 0% 0%; }
       100% { background-position: 200% 0%; }
     }
+
+    #app-loading {
+      position: fixed;
+      inset: 0;
+      background: #000000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.3s ease;
+    }
+
+    #app-loading span {
+      color: #ffffff;
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      opacity: 0.4;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
   </style>
 </head>
 <body>
-  <div id="root"><!--app-html--></div>
+  <div id="root">
+    <!--app-html-->
+    <div id="app-loading">
+      <span>Loading...</span>
+    </div>
+  </div>
   <script type="module" src="/index.tsx"></script>
+
+  <script>
+    var observer = new MutationObserver(function() {
+      var loader = document.getElementById('app-loading');
+      if (!loader) { observer.disconnect(); return; }
+      var root = document.getElementById('root');
+      if (root && root.children.length > 1) {
+        loader.style.opacity = '0';
+        setTimeout(function() {
+          if (loader.parentNode) loader.parentNode.removeChild(loader);
+        }, 300);
+        observer.disconnect();
+      }
+    });
+    var rootEl = document.getElementById('root');
+    if (rootEl) observer.observe(rootEl, { childList: true, subtree: false });
+  </script>
 </body>
 </html>
