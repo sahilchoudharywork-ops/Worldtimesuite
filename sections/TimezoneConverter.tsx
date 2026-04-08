@@ -1,3 +1,5 @@
+// // TESTING FAQ Feature 
+
 // import React, { useState, useCallback, useEffect, useMemo } from 'react';
 // import * as ct from 'countries-and-timezones';
 // import { COMMON_TIMEZONES } from '../constants';
@@ -7,6 +9,7 @@
 //   isDark: boolean;
 //   fromSlug?: string;
 //   toSlug?: string;
+//   isTimezoneCodeRoute?: boolean;
 // }
 
 // interface ConversionHistoryItem {
@@ -87,6 +90,20 @@
 //   BRT: 'America/Sao_Paulo',
 //   BRAZIL: 'America/Sao_Paulo',
 //   'SAO PAULO': 'America/Sao_Paulo'
+// };
+
+// const IANA_TO_CODE: Record<string, string> = {
+//   'America/New_York':    'EST',
+//   'America/Los_Angeles': 'PST',
+//   'America/Chicago':     'CST',
+//   'America/Denver':      'MST',
+//   'Europe/London':       'GMT',
+//   'Asia/Kolkata':        'IST',
+//   'Asia/Tokyo':          'JST',
+//   'Europe/Berlin':       'CET',
+//   'Asia/Singapore':      'SGT',
+//   'Australia/Sydney':    'AEST',
+//   'Asia/Dubai':          'GST',
 // };
 
 // const normalizeKey = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -330,15 +347,25 @@
 //   return TZ_DISPLAY_FORMATTER_CACHE[iana];
 // };
 
-// const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug, toSlug }) => {
+// const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug, toSlug, isTimezoneCodeRoute = false }) => {
 //   const [naturalInput, setNaturalInput] = useState('');
 //   const [baseTime, setBaseTime] = useState(() => {
 //     const d = new Date();
 //     d.setSeconds(0, 0);
 //     return d;
 //   });
-//   const [sourceTz, setSourceTz] = useState<Timezone>(COMMON_TIMEZONES[3]);
-//   const [targets, setTargets] = useState<Timezone[]>([{ name: 'Toronto', iana: 'America/Toronto', offset: -5 }]);
+//   const [sourceTz, setSourceTz] = useState<Timezone>({
+//   name: 'London',
+//   iana: 'Europe/London',
+//   offset: 0
+// });
+//   // const [sourceTz, setSourceTz] = useState<Timezone>(COMMON_TIMEZONES[3]);
+//   const [targets, setTargets] = useState<Timezone[]>([
+//   { name: 'New York', iana: 'America/New_York', offset: -5 }
+// ]);
+
+  
+//   // const [targets, setTargets] = useState<Timezone[]>([{ name: 'Toronto', iana: 'America/Toronto', offset: -5 }]);
 //   const [history, setHistory] = useState<ConversionHistoryItem[]>([]);
 //   const [isLoading, setIsLoading] = useState(false);
 //   const [isLive, setIsLive] = useState(true);
@@ -429,20 +456,47 @@
 //     }
 //   };
 
+//   const getLongTimeZoneName = (iana: string, date: Date = new Date()) => {
+//     try {
+//       const parts = new Intl.DateTimeFormat('en-US', { timeZone: iana, timeZoneName: 'long' }).formatToParts(date);
+//       return parts.find(p => p.type === 'timeZoneName')?.value || iana;
+//     } catch {
+//       return iana;
+//     }
+//   };
+
+//   const getOffsetHours = (iana: string, date: Date = new Date()) => {
+//     try {
+//       const parts = new Intl.DateTimeFormat('en-US', { timeZone: iana, timeZoneName: 'longOffset' }).formatToParts(date);
+//       const offsetStr = parts.find(p => p.type === 'timeZoneName')?.value || 'GMT+0';
+//       const match = offsetStr.match(/GMT([+-])(\d{1,2})(?::(\d{2}))?/);
+//       if (!match) return 0;
+//       const sign = match[1] === '-' ? -1 : 1;
+//       const h = parseInt(match[2], 10);
+//       const m = match[3] ? parseInt(match[3], 10) : 0;
+//       return sign * (h + m / 60);
+//     } catch {
+//       return 0;
+//     }
+//   };
+
+//   const formatHourRange = (start: number, end: number) => {
+//     const formatPoint = (value: number) => {
+//       const whole = Math.floor(value);
+//       const minute = Math.round((value - whole) * 60);
+//       const normalizedHour = ((whole % 24) + 24) % 24;
+//       const hour12 = ((normalizedHour + 11) % 12) + 1;
+//       const suffix = normalizedHour < 12 ? 'am' : 'pm';
+//       if (minute === 0) return `${hour12}${suffix}`;
+//       return `${hour12}:${String(minute).padStart(2, '0')}${suffix}`;
+//     };
+//     return `${formatPoint(start)}-${formatPoint(end)}`;
+//   };
+
 //   const getRelativeOffset = (iana: string, refIana: string) => {
 //     try {
 //       const now = new Date();
-//       const getOffset = (tz: string) => {
-//         const parts = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'longOffset' }).formatToParts(now);
-//         const offsetStr = parts.find(p => p.type === 'timeZoneName')?.value || 'GMT+0';
-//         const match = offsetStr.match(/([-+])(\d+):?(\d+)?/);
-//         if (!match) return 0;
-//         const sign = match[1] === '-' ? -1 : 1;
-//         const h = parseInt(match[2]);
-//         const m = match[3] ? parseInt(match[3]) : 0;
-//         return sign * (h + m / 60);
-//       };
-//       const diff = getOffset(iana) - getOffset(refIana);
+//       const diff = getOffsetHours(iana, now) - getOffsetHours(refIana, now);
 //       return diff === 0 ? '0' : diff > 0 ? `+${diff}` : `${diff}`;
 //     } catch {
 //       return '0';
@@ -524,12 +578,14 @@
 //     let routeTarget: Timezone | null = null;
 
 //     if (fromIana) {
-//       routeSource = { name: toZoneLabel(fromIana), iana: fromIana, offset: 0 };
+//       const fromName = isTimezoneCodeRoute ? fromSlug!.toUpperCase() : toZoneLabel(fromIana);
+//       routeSource = { name: fromName, iana: fromIana, offset: 0 };
 //       setSourceTz(routeSource);
 //     }
 
 //     if (toIana) {
-//       routeTarget = { name: toZoneLabel(toIana), iana: toIana, offset: 0 };
+//       const toName = isTimezoneCodeRoute ? toSlug!.toUpperCase() : toZoneLabel(toIana);
+//       routeTarget = { name: toName, iana: toIana, offset: 0 };
 //       setTargets([routeTarget]);
 //     }
 
@@ -554,7 +610,10 @@
 //     const findZone = (query: string): Timezone | null => {
 //       const iana = resolveIanaFromQuery(query);
 //       if (!iana) return null;
-//       return { name: toZoneLabel(iana), iana, offset: 0 };
+//       const upperQuery = query.toUpperCase().trim();
+//       const code = IANA_TO_CODE[iana];
+//       const isCodeQuery = Boolean(code && EXTENDED_ZONE_MAP[upperQuery] === iana);
+//       return { name: isCodeQuery ? code : toZoneLabel(iana), iana, offset: 0 };
 //     };
 
 //     let activeSrc = sourceTz;
@@ -583,9 +642,9 @@
 //     const timeMatch = text.match(/\b(\d{1,2})(?::(\d{2}))?(?::(\d{2}))?\s*(AM|PM)?\b/i);
 
 //     if (timeMatch) {
-//       let h = parseInt(timeMatch[1]);
-//       const m = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
-//       const s = timeMatch[3] ? parseInt(timeMatch[3]) : 0;
+//       let h = parseInt(timeMatch[1], 10);
+//       const m = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
+//       const s = timeMatch[3] ? parseInt(timeMatch[3], 10) : 0;
 //       const period = timeMatch[4];
 
 //       if (period === 'PM' && h < 12) h += 12;
@@ -693,54 +752,152 @@
 //   const currentRoute = `${fromRouteSlug}-to-${toRouteSlug}`;
 
 //   const relatedRoutes = useMemo(() => {
-//     const fromNode = ROUTE_ALIAS[fromRouteSlug] || fromRouteSlug;
-//     const toNode = ROUTE_ALIAS[toRouteSlug] || toRouteSlug;
-
 //     const itemMap = new Map<string, RelatedRouteItem>();
+//     const currentHref = `/${currentRoute}`;
 
-//     const addRoute = (fromCity: string, toCity: string, score: number) => {
-//       if (!fromCity || !toCity || fromCity === toCity) return;
-//       const href = `/${fromCity}-to-${toCity}`;
-//       if (href === `/${currentRoute}`) return;
-//       const label = `${humanizeSlug(fromCity)} → ${humanizeSlug(toCity)}`;
-
+//     const addRoute = (from: string, to: string, score: number) => {
+//       if (!from || !to || from === to) return;
+//       const href = `/${from}-to-${to}`;
+//       if (href === currentHref) return;
+//       const label = `${humanizeSlug(from)} → ${humanizeSlug(to)}`;
 //       const existing = itemMap.get(href);
 //       if (!existing || score > existing.score) {
 //         itemMap.set(href, { href, label, score });
 //       }
 //     };
 
-//     (ROUTE_GRAPH[fromNode] || []).forEach(edge => {
-//       if (edge.to === toNode) return;
-//       const targetCandidates = HUB_CITY_VARIANTS[edge.to] || [edge.to];
-//       targetCandidates.slice(0, 2).forEach(city => addRoute(fromRouteSlug, city, edge.score));
-//     });
+//     // ── Timezone-aware suggestions ──
+//     // Maps each timezone code to its most popular representative cities
+//     const TZ_TO_CITIES: Record<string, string[]> = {
+//       'ist':  ['mumbai', 'delhi', 'bangalore', 'hyderabad', 'chennai'],
+//       'est':  ['new-york', 'boston', 'miami', 'atlanta', 'washington-dc'],
+//       'pst':  ['los-angeles', 'san-francisco', 'seattle', 'las-vegas'],
+//       'cst':  ['chicago', 'houston', 'dallas'],
+//       'mst':  ['denver'],
+//       'gmt':  ['london', 'dublin'],
+//       'cet':  ['berlin', 'paris', 'amsterdam', 'rome', 'madrid'],
+//       'jst':  ['tokyo', 'osaka'],
+//       'sgt':  ['singapore'],
+//       'aest': ['sydney', 'melbourne', 'brisbane'],
+//       'gst':  ['dubai', 'abu-dhabi'],
+//     };
 
-//     Object.entries(ROUTE_GRAPH).forEach(([sourceNode, edges]) => {
-//       const edge = edges.find(e => e.to === toNode);
-//       if (!edge) return;
-//       const sourceCandidates = HUB_CITY_VARIANTS[sourceNode] || [sourceNode];
-//       sourceCandidates.slice(0, 2).forEach(city => addRoute(city, toRouteSlug, edge.score - 5));
-//     });
+//     // Most relevant timezone pairing partners for each timezone code
+//     const TZ_POPULAR_PAIRS: Record<string, string[]> = {
+//       'ist':  ['est', 'pst', 'gmt', 'cet', 'jst', 'sgt', 'gst', 'aest', 'cst'],
+//       'est':  ['ist', 'gmt', 'pst', 'cet', 'jst', 'sgt', 'aest', 'cst', 'gst'],
+//       'pst':  ['ist', 'gmt', 'est', 'cet', 'jst', 'sgt', 'aest', 'cst'],
+//       'cst':  ['est', 'ist', 'gmt', 'pst', 'cet', 'jst', 'sgt'],
+//       'mst':  ['est', 'pst', 'gmt', 'cst', 'ist'],
+//       'gmt':  ['ist', 'est', 'pst', 'cet', 'jst', 'sgt', 'aest', 'gst', 'cst'],
+//       'cet':  ['gmt', 'est', 'ist', 'pst', 'jst', 'sgt', 'aest'],
+//       'jst':  ['est', 'pst', 'ist', 'sgt', 'aest', 'gmt', 'cet'],
+//       'sgt':  ['ist', 'gmt', 'est', 'jst', 'aest', 'cet', 'pst'],
+//       'aest': ['ist', 'gmt', 'est', 'jst', 'sgt', 'pst', 'cet'],
+//       'gst':  ['ist', 'gmt', 'est', 'cet', 'jst', 'pst'],
+//     };
 
-//     if (toNode === 'usa' || ['new-york', 'los-angeles', 'chicago', 'seattle', 'dallas', 'san-francisco'].includes(toRouteSlug)) {
-//       ['new-york', 'los-angeles', 'chicago', 'seattle', 'dallas', 'san-francisco']
-//         .filter(city => city !== toRouteSlug)
-//         .forEach((city, idx) => addRoute(fromRouteSlug, city, 82 - idx));
-//     }
+//     const isFromTz = Boolean(TZ_TO_CITIES[fromRouteSlug]);
+//     const isToTz = Boolean(TZ_TO_CITIES[toRouteSlug]);
 
-//     addRoute(toRouteSlug, fromRouteSlug, 120);
+//     if (isFromTz || isToTz) {
+//       // ── Timezone route or mixed (tz+city) ──
 
-//     if (itemMap.size < 6) {
-//       const fromRegion = CITY_REGION_MAP[fromRouteSlug];
-//       const toRegion = CITY_REGION_MAP[toRouteSlug];
+//       // 1. Reverse direction — always highest priority
+//       addRoute(toRouteSlug, fromRouteSlug, 100);
 
-//       (fromRegion ? REGION_CLUSTERS[fromRegion] || [] : []).forEach((city, idx) => {
-//         if (city !== fromRouteSlug && city !== toRouteSlug) addRoute(fromRouteSlug, city, 50 - idx);
+//       if (isFromTz && isToTz) {
+//         // Both are timezone codes e.g. ist-to-gmt
+//         // Suggest: same "from" code with other popular "to" codes
+//         (TZ_POPULAR_PAIRS[fromRouteSlug] || [])
+//           .filter(tz => tz !== toRouteSlug)
+//           .slice(0, 4)
+//           .forEach((tz, i) => addRoute(fromRouteSlug, tz, 90 - i));
+
+//         // Suggest: other popular "from" codes with same "to" code
+//         (TZ_POPULAR_PAIRS[toRouteSlug] || [])
+//           .filter(tz => tz !== fromRouteSlug)
+//           .slice(0, 3)
+//           .forEach((tz, i) => addRoute(tz, toRouteSlug, 80 - i));
+
+//         // Suggest: representative city pairs (most popular cities for each tz)
+//         const fromCities = (TZ_TO_CITIES[fromRouteSlug] || []).slice(0, 2);
+//         const toCities = (TZ_TO_CITIES[toRouteSlug] || []).slice(0, 2);
+//         fromCities.forEach((fc, i) => {
+//           toCities.forEach((tc, j) => addRoute(fc, tc, 70 - i - j));
+//         });
+
+//       } else if (isFromTz && !isToTz) {
+//         // e.g. ist-to-london (tz to city)
+//         const fromCities = (TZ_TO_CITIES[fromRouteSlug] || []).slice(0, 3);
+//         // Suggest: tz code to city (other cities in same region)
+//         fromCities.forEach((fc, i) => addRoute(fc, toRouteSlug, 90 - i));
+//         // Suggest: same from-tz to popular partner tz codes
+//         (TZ_POPULAR_PAIRS[fromRouteSlug] || []).slice(0, 4)
+//           .forEach((tz, i) => addRoute(fromRouteSlug, tz, 80 - i));
+
+//       } else if (!isFromTz && isToTz) {
+//         // e.g. london-to-ist (city to tz)
+//         const toCities = (TZ_TO_CITIES[toRouteSlug] || []).slice(0, 3);
+//         // Suggest: city to tz cities
+//         toCities.forEach((tc, i) => addRoute(fromRouteSlug, tc, 90 - i));
+//         // Suggest: popular tz codes to same to-tz code
+//         (TZ_POPULAR_PAIRS[toRouteSlug] || []).slice(0, 4)
+//           .forEach((tz, i) => addRoute(tz, toRouteSlug, 80 - i));
+//       }
+
+//     } else {
+//       // ── City-to-city route (original logic, enhanced) ──
+//       const fromNode = ROUTE_ALIAS[fromRouteSlug] || fromRouteSlug;
+//       const toNode = ROUTE_ALIAS[toRouteSlug] || toRouteSlug;
+
+//       // Reverse always first
+//       addRoute(toRouteSlug, fromRouteSlug, 100);
+
+//       // From same hub, different destinations
+//       (ROUTE_GRAPH[fromNode] || []).forEach(edge => {
+//         if (edge.to === toNode) return;
+//         const targetCandidates = HUB_CITY_VARIANTS[edge.to] || [edge.to];
+//         targetCandidates.slice(0, 2).forEach(city => addRoute(fromRouteSlug, city, edge.score));
 //       });
 
-//       (toRegion ? REGION_CLUSTERS[toRegion] || [] : []).forEach((city, idx) => {
-//         if (city !== fromRouteSlug && city !== toRouteSlug) addRoute(city, toRouteSlug, 45 - idx);
+//       // Different sources, same destination hub
+//       Object.entries(ROUTE_GRAPH).forEach(([sourceNode, edges]) => {
+//         const edge = edges.find(e => e.to === toNode);
+//         if (!edge) return;
+//         const sourceCandidates = HUB_CITY_VARIANTS[sourceNode] || [sourceNode];
+//         sourceCandidates.slice(0, 2).forEach(city => addRoute(city, toRouteSlug, edge.score - 5));
+//       });
+
+//       // US city variants
+//       if (toNode === 'usa' || ['new-york', 'los-angeles', 'chicago', 'seattle', 'dallas', 'san-francisco'].includes(toRouteSlug)) {
+//         ['new-york', 'los-angeles', 'chicago', 'seattle', 'dallas', 'san-francisco']
+//           .filter(city => city !== toRouteSlug)
+//           .forEach((city, idx) => addRoute(fromRouteSlug, city, 82 - idx));
+//       }
+
+//       // Region clusters fallback
+//       if (itemMap.size < 6) {
+//         const fromRegion = CITY_REGION_MAP[fromRouteSlug];
+//         const toRegion = CITY_REGION_MAP[toRouteSlug];
+//         (fromRegion ? REGION_CLUSTERS[fromRegion] || [] : []).forEach((city, idx) => {
+//           if (city !== fromRouteSlug && city !== toRouteSlug) addRoute(fromRouteSlug, city, 50 - idx);
+//         });
+//         (toRegion ? REGION_CLUSTERS[toRegion] || [] : []).forEach((city, idx) => {
+//           if (city !== fromRouteSlug && city !== toRouteSlug) addRoute(city, toRouteSlug, 45 - idx);
+//         });
+//       }
+//     }
+
+//     // Final fallback: if still under 6, add popular global routes involving from/to
+//     if (itemMap.size < 6) {
+//       const globalFallback = [
+//         ['mumbai', 'london'], ['new-york', 'london'], ['london', 'new-york'],
+//         ['mumbai', 'new-york'], ['singapore', 'london'], ['dubai', 'london'],
+//         ['sydney', 'london'], ['tokyo', 'new-york'], ['berlin', 'new-york'],
+//       ];
+//       globalFallback.forEach(([f, t]) => {
+//         if (f !== fromRouteSlug && t !== toRouteSlug) addRoute(f, t, 30);
 //       });
 //     }
 
@@ -748,6 +905,52 @@
 //       .sort((a, b) => b.score - a.score)
 //       .slice(0, 6);
 //   }, [fromRouteSlug, toRouteSlug, currentRoute]);
+
+//   const faqData = useMemo(() => {
+//     const target = targets[0];
+//     if (!target) return null;
+
+//     const srcOffsetHours = getOffsetHours(sourceTz.iana, baseTime);
+//     const tgtOffsetHours = getOffsetHours(target.iana, baseTime);
+//     const diff = srcOffsetHours - tgtOffsetHours;
+//     const absDiff = Math.abs(diff);
+
+//     const srcLongName = getLongTimeZoneName(sourceTz.iana, baseTime);
+//     const tgtLongName = getLongTimeZoneName(target.iana, baseTime);
+
+//     const srcTime = getTzInfo(baseTime, sourceTz.iana).time;
+//     const tgtTime = getTzInfo(baseTime, target.iana).time;
+
+//     const businessStart = 9;
+//     const businessEnd = 17;
+//     const targetBusinessInSourceStart = businessStart + diff;
+//     const targetBusinessInSourceEnd = businessEnd + diff;
+
+//     const overlapStart = Math.max(businessStart, targetBusinessInSourceStart);
+//     const overlapEnd = Math.min(businessEnd, targetBusinessInSourceEnd);
+
+//     const overlap =
+//       overlapStart < overlapEnd
+//         ? {
+//             srcRange: formatHourRange(overlapStart, overlapEnd),
+//             tgtRange: formatHourRange(overlapStart - diff, overlapEnd - diff)
+//           }
+//         : null;
+
+//     return {
+//       srcName: sourceTz.name,
+//       tgtName: target.name,
+//       srcLongName,
+//       tgtLongName,
+//       srcTime,
+//       tgtTime,
+//       srcOffset: getOffsetString(sourceTz.iana, baseTime),
+//       tgtOffset: getOffsetString(target.iana, baseTime),
+//       diffHours: Number.isInteger(absDiff) ? String(absDiff) : absDiff.toFixed(1).replace(/\.0$/, ''),
+//       isAhead: diff > 0,
+//       overlap
+//     };
+//   }, [sourceTz, targets, baseTime, getTzInfo]);
 
 //   const showRelatedRoutes = hasSearchedConversion && relatedRoutes.length > 0;
 //   const relatedRoutesDiffLine = targets[0]
@@ -780,7 +983,7 @@
 //           <input
 //             aria-label="Timezone conversion query"
 //             className="flex-grow bg-transparent border-none outline-none font-bold text-base sm:text-lg min-w-0"
-//             placeholder="e.g. 8 pm russia to london"
+//             placeholder={!fromSlug && !toSlug ? '5 pm London to New York' : 'e.g. 8 pm russia to london'}
 //             value={naturalInput}
 //             onChange={e => {
 //               setNaturalInput(e.target.value);
@@ -937,7 +1140,7 @@
 
 //       <div id="timeline-section" className="max-w-6xl mx-auto mt-12 sm:mt-20 scroll-mt-24">
 //         <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
-//           <div className="w-10 sm:w-20 h-px bg-current"></div>24H Timezone Overlap
+//           <div className="w-10 sm:w-20 h-px bg-current"></div>Business Hour Overlap
 //         </div>
 //         <div className={`border ${borderClass} rounded-xl overflow-hidden ${timelineWrapBg}`}>
 //           <div className="flex flex-col lg:flex-row">
@@ -1088,6 +1291,162 @@
 //         </div>
 //       </div>
 
+//             {faqData && (
+//         <div className="max-w-6xl mx-auto mt-12 sm:mt-16">
+//           <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
+//             <div className="w-10 sm:w-20 h-px bg-current"></div>Timezone Conversion FAQ and Fact
+//           </div>
+
+//           <div className={`border ${panelBorder} rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-6 sm:p-10 space-y-8`}>
+//             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12">
+//               <div className="space-y-4">
+//                 <h4 className="text-xs font-black uppercase tracking-widest text-blue-500">Time Difference</h4>
+//                 <div className="space-y-2">
+//                   <p className="text-sm sm:text-base lg:text-xl font-bold leading-relaxed">
+//                     {faqData.srcLongName} is {faqData.diffHours} hours {faqData.isAhead ? 'ahead of' : 'behind'} {faqData.tgtLongName}
+//                   </p>
+//                   <p className={`text-xs sm:text-sm ${subtleText} leading-relaxed`}>
+//                     {faqData.srcTime} in {faqData.srcName} is {faqData.tgtTime} in {faqData.tgtName}
+//                   </p>
+//                 </div>
+//               </div>
+
+//               <div className="space-y-4">
+//                 <h4 className="text-xs font-black uppercase tracking-widest text-green-500">
+//                   {faqData.srcName} to {faqData.tgtName} Call Time
+//                 </h4>
+//                 <div className="space-y-2">
+//                   {faqData.overlap ? (
+//                     <p className="text-sm sm:text-base lg:text-xl font-bold leading-relaxed">
+//                       Best time for a conference call or a meeting is between {faqData.overlap.srcRange} in {faqData.srcName} which corresponds to {faqData.overlap.tgtRange} in {faqData.tgtName}
+//                     </p>
+//                   ) : (
+//                     <p className={`text-sm sm:text-base lg:text-xl font-bold leading-relaxed ${subtleText}`}>
+//                       No standard business hour overlap found. Consider scheduling during early morning or late evening.
+//                     </p>
+//                   )}
+//                 </div>
+//               </div>
+//             </div>
+
+//             <div className={`pt-8 border-t ${panelBorderSoft} grid grid-cols-1 md:grid-cols-2 gap-6`}>
+//               <div className="flex items-center gap-4">
+//                 <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center flex-none">
+//                   <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+//                   </svg>
+//                 </div>
+//                 <div>
+//                   <div className={`text-[10px] font-black uppercase tracking-widest ${subtleText}`}>
+//                     {faqData.srcName} ({faqData.srcLongName})
+//                   </div>
+//                   <div className="text-sm sm:text-lg font-bold">Offset {faqData.srcOffset}</div>
+//                 </div>
+//               </div>
+
+//               <div className="flex items-center gap-4">
+//                 <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center flex-none">
+//                   <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+//                   </svg>
+//                 </div>
+//                 <div>
+//                   <div className={`text-[10px] font-black uppercase tracking-widest ${subtleText}`}>
+//                     {faqData.tgtName} ({faqData.tgtLongName})
+//                   </div>
+//                   <div className="text-sm sm:text-lg font-bold">Offset {faqData.tgtOffset}</div>
+//                 </div>
+//               </div>
+//             </div>
+
+//             <div className="text-center pt-4">
+//               <div className={`inline-block px-4 py-2 rounded-full ${isDark ? 'bg-zinc-500/5' : 'bg-zinc-900/5'} text-[10px] font-black uppercase tracking-widest ${faintText}`}>
+//                 {faqData.srcTime} {faqData.srcName} / {faqData.tgtTime} {faqData.tgtName}
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+
+      
+      
+//       {/* {faqData && (
+//         <div className="max-w-6xl mx-auto mt-12 sm:mt-16">
+//           <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
+//             <div className="w-10 sm:w-20 h-px bg-current"></div>Timezone FAQ & Facts
+//           </div>
+
+//           <div className={`border ${panelBorder} rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-6 sm:p-10 space-y-8`}>
+//             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12">
+//               <div className="space-y-4">
+//                 <h4 className="text-xs font-black uppercase tracking-widest text-blue-500">Time Difference</h4>
+//                 <div className="space-y-2">
+//                   <p className="text-sm sm:text-base lg:text-2xl font-bold leading-relaxed">
+//                     {faqData.srcLongName} is {faqData.diffHours} hours {faqData.isAhead ? 'ahead of' : 'behind'} {faqData.tgtLongName}
+//                   </p>
+//                   <p className={`text-xs sm:text-sm ${subtleText} leading-relaxed`}>
+//                     {faqData.srcTime} in {faqData.srcName} is {faqData.tgtTime} in {faqData.tgtName}
+//                   </p>
+//                 </div>
+//               </div>
+
+//               <div className="space-y-4">
+//                 <h4 className="text-xs font-black uppercase tracking-widest text-green-500">
+//                   {faqData.srcName} to {faqData.tgtName} Call Time
+//                 </h4>
+//                 <div className="space-y-2">
+//                   {faqData.overlap ? (
+//                     <p className="text-sm sm:text-base lg:text-2xl font-bold leading-relaxed">
+//                       Best time for a conference call or a meeting is between {faqData.overlap.srcRange} in {faqData.srcName} which corresponds to {faqData.overlap.tgtRange} in {faqData.tgtName}
+//                     </p>
+//                   ) : (
+//                     <p className={`text-sm sm:text-base lg:text-2xl font-bold leading-relaxed ${subtleText}`}>
+//                       No standard business hour overlap found. Consider scheduling during early morning or late evening.
+//                     </p>
+//                   )}
+//                 </div>
+//               </div>
+//             </div>
+
+//             <div className={`pt-8 border-t ${panelBorderSoft} grid grid-cols-1 md:grid-cols-2 gap-6`}>
+//               <div className="flex items-center gap-4">
+//                 <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center flex-none">
+//                   <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+//                   </svg>
+//                 </div>
+//                 <div>
+//                   <div className={`text-[10px] font-black uppercase tracking-widest ${subtleText}`}>
+//                     {faqData.srcName} ({faqData.srcLongName})
+//                   </div>
+//                   <div className="text-sm sm:text-lg font-bold">Offset {faqData.srcOffset}</div>
+//                 </div>
+//               </div>
+
+//               <div className="flex items-center gap-4">
+//                 <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center flex-none">
+//                   <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+//                   </svg>
+//                 </div>
+//                 <div>
+//                   <div className={`text-[10px] font-black uppercase tracking-widest ${subtleText}`}>
+//                     {faqData.tgtName} ({faqData.tgtLongName})
+//                   </div>
+//                   <div className="text-sm sm:text-lg font-bold">Offset {faqData.tgtOffset}</div>
+//                 </div>
+//               </div>
+//             </div>
+
+//             <div className="text-center pt-4">
+//               <div className={`inline-block px-4 py-2 rounded-full ${isDark ? 'bg-zinc-500/5' : 'bg-zinc-900/5'} text-[10px] font-black uppercase tracking-widest ${faintText}`}>
+//                 {faqData.srcTime} {faqData.srcName} / {faqData.tgtTime} {faqData.tgtName}
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       )} */}
+
 //       <div className={`text-center text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] pt-6 sm:pt-8 ${faintText}`}>
 //         Global resolution context • Wall-clock anchored drift-free engine
 //       </div>
@@ -1130,9 +1489,6 @@
 
 // export default TimezoneConverter;
 
-
-// TESTING FAQ Feature 
-
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import * as ct from 'countries-and-timezones';
 import { COMMON_TIMEZONES } from '../constants';
@@ -1142,6 +1498,7 @@ interface TimezoneConverterProps {
   isDark: boolean;
   fromSlug?: string;
   toSlug?: string;
+  isTimezoneCodeRoute?: boolean;
 }
 
 interface ConversionHistoryItem {
@@ -1206,6 +1563,18 @@ const EXTENDED_ZONE_MAP: Record<string, string> = {
   SGT: 'Asia/Singapore',
   SINGAPORE: 'Asia/Singapore',
   GST: 'Asia/Dubai',
+  PHT: 'Asia/Manila',
+  MANILA: 'Asia/Manila',
+  PHILIPPINES: 'Asia/Manila',
+  EET: 'Europe/Helsinki',
+  HELSINKI: 'Europe/Helsinki',
+  KST: 'Asia/Seoul',
+  KOREA: 'Asia/Seoul',
+  NZDT: 'Pacific/Auckland',
+  NZST: 'Pacific/Auckland',
+  AUCKLAND: 'Pacific/Auckland',
+  AST: 'America/Halifax',
+  HALIFAX: 'America/Halifax',
   DUBAI: 'Asia/Dubai',
   UAE: 'Asia/Dubai',
   RUSSIA: 'Europe/Moscow',
@@ -1222,6 +1591,37 @@ const EXTENDED_ZONE_MAP: Record<string, string> = {
   BRT: 'America/Sao_Paulo',
   BRAZIL: 'America/Sao_Paulo',
   'SAO PAULO': 'America/Sao_Paulo'
+};
+
+// Timezone abbreviation codes — these should display as codes, not city names
+const TIMEZONE_CODES = new Set([
+  'IST', 'EST', 'EDT', 'PST', 'PDT', 'CST', 'CDT', 'MST', 'MDT',
+  'GMT', 'BST', 'CET', 'CEST', 'JST', 'AEST', 'AEDT', 'SGT',
+  'GST', 'MSK', 'HKT', 'WET', 'BRT', 'NY', 'NYC', 'LA', 'SF', 'UK',
+  'PHT', 'EET', 'KST', 'NZDT', 'NZST', 'AST'
+]);
+
+const IANA_TO_CODE: Record<string, string> = {
+  'America/New_York':    'EST',
+  'America/Los_Angeles': 'PST',
+  'America/Chicago':     'CST',
+  'America/Denver':      'MST',
+  'Europe/London':       'GMT',
+  'Asia/Kolkata':        'IST',
+  'Asia/Tokyo':          'JST',
+  'Europe/Berlin':       'CET',
+  'Asia/Singapore':      'SGT',
+  'Australia/Sydney':    'AEST',
+  'Asia/Dubai':          'GST',
+  'Asia/Manila':         'PHT',
+  'Europe/Helsinki':     'EET',
+  'Asia/Seoul':          'KST',
+  'Pacific/Auckland':    'NZDT',
+  'America/Halifax':     'AST',
+  'America/Sao_Paulo':   'BRT',
+  'Europe/Lisbon':       'WET',
+  'Asia/Hong_Kong':      'HKT',
+  'Europe/Moscow':       'MSK',
 };
 
 const normalizeKey = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -1267,6 +1667,23 @@ const toZoneLabel = (iana: string) => {
   const parts = iana.split('/');
   const last = parts[parts.length - 1].replace(/_/g, ' ');
   return last.charAt(0).toUpperCase() + last.slice(1);
+};
+
+/**
+ * Given a raw query string (e.g. "delhi", "New York", "IST"),
+ * return the best display name:
+ * - If it's a known timezone code (IST, GMT, PST…) → return the code in uppercase
+ * - Otherwise → title-case the original query (preserves "Delhi", "New York", "London")
+ */
+const getDisplayName = (query: string, iana: string): string => {
+  const upperQuery = query.toUpperCase().trim();
+  if (TIMEZONE_CODES.has(upperQuery)) return upperQuery;
+  // Title-case the original human query
+  return query
+    .trim()
+    .split(/\s+/)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
 };
 
 const slugifyRoutePart = (value: string) =>
@@ -1465,7 +1882,7 @@ const getDisplayFormatter = (iana: string) => {
   return TZ_DISPLAY_FORMATTER_CACHE[iana];
 };
 
-const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug, toSlug }) => {
+const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug, toSlug, isTimezoneCodeRoute = false }) => {
   const [naturalInput, setNaturalInput] = useState('');
   const [baseTime, setBaseTime] = useState(() => {
     const d = new Date();
@@ -1477,13 +1894,10 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
   iana: 'Europe/London',
   offset: 0
 });
-  // const [sourceTz, setSourceTz] = useState<Timezone>(COMMON_TIMEZONES[3]);
   const [targets, setTargets] = useState<Timezone[]>([
   { name: 'New York', iana: 'America/New_York', offset: -5 }
 ]);
 
-  
-  // const [targets, setTargets] = useState<Timezone[]>([{ name: 'Toronto', iana: 'America/Toronto', offset: -5 }]);
   const [history, setHistory] = useState<ConversionHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLive, setIsLive] = useState(true);
@@ -1696,12 +2110,21 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
     let routeTarget: Timezone | null = null;
 
     if (fromIana) {
-      routeSource = { name: toZoneLabel(fromIana), iana: fromIana, offset: 0 };
+      // FIX: use humanizeSlug to preserve the city name from the URL slug (e.g. "Delhi", "London")
+      // Previously used toZoneLabel(fromIana) which gave the IANA city part (e.g. "Kolkata" for Delhi)
+      const fromName = isTimezoneCodeRoute
+        ? fromSlug!.toUpperCase()
+        : humanizeSlug(fromSlug!);
+      routeSource = { name: fromName, iana: fromIana, offset: 0 };
       setSourceTz(routeSource);
     }
 
     if (toIana) {
-      routeTarget = { name: toZoneLabel(toIana), iana: toIana, offset: 0 };
+      // FIX: same fix for target
+      const toName = isTimezoneCodeRoute
+        ? toSlug!.toUpperCase()
+        : humanizeSlug(toSlug!);
+      routeTarget = { name: toName, iana: toIana, offset: 0 };
       setTargets([routeTarget]);
     }
 
@@ -1723,18 +2146,26 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       .replace(/\b(\d{1,2})(?::(\d{2}))?(?::(\d{2}))?\s*(AM|PM)?\b/gi, '')
       .split(/\s+(?:TO|INTO|IN|AND|AT)\s+/i);
 
-    const findZone = (query: string): Timezone | null => {
-      const iana = resolveIanaFromQuery(query);
+    // Keep original-case parts for display name resolution
+    const originalParts = input
+      .replace(/\b(\d{1,2})(?::(\d{2}))?(?::(\d{2}))?\s*(AM|PM)?\b/gi, '')
+      .split(/\s+(?:to|into|in|and|at)\s+/i);
+
+    // FIX: findZone now takes the original (non-uppercased) query to use as display name
+    const findZone = (uppercaseQuery: string, originalQuery: string): Timezone | null => {
+      const iana = resolveIanaFromQuery(uppercaseQuery);
       if (!iana) return null;
-      return { name: toZoneLabel(iana), iana, offset: 0 };
+      // Use getDisplayName to distinguish timezone codes from city names
+      const displayName = getDisplayName(originalQuery.trim(), iana);
+      return { name: displayName, iana, offset: 0 };
     };
 
     let activeSrc = sourceTz;
     let activeTgt = targets[0] || { name: 'Target', iana: 'UTC', offset: 0 };
 
     if (zoneParts.length >= 2) {
-      const src = findZone(zoneParts[0]);
-      const tgt = findZone(zoneParts[1]);
+      const src = findZone(zoneParts[0], originalParts[0] || zoneParts[0]);
+      const tgt = findZone(zoneParts[1], originalParts[1] || zoneParts[1]);
       if (src) {
         setSourceTz(src);
         activeSrc = src;
@@ -1744,7 +2175,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
         activeTgt = tgt;
       }
     } else if (zoneParts.length === 1) {
-      const single = findZone(zoneParts[0]);
+      const single = findZone(zoneParts[0], originalParts[0] || zoneParts[0]);
       if (single) {
         setSourceTz(single);
         activeSrc = single;
@@ -1865,54 +2296,129 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
   const currentRoute = `${fromRouteSlug}-to-${toRouteSlug}`;
 
   const relatedRoutes = useMemo(() => {
-    const fromNode = ROUTE_ALIAS[fromRouteSlug] || fromRouteSlug;
-    const toNode = ROUTE_ALIAS[toRouteSlug] || toRouteSlug;
-
     const itemMap = new Map<string, RelatedRouteItem>();
+    const currentHref = `/${currentRoute}`;
 
-    const addRoute = (fromCity: string, toCity: string, score: number) => {
-      if (!fromCity || !toCity || fromCity === toCity) return;
-      const href = `/${fromCity}-to-${toCity}`;
-      if (href === `/${currentRoute}`) return;
-      const label = `${humanizeSlug(fromCity)} → ${humanizeSlug(toCity)}`;
-
+    const addRoute = (from: string, to: string, score: number) => {
+      if (!from || !to || from === to) return;
+      const href = `/${from}-to-${to}`;
+      if (href === currentHref) return;
+      const label = `${humanizeSlug(from)} → ${humanizeSlug(to)}`;
       const existing = itemMap.get(href);
       if (!existing || score > existing.score) {
         itemMap.set(href, { href, label, score });
       }
     };
 
-    (ROUTE_GRAPH[fromNode] || []).forEach(edge => {
-      if (edge.to === toNode) return;
-      const targetCandidates = HUB_CITY_VARIANTS[edge.to] || [edge.to];
-      targetCandidates.slice(0, 2).forEach(city => addRoute(fromRouteSlug, city, edge.score));
-    });
+    const TZ_TO_CITIES: Record<string, string[]> = {
+      'ist':  ['mumbai', 'delhi', 'bangalore', 'hyderabad', 'chennai'],
+      'est':  ['new-york', 'boston', 'miami', 'atlanta', 'washington-dc'],
+      'pst':  ['los-angeles', 'san-francisco', 'seattle', 'las-vegas'],
+      'cst':  ['chicago', 'houston', 'dallas'],
+      'mst':  ['denver'],
+      'gmt':  ['london', 'dublin'],
+      'cet':  ['berlin', 'paris', 'amsterdam', 'rome', 'madrid'],
+      'jst':  ['tokyo', 'osaka'],
+      'sgt':  ['singapore'],
+      'aest': ['sydney', 'melbourne', 'brisbane'],
+      'gst':  ['dubai', 'abu-dhabi'],
+    };
 
-    Object.entries(ROUTE_GRAPH).forEach(([sourceNode, edges]) => {
-      const edge = edges.find(e => e.to === toNode);
-      if (!edge) return;
-      const sourceCandidates = HUB_CITY_VARIANTS[sourceNode] || [sourceNode];
-      sourceCandidates.slice(0, 2).forEach(city => addRoute(city, toRouteSlug, edge.score - 5));
-    });
+    const TZ_POPULAR_PAIRS: Record<string, string[]> = {
+      'ist':  ['est', 'pst', 'gmt', 'cet', 'jst', 'sgt', 'gst', 'aest', 'cst'],
+      'est':  ['ist', 'gmt', 'pst', 'cet', 'jst', 'sgt', 'aest', 'cst', 'gst'],
+      'pst':  ['ist', 'gmt', 'est', 'cet', 'jst', 'sgt', 'aest', 'cst'],
+      'cst':  ['est', 'ist', 'gmt', 'pst', 'cet', 'jst', 'sgt'],
+      'mst':  ['est', 'pst', 'gmt', 'cst', 'ist'],
+      'gmt':  ['ist', 'est', 'pst', 'cet', 'jst', 'sgt', 'aest', 'gst', 'cst'],
+      'cet':  ['gmt', 'est', 'ist', 'pst', 'jst', 'sgt', 'aest'],
+      'jst':  ['est', 'pst', 'ist', 'sgt', 'aest', 'gmt', 'cet'],
+      'sgt':  ['ist', 'gmt', 'est', 'jst', 'aest', 'cet', 'pst'],
+      'aest': ['ist', 'gmt', 'est', 'jst', 'sgt', 'pst', 'cet'],
+      'gst':  ['ist', 'gmt', 'est', 'cet', 'jst', 'pst'],
+    };
 
-    if (toNode === 'usa' || ['new-york', 'los-angeles', 'chicago', 'seattle', 'dallas', 'san-francisco'].includes(toRouteSlug)) {
-      ['new-york', 'los-angeles', 'chicago', 'seattle', 'dallas', 'san-francisco']
-        .filter(city => city !== toRouteSlug)
-        .forEach((city, idx) => addRoute(fromRouteSlug, city, 82 - idx));
-    }
+    const isFromTz = Boolean(TZ_TO_CITIES[fromRouteSlug]);
+    const isToTz = Boolean(TZ_TO_CITIES[toRouteSlug]);
 
-    addRoute(toRouteSlug, fromRouteSlug, 120);
+    if (isFromTz || isToTz) {
+      addRoute(toRouteSlug, fromRouteSlug, 100);
 
-    if (itemMap.size < 6) {
-      const fromRegion = CITY_REGION_MAP[fromRouteSlug];
-      const toRegion = CITY_REGION_MAP[toRouteSlug];
+      if (isFromTz && isToTz) {
+        (TZ_POPULAR_PAIRS[fromRouteSlug] || [])
+          .filter(tz => tz !== toRouteSlug)
+          .slice(0, 4)
+          .forEach((tz, i) => addRoute(fromRouteSlug, tz, 90 - i));
 
-      (fromRegion ? REGION_CLUSTERS[fromRegion] || [] : []).forEach((city, idx) => {
-        if (city !== fromRouteSlug && city !== toRouteSlug) addRoute(fromRouteSlug, city, 50 - idx);
+        (TZ_POPULAR_PAIRS[toRouteSlug] || [])
+          .filter(tz => tz !== fromRouteSlug)
+          .slice(0, 3)
+          .forEach((tz, i) => addRoute(tz, toRouteSlug, 80 - i));
+
+        const fromCities = (TZ_TO_CITIES[fromRouteSlug] || []).slice(0, 2);
+        const toCities = (TZ_TO_CITIES[toRouteSlug] || []).slice(0, 2);
+        fromCities.forEach((fc, i) => {
+          toCities.forEach((tc, j) => addRoute(fc, tc, 70 - i - j));
+        });
+
+      } else if (isFromTz && !isToTz) {
+        const fromCities = (TZ_TO_CITIES[fromRouteSlug] || []).slice(0, 3);
+        fromCities.forEach((fc, i) => addRoute(fc, toRouteSlug, 90 - i));
+        (TZ_POPULAR_PAIRS[fromRouteSlug] || []).slice(0, 4)
+          .forEach((tz, i) => addRoute(fromRouteSlug, tz, 80 - i));
+
+      } else if (!isFromTz && isToTz) {
+        const toCities = (TZ_TO_CITIES[toRouteSlug] || []).slice(0, 3);
+        toCities.forEach((tc, i) => addRoute(fromRouteSlug, tc, 90 - i));
+        (TZ_POPULAR_PAIRS[toRouteSlug] || []).slice(0, 4)
+          .forEach((tz, i) => addRoute(tz, toRouteSlug, 80 - i));
+      }
+
+    } else {
+      const fromNode = ROUTE_ALIAS[fromRouteSlug] || fromRouteSlug;
+      const toNode = ROUTE_ALIAS[toRouteSlug] || toRouteSlug;
+
+      addRoute(toRouteSlug, fromRouteSlug, 100);
+
+      (ROUTE_GRAPH[fromNode] || []).forEach(edge => {
+        if (edge.to === toNode) return;
+        const targetCandidates = HUB_CITY_VARIANTS[edge.to] || [edge.to];
+        targetCandidates.slice(0, 2).forEach(city => addRoute(fromRouteSlug, city, edge.score));
       });
 
-      (toRegion ? REGION_CLUSTERS[toRegion] || [] : []).forEach((city, idx) => {
-        if (city !== fromRouteSlug && city !== toRouteSlug) addRoute(city, toRouteSlug, 45 - idx);
+      Object.entries(ROUTE_GRAPH).forEach(([sourceNode, edges]) => {
+        const edge = edges.find(e => e.to === toNode);
+        if (!edge) return;
+        const sourceCandidates = HUB_CITY_VARIANTS[sourceNode] || [sourceNode];
+        sourceCandidates.slice(0, 2).forEach(city => addRoute(city, toRouteSlug, edge.score - 5));
+      });
+
+      if (toNode === 'usa' || ['new-york', 'los-angeles', 'chicago', 'seattle', 'dallas', 'san-francisco'].includes(toRouteSlug)) {
+        ['new-york', 'los-angeles', 'chicago', 'seattle', 'dallas', 'san-francisco']
+          .filter(city => city !== toRouteSlug)
+          .forEach((city, idx) => addRoute(fromRouteSlug, city, 82 - idx));
+      }
+
+      if (itemMap.size < 6) {
+        const fromRegion = CITY_REGION_MAP[fromRouteSlug];
+        const toRegion = CITY_REGION_MAP[toRouteSlug];
+        (fromRegion ? REGION_CLUSTERS[fromRegion] || [] : []).forEach((city, idx) => {
+          if (city !== fromRouteSlug && city !== toRouteSlug) addRoute(fromRouteSlug, city, 50 - idx);
+        });
+        (toRegion ? REGION_CLUSTERS[toRegion] || [] : []).forEach((city, idx) => {
+          if (city !== fromRouteSlug && city !== toRouteSlug) addRoute(city, toRouteSlug, 45 - idx);
+        });
+      }
+    }
+
+    if (itemMap.size < 6) {
+      const globalFallback = [
+        ['mumbai', 'london'], ['new-york', 'london'], ['london', 'new-york'],
+        ['mumbai', 'new-york'], ['singapore', 'london'], ['dubai', 'london'],
+        ['sydney', 'london'], ['tokyo', 'new-york'], ['berlin', 'new-york'],
+      ];
+      globalFallback.forEach(([f, t]) => {
+        if (f !== fromRouteSlug && t !== toRouteSlug) addRoute(f, t, 30);
       });
     }
 
@@ -2230,7 +2736,9 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
                         const val = (e.target as HTMLInputElement).value;
                         const iana = resolveIanaFromQuery(val);
                         if (iana) {
-                          setTargets(prev => [...prev, { name: toZoneLabel(iana), iana, offset: 0 }]);
+                          // FIX: use getDisplayName here too for consistent naming
+                          const displayName = getDisplayName(val, iana);
+                          setTargets(prev => [...prev, { name: displayName, iana, offset: 0 }]);
                           (e.target as HTMLInputElement).value = '';
                         }
                       }
@@ -2306,7 +2814,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
         </div>
       </div>
 
-            {faqData && (
+      {faqData && (
         <div className="max-w-6xl mx-auto mt-12 sm:mt-16">
           <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
             <div className="w-10 sm:w-20 h-px bg-current"></div>Timezone Conversion FAQ and Fact
@@ -2382,85 +2890,6 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
           </div>
         </div>
       )}
-
-      
-      
-      {/* {faqData && (
-        <div className="max-w-6xl mx-auto mt-12 sm:mt-16">
-          <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
-            <div className="w-10 sm:w-20 h-px bg-current"></div>Timezone FAQ & Facts
-          </div>
-
-          <div className={`border ${panelBorder} rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-6 sm:p-10 space-y-8`}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12">
-              <div className="space-y-4">
-                <h4 className="text-xs font-black uppercase tracking-widest text-blue-500">Time Difference</h4>
-                <div className="space-y-2">
-                  <p className="text-sm sm:text-base lg:text-2xl font-bold leading-relaxed">
-                    {faqData.srcLongName} is {faqData.diffHours} hours {faqData.isAhead ? 'ahead of' : 'behind'} {faqData.tgtLongName}
-                  </p>
-                  <p className={`text-xs sm:text-sm ${subtleText} leading-relaxed`}>
-                    {faqData.srcTime} in {faqData.srcName} is {faqData.tgtTime} in {faqData.tgtName}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h4 className="text-xs font-black uppercase tracking-widest text-green-500">
-                  {faqData.srcName} to {faqData.tgtName} Call Time
-                </h4>
-                <div className="space-y-2">
-                  {faqData.overlap ? (
-                    <p className="text-sm sm:text-base lg:text-2xl font-bold leading-relaxed">
-                      Best time for a conference call or a meeting is between {faqData.overlap.srcRange} in {faqData.srcName} which corresponds to {faqData.overlap.tgtRange} in {faqData.tgtName}
-                    </p>
-                  ) : (
-                    <p className={`text-sm sm:text-base lg:text-2xl font-bold leading-relaxed ${subtleText}`}>
-                      No standard business hour overlap found. Consider scheduling during early morning or late evening.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className={`pt-8 border-t ${panelBorderSoft} grid grid-cols-1 md:grid-cols-2 gap-6`}>
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center flex-none">
-                  <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <div className={`text-[10px] font-black uppercase tracking-widest ${subtleText}`}>
-                    {faqData.srcName} ({faqData.srcLongName})
-                  </div>
-                  <div className="text-sm sm:text-lg font-bold">Offset {faqData.srcOffset}</div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center flex-none">
-                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <div className={`text-[10px] font-black uppercase tracking-widest ${subtleText}`}>
-                    {faqData.tgtName} ({faqData.tgtLongName})
-                  </div>
-                  <div className="text-sm sm:text-lg font-bold">Offset {faqData.tgtOffset}</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-center pt-4">
-              <div className={`inline-block px-4 py-2 rounded-full ${isDark ? 'bg-zinc-500/5' : 'bg-zinc-900/5'} text-[10px] font-black uppercase tracking-widest ${faintText}`}>
-                {faqData.srcTime} {faqData.srcName} / {faqData.tgtTime} {faqData.tgtName}
-              </div>
-            </div>
-          </div>
-        </div>
-      )} */}
 
       <div className={`text-center text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] pt-6 sm:pt-8 ${faintText}`}>
         Global resolution context • Wall-clock anchored drift-free engine

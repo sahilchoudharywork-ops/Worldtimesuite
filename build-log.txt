@@ -1,0 +1,150 @@
+
+> worldtimesuite-timezone-productivity-suite@0.0.0 build
+> npm run build:sitemap && npm run build:client && npm run build:prerender
+
+
+> worldtimesuite-timezone-productivity-suite@0.0.0 build:sitemap
+> tsx scripts/generate-sitemap.ts
+
+Wrote sitemap-1.xml (5000 URLs)
+Wrote sitemap-2.xml (5000 URLs)
+Wrote sitemap-3.xml (1864 URLs)
+
+Sitemap generated:
+  Static pages:    4
+  Timezone routes: 88
+  City pair pages: 11772
+  Total:           11864 URLs across 3 sitemap files
+
+> worldtimesuite-timezone-productivity-suite@0.0.0 build:client
+> vite build
+
+vite v6.4.2 building for production...
+transforming...
+✓ 45 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                      4.88 kB │ gzip:  1.76 kB
+dist/assets/index-DCf766MW.css      38.88 kB │ gzip:  7.22 kB
+dist/assets/Stopwatch-DgI3Ti22.js    4.77 kB │ gzip:  1.68 kB
+dist/assets/Timer-BNo52_xP.js        8.37 kB │ gzip:  2.39 kB
+dist/assets/Calendar-BRREv-kO.js    17.86 kB │ gzip:  5.14 kB
+dist/assets/index-Xkzx5Abc.js      284.50 kB │ gzip: 88.34 kB
+✓ built in 761ms
+
+> worldtimesuite-timezone-productivity-suite@0.0.0 build:prerender
+> tsx scripts/prerender.ts
+
+
+  Template backed up to dist/_template.html
+  Sanity check: parseConversionRoute('/delhi-to-london') = {"fromSlug":"delhi","toSlug":"london","fromName":"Delhi","toName":"London"}
+  Sanity check: parseConversionRoute('/ist-to-gmt') = {"fromSlug":"ist","toSlug":"gmt","fromName":"IST","toName":"GMT"}
+
+  Prerendering 100 routes...
+
+  ✓ /
+  ✓ /timer
+  ✓ /stopwatch
+  ✓ /calendar
+  ✓ /ist-to-gmt
+  ✓ /est-to-gmt
+  ✓ /ist-to-est
+  ✓ /pst-to-est
+  ✓ /pst-to-gmt
+  ✓ /cst-to-gmt
+  ✓ /ist-to-pst
+  ✓ /cet-to-gmt
+  ✓ /aest-to-gmt
+  ✓ /ist-to-cst
+  ✓ /est-to-cet
+  ✓ /gmt-to-ist
+  ✓ /gst-to-gmt
+  ✓ /pht-to-est
+  ✓ /pht-to-gmt
+  ✓ /jst-to-gmt
+  ✓ /cest-to-gmt
+  ✓ /jst-to-est
+  ✓ /cst-to-est
+  ✓ /gmt-to-cet
+  ✓ /pst-to-cst
+  ✓ /ist-to-aest
+  ✓ /est-to-aest
+  ✓ /hkt-to-gmt
+  ✓ /hkt-to-est
+  ✓ /sgt-to-gmt
+  ✓ /sgt-to-est
+  ✓ /brt-to-est
+  ✓ /mst-to-gmt
+  ✓ /eet-to-gmt
+  ✓ /kst-to-est
+  ✓ /gmt-to-pst
+  ✓ /cet-to-est
+  ✓ /wet-to-gmt
+  ✓ /nzdt-to-est
+  ✓ /ast-to-est
+  ✓ /brt-to-gmt
+  ✓ /ist-to-jst
+  ✓ /cst-to-pst
+  ✓ /pst-to-cet
+  ✓ /cet-to-ist
+  ✓ /mst-to-est
+  ✓ /gst-to-ist
+  ✓ /gmt-to-kst
+  ✓ /est-to-sgt
+  ✓ /ist-to-hkt
+  ✓ /aest-to-pst
+  ✓ /gmt-to-msk
+  ✓ /london-to-new-york
+  ✓ /new-york-to-london
+  ✓ /london-to-dubai
+  ✓ /mumbai-to-new-york
+  ✓ /los-angeles-to-new-york
+  ✓ /sydney-to-london
+  ✓ /singapore-to-london
+  ✓ /toronto-to-new-york
+  ✓ /dubai-to-london
+  ✓ /delhi-to-new-york
+  ✓ /london-to-sydney
+  ✓ /chicago-to-new-york
+  ✓ /san-francisco-to-new-york
+  ✓ /london-to-paris
+  ✓ /paris-to-london
+  ✓ /bangalore-to-new-york
+  ✓ /hong-kong-to-london
+  ✓ /new-york-to-tokyo
+  ✓ /london-to-hong-kong
+  ✓ /mumbai-to-london
+  ✓ /sydney-to-new-york
+  ✓ /new-york-to-singapore
+  ✓ /manila-to-new-york
+  ✓ /toronto-to-london
+  ✓ /chicago-to-london
+  ✓ /london-to-singapore
+  ✓ /melbourne-to-london
+  ✓ /london-to-los-angeles
+  ✓ /new-york-to-dubai
+  ✓ /vancouver-to-london
+  ✓ /delhi-to-london
+  ✓ /brisbane-to-london
+  ✓ /new-york-to-hong-kong
+  ✓ /london-to-mumbai
+  ✓ /dallas-to-london
+  ✓ /london-to-bangalore
+  ✓ /perth-to-london
+  ✓ /new-york-to-paris
+  ✓ /san-francisco-to-london
+  ✓ /dubai-to-mumbai
+  ✓ /atlanta-to-london
+  ✓ /delhi-to-dubai
+  ✓ /boston-to-london
+  ✓ /london-to-tokyo
+  ✓ /new-york-to-berlin
+  ✓ /seattle-to-new-york
+  ✓ /houston-to-new-york
+  ✓ /london-to-bangkok
+
+✅ Done.
+   Static:    4
+   Timezone:  48
+   City:      48
+   Total:     100
