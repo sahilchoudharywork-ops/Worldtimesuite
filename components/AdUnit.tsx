@@ -68,6 +68,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AdProps } from '../types';
 
 const AdUnit: React.FC<AdProps> = ({ id, type, className = '', isDark = false }) => {
+  return null; // ADS PAUSED — remove this line to re-enable
   const [isVisible, setIsVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
