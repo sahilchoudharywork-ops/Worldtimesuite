@@ -295,7 +295,7 @@ const App: React.FC<AppProps> = ({ initialPath = '/' }) => {
                 </aside>
               )}
 
-              <div className={`${isCalendar ? 'lg:col-span-12' : isConverter ? 'lg:col-span-9' : 'lg:col-span-7'} ${bgColor} min-h-[800px] overflow-hidden relative border-zinc-800/10 dark:border-zinc-200/10 transition-all duration-500`}>
+              <div className={`${isCalendar ? 'lg:col-span-12' : isConverter ? 'lg:col-span-12' : 'lg:col-span-7'} ${bgColor} min-h-[800px] overflow-hidden relative border-zinc-800/10 dark:border-zinc-200/10 transition-all duration-500`}>
                 <Suspense fallback={loadingFallback}>
                   {renderPage()}
                 </Suspense>

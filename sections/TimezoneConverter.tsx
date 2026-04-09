@@ -1,3 +1,1448 @@
+// import React, { useState, useCallback, useEffect, useMemo } from 'react';
+// import * as ct from 'countries-and-timezones';
+// import { COMMON_TIMEZONES } from '../constants';
+// import { Timezone } from '../types';
+
+// interface TimezoneConverterProps {
+//   isDark: boolean;
+//   fromSlug?: string;
+//   toSlug?: string;
+//   isTimezoneCodeRoute?: boolean;
+// }
+
+// interface ConversionHistoryItem {
+//   id: string;
+//   query: string;
+//   sourceName: string;
+//   sourceIana: string;
+//   sourceTime: string;
+//   targetName: string;
+//   targetIana: string;
+//   targetTime: string;
+//   createdAt: number;
+// }
+
+// interface RelatedRouteItem {
+//   href: string;
+//   label: string;
+//   score: number;
+// }
+
+// const EXTENDED_ZONE_MAP: Record<string, string> = {
+//   IST: 'Asia/Kolkata',
+//   INDIA: 'Asia/Kolkata',
+//   BOMBAY: 'Asia/Kolkata',
+//   DELHI: 'Asia/Kolkata',
+//   KOLKATA: 'Asia/Kolkata',
+//   EST: 'America/New_York',
+//   EDT: 'America/New_York',
+//   'NEW YORK': 'America/New_York',
+//   NY: 'America/New_York',
+//   NYC: 'America/New_York',
+//   PST: 'America/Los_Angeles',
+//   PDT: 'America/Los_Angeles',
+//   LA: 'America/Los_Angeles',
+//   CALIFORNIA: 'America/Los_Angeles',
+//   SF: 'America/Los_Angeles',
+//   'SAN FRANCISCO': 'America/Los_Angeles',
+//   CST: 'America/Chicago',
+//   CDT: 'America/Chicago',
+//   CHICAGO: 'America/Chicago',
+//   MST: 'America/Denver',
+//   MDT: 'America/Denver',
+//   DENVER: 'America/Denver',
+//   GMT: 'Europe/London',
+//   BST: 'Europe/London',
+//   LONDON: 'Europe/London',
+//   UK: 'Europe/London',
+//   ENGLAND: 'Europe/London',
+//   CET: 'Europe/Berlin',
+//   CEST: 'Europe/Berlin',
+//   BERLIN: 'Europe/Berlin',
+//   GERMANY: 'Europe/Berlin',
+//   PARIS: 'Europe/Paris',
+//   FRANCE: 'Europe/Paris',
+//   JST: 'Asia/Tokyo',
+//   TOKYO: 'Asia/Tokyo',
+//   JAPAN: 'Asia/Tokyo',
+//   AEST: 'Australia/Sydney',
+//   AEDT: 'Australia/Sydney',
+//   SYDNEY: 'Australia/Sydney',
+//   MELBOURNE: 'Australia/Melbourne',
+//   SGT: 'Asia/Singapore',
+//   SINGAPORE: 'Asia/Singapore',
+//   GST: 'Asia/Dubai',
+//   PHT: 'Asia/Manila',
+//   MANILA: 'Asia/Manila',
+//   PHILIPPINES: 'Asia/Manila',
+//   EET: 'Europe/Helsinki',
+//   HELSINKI: 'Europe/Helsinki',
+//   KST: 'Asia/Seoul',
+//   KOREA: 'Asia/Seoul',
+//   NZDT: 'Pacific/Auckland',
+//   NZST: 'Pacific/Auckland',
+//   AUCKLAND: 'Pacific/Auckland',
+//   AST: 'America/Halifax',
+//   HALIFAX: 'America/Halifax',
+//   DUBAI: 'Asia/Dubai',
+//   UAE: 'Asia/Dubai',
+//   RUSSIA: 'Europe/Moscow',
+//   MOSCOW: 'Europe/Moscow',
+//   MSK: 'Europe/Moscow',
+//   TORONTO: 'America/Toronto',
+//   CANADA: 'America/Toronto',
+//   ONTARIO: 'America/Toronto',
+//   HKT: 'Asia/Hong_Kong',
+//   'HONG KONG': 'Asia/Hong_Kong',
+//   WET: 'Europe/Lisbon',
+//   PORTUGAL: 'Europe/Lisbon',
+//   LISBON: 'Europe/Lisbon',
+//   BRT: 'America/Sao_Paulo',
+//   BRAZIL: 'America/Sao_Paulo',
+//   'SAO PAULO': 'America/Sao_Paulo'
+// };
+
+// // Timezone abbreviation codes — these should display as codes, not city names
+// const TIMEZONE_CODES = new Set([
+//   'IST', 'EST', 'EDT', 'PST', 'PDT', 'CST', 'CDT', 'MST', 'MDT',
+//   'GMT', 'BST', 'CET', 'CEST', 'JST', 'AEST', 'AEDT', 'SGT',
+//   'GST', 'MSK', 'HKT', 'WET', 'BRT', 'NY', 'NYC', 'LA', 'SF', 'UK',
+//   'PHT', 'EET', 'KST', 'NZDT', 'NZST', 'AST'
+// ]);
+
+// const IANA_TO_CODE: Record<string, string> = {
+//   'America/New_York':    'EST',
+//   'America/Los_Angeles': 'PST',
+//   'America/Chicago':     'CST',
+//   'America/Denver':      'MST',
+//   'Europe/London':       'GMT',
+//   'Asia/Kolkata':        'IST',
+//   'Asia/Tokyo':          'JST',
+//   'Europe/Berlin':       'CET',
+//   'Asia/Singapore':      'SGT',
+//   'Australia/Sydney':    'AEST',
+//   'Asia/Dubai':          'GST',
+//   'Asia/Manila':         'PHT',
+//   'Europe/Helsinki':     'EET',
+//   'Asia/Seoul':          'KST',
+//   'Pacific/Auckland':    'NZDT',
+//   'America/Halifax':     'AST',
+//   'America/Sao_Paulo':   'BRT',
+//   'Europe/Lisbon':       'WET',
+//   'Asia/Hong_Kong':      'HKT',
+//   'Europe/Moscow':       'MSK',
+// };
+
+// const normalizeKey = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+// const ALL_IANA_ZONES: string[] = (() => {
+//   try {
+//     return (Intl as any).supportedValuesOf ? (Intl as any).supportedValuesOf('timeZone') : [];
+//   } catch {
+//     return [];
+//   }
+// })();
+
+// const GLOBAL_ZONE_INDEX: Record<string, string> = {};
+// const COUNTRY_ZONE_INDEX: Record<string, string> = {};
+
+// ALL_IANA_ZONES.forEach(iana => {
+//   const parts = iana.split('/');
+//   const city = parts[parts.length - 1];
+//   GLOBAL_ZONE_INDEX[normalizeKey(city)] = iana;
+//   GLOBAL_ZONE_INDEX[normalizeKey(iana)] = iana;
+// });
+
+// const countries = ct.getAllCountries();
+// Object.values(countries).forEach((country: any) => {
+//   const primaryZone = country.timezones[0];
+//   if (primaryZone) {
+//     COUNTRY_ZONE_INDEX[normalizeKey(country.name)] = primaryZone;
+//     COUNTRY_ZONE_INDEX[normalizeKey(country.id)] = primaryZone;
+//   }
+// });
+
+// const resolveIanaFromQuery = (query: string): string | null => {
+//   const norm = normalizeKey(query);
+//   if (!norm) return null;
+//   const upper = query.toUpperCase().trim();
+//   if (EXTENDED_ZONE_MAP[upper]) return EXTENDED_ZONE_MAP[upper];
+//   if (GLOBAL_ZONE_INDEX[norm]) return GLOBAL_ZONE_INDEX[norm];
+//   if (COUNTRY_ZONE_INDEX[norm]) return COUNTRY_ZONE_INDEX[norm];
+//   return ALL_IANA_ZONES.find(z => normalizeKey(z).includes(norm)) || null;
+// };
+
+// const toZoneLabel = (iana: string) => {
+//   const parts = iana.split('/');
+//   const last = parts[parts.length - 1].replace(/_/g, ' ');
+//   return last.charAt(0).toUpperCase() + last.slice(1);
+// };
+
+// /**
+//  * Given a raw query string (e.g. "delhi", "New York", "IST"),
+//  * return the best display name:
+//  * - If it's a known timezone code (IST, GMT, PST…) → return the code in uppercase
+//  * - Otherwise → title-case the original query (preserves "Delhi", "New York", "London")
+//  */
+// const getDisplayName = (query: string, iana: string): string => {
+//   const upperQuery = query.toUpperCase().trim();
+//   if (TIMEZONE_CODES.has(upperQuery)) return upperQuery;
+//   // Title-case the original human query
+//   return query
+//     .trim()
+//     .split(/\s+/)
+//     .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+//     .join(' ');
+// };
+
+// const slugifyRoutePart = (value: string) =>
+//   value
+//     .toLowerCase()
+//     .trim()
+//     .replace(/[^a-z0-9\s-]/g, '')
+//     .replace(/\s+/g, '-')
+//     .replace(/-+/g, '-');
+
+// const humanizeSlug = (slug: string) =>
+//   slug
+//     .split('-')
+//     .filter(Boolean)
+//     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+//     .join(' ');
+
+// type RouteEdge = { to: string; score: number };
+
+// const ROUTE_ALIAS: Record<string, string> = {
+//   india: 'india',
+//   delhi: 'india',
+//   mumbai: 'india',
+//   bangalore: 'india',
+//   hyderabad: 'india',
+//   chennai: 'india',
+//   usa: 'usa',
+//   'new-york': 'usa',
+//   'los-angeles': 'usa',
+//   chicago: 'usa',
+//   seattle: 'usa',
+//   dallas: 'usa',
+//   'san-francisco': 'usa',
+//   texas: 'usa',
+//   california: 'usa',
+//   uk: 'uk',
+//   london: 'uk',
+//   manchester: 'uk',
+//   birmingham: 'uk',
+//   canada: 'canada',
+//   toronto: 'canada',
+//   vancouver: 'canada',
+//   montreal: 'canada',
+//   uae: 'uae',
+//   dubai: 'uae',
+//   'abu-dhabi': 'uae',
+//   australia: 'australia',
+//   sydney: 'australia',
+//   melbourne: 'australia',
+//   perth: 'australia',
+//   singapore: 'singapore',
+//   japan: 'japan',
+//   tokyo: 'japan',
+//   osaka: 'japan',
+//   germany: 'germany',
+//   berlin: 'germany',
+//   frankfurt: 'germany',
+//   munich: 'germany'
+// };
+
+// const HUB_CITY_VARIANTS: Record<string, string[]> = {
+//   india: ['delhi', 'mumbai', 'bangalore', 'hyderabad', 'chennai'],
+//   usa: ['new-york', 'los-angeles', 'chicago', 'seattle', 'dallas', 'san-francisco'],
+//   uk: ['london', 'manchester', 'birmingham'],
+//   canada: ['toronto', 'vancouver', 'montreal'],
+//   uae: ['dubai', 'abu-dhabi'],
+//   australia: ['sydney', 'melbourne', 'perth'],
+//   singapore: ['singapore'],
+//   japan: ['tokyo', 'osaka'],
+//   germany: ['berlin', 'frankfurt', 'munich']
+// };
+
+// const ROUTE_GRAPH: Record<string, RouteEdge[]> = {
+//   india: [
+//     { to: 'usa', score: 100 },
+//     { to: 'uk', score: 95 },
+//     { to: 'uae', score: 90 },
+//     { to: 'canada', score: 88 },
+//     { to: 'australia', score: 82 },
+//     { to: 'singapore', score: 70 }
+//   ],
+//   usa: [
+//     { to: 'india', score: 96 },
+//     { to: 'uk', score: 90 },
+//     { to: 'germany', score: 78 },
+//     { to: 'uae', score: 72 },
+//     { to: 'japan', score: 74 }
+//   ],
+//   uk: [
+//     { to: 'india', score: 91 },
+//     { to: 'usa', score: 92 },
+//     { to: 'uae', score: 68 }
+//   ],
+//   canada: [
+//     { to: 'india', score: 86 },
+//     { to: 'usa', score: 84 },
+//     { to: 'uk', score: 62 }
+//   ],
+//   uae: [
+//     { to: 'india', score: 89 },
+//     { to: 'uk', score: 65 },
+//     { to: 'usa', score: 60 }
+//   ],
+//   australia: [
+//     { to: 'india', score: 80 },
+//     { to: 'singapore', score: 66 },
+//     { to: 'uk', score: 58 }
+//   ],
+//   singapore: [
+//     { to: 'india', score: 74 },
+//     { to: 'australia', score: 64 },
+//     { to: 'japan', score: 59 }
+//   ],
+//   japan: [
+//     { to: 'usa', score: 76 },
+//     { to: 'singapore', score: 57 },
+//     { to: 'india', score: 55 }
+//   ],
+//   germany: [
+//     { to: 'india', score: 69 },
+//     { to: 'usa', score: 67 },
+//     { to: 'uk', score: 63 }
+//   ]
+// };
+
+// const CITY_REGION_MAP: Record<string, string> = {
+//   dubai: 'middle-east',
+//   riyadh: 'middle-east',
+//   doha: 'middle-east',
+//   mumbai: 'india',
+//   delhi: 'india',
+//   bangalore: 'india',
+//   london: 'europe',
+//   paris: 'europe',
+//   berlin: 'europe',
+//   'new-york': 'us',
+//   'los-angeles': 'us',
+//   chicago: 'us',
+//   toronto: 'canada',
+//   singapore: 'asia',
+//   tokyo: 'asia',
+//   'hong-kong': 'asia',
+//   sydney: 'australia',
+//   melbourne: 'australia'
+// };
+
+// const REGION_CLUSTERS: Record<string, string[]> = {
+//   india: ['mumbai', 'delhi', 'bangalore'],
+//   'middle-east': ['dubai', 'riyadh', 'doha'],
+//   europe: ['london', 'paris', 'berlin'],
+//   us: ['new-york', 'los-angeles', 'chicago'],
+//   canada: ['toronto'],
+//   asia: ['singapore', 'tokyo', 'hong-kong'],
+//   australia: ['sydney', 'melbourne']
+// };
+
+// const buildTimelineStart = (anchor: Date) => {
+//   const aligned = new Date(anchor);
+//   aligned.setMinutes(aligned.getMinutes() < 30 ? 0 : 30, 0, 0);
+//   return new Date(aligned.getTime() - 15 * 30 * 60000);
+// };
+
+// const TZ_PARTS_FORMATTER_CACHE: Record<string, Intl.DateTimeFormat> = {};
+// const TZ_DISPLAY_FORMATTER_CACHE: Record<string, Intl.DateTimeFormat> = {};
+
+// const getPartsFormatter = (iana: string) => {
+//   if (!TZ_PARTS_FORMATTER_CACHE[iana]) {
+//     TZ_PARTS_FORMATTER_CACHE[iana] = new Intl.DateTimeFormat('en-US', {
+//       timeZone: iana,
+//       hour12: false,
+//       hourCycle: 'h23',
+//       year: 'numeric',
+//       month: 'numeric',
+//       day: 'numeric',
+//       hour: 'numeric',
+//       minute: 'numeric',
+//       second: 'numeric'
+//     });
+//   }
+//   return TZ_PARTS_FORMATTER_CACHE[iana];
+// };
+
+// const getDisplayFormatter = (iana: string) => {
+//   if (!TZ_DISPLAY_FORMATTER_CACHE[iana]) {
+//     TZ_DISPLAY_FORMATTER_CACHE[iana] = new Intl.DateTimeFormat('en-US', {
+//       timeZone: iana,
+//       hour: '2-digit',
+//       minute: '2-digit',
+//       second: '2-digit',
+//       hour12: true,
+//       weekday: 'short',
+//       month: 'short',
+//       day: 'numeric'
+//     });
+//   }
+//   return TZ_DISPLAY_FORMATTER_CACHE[iana];
+// };
+
+// const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug, toSlug, isTimezoneCodeRoute = false }) => {
+//   const [naturalInput, setNaturalInput] = useState('');
+//   const [baseTime, setBaseTime] = useState(() => {
+//     const d = new Date();
+//     d.setSeconds(0, 0);
+//     return d;
+//   });
+//   const [sourceTz, setSourceTz] = useState<Timezone>({
+//   name: 'London',
+//   iana: 'Europe/London',
+//   offset: 0
+// });
+//   const [targets, setTargets] = useState<Timezone[]>([
+//   { name: 'New York', iana: 'America/New_York', offset: -5 }
+// ]);
+
+//   const [history, setHistory] = useState<ConversionHistoryItem[]>([]);
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [isLive, setIsLive] = useState(true);
+//   const [timelineFocusIndex, setTimelineFocusIndex] = useState<number | null>(null);
+//   const [timelineStartUtc, setTimelineStartUtc] = useState<Date>(() => {
+//     const d = new Date();
+//     d.setMinutes(d.getMinutes() < 30 ? 0 : 30, 0, 0);
+//     return new Date(d.getTime() - 15 * 30 * 60000);
+//   });
+//   const [hasSearchedConversion, setHasSearchedConversion] = useState<boolean>(Boolean(fromSlug && toSlug));
+
+//   useEffect(() => {
+//     if (!isLive) return;
+
+//     const interval = setInterval(() => {
+//       const now = new Date();
+//       setBaseTime(now);
+//       setTimelineStartUtc(buildTimelineStart(now));
+//       setTimelineFocusIndex(15);
+//     }, 1000);
+
+//     return () => clearInterval(interval);
+//   }, [isLive]);
+
+//   const getZoneDateParts = (date: Date, iana: string) => {
+//     const parts = getPartsFormatter(iana).formatToParts(date);
+//     const p = (type: string) => parseInt(parts.find(x => x.type === type)?.value || '0');
+//     return { year: p('year'), month: p('month'), day: p('day'), hour: p('hour'), minute: p('minute'), second: p('second') };
+//   };
+
+//   const zonedTimeToUtc = (
+//     input: { year: number; month: number; day: number; hour: number; minute: number; second: number },
+//     iana: string
+//   ) => {
+//     const targetWallMs = Date.UTC(input.year, input.month - 1, input.day, input.hour, input.minute, input.second);
+//     let utcMillis = targetWallMs;
+//     for (let i = 0; i < 4; i++) {
+//       const date = new Date(utcMillis);
+//       const parts = getZoneDateParts(date, iana);
+//       const zoneWallMs = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+//       const diff = targetWallMs - zoneWallMs;
+//       if (diff === 0) break;
+//       utcMillis += diff;
+//     }
+//     return new Date(utcMillis);
+//   };
+
+//   const getTzInfo = useCallback((date: Date, iana: string) => {
+//     try {
+//       const parts = getDisplayFormatter(iana).formatToParts(date);
+//       const p = (type: string) => parts.find(part => part.type === type)?.value || '';
+
+//       const timeStr = `${p('hour')}:${p('minute')}:${p('second')} ${p('dayPeriod')}`;
+//       const shortTime = `${p('hour')}:${p('minute')}${p('dayPeriod')?.toLowerCase().charAt(0)}`;
+
+//       return {
+//         time: timeStr,
+//         shortTime,
+//         hour: parseInt(p('hour')),
+//         minute: parseInt(p('minute')),
+//         second: parseInt(p('second')),
+//         dayPeriod: p('dayPeriod')?.toLowerCase() || '',
+//         date: `${p('weekday')}, ${p('month')} ${p('day')}`.toUpperCase(),
+//         dayName: p('weekday').toUpperCase(),
+//         monthDay: `${p('month')} ${p('day')}`.toUpperCase()
+//       };
+//     } catch {
+//       return {
+//         time: '--:--:--',
+//         shortTime: '--:--',
+//         hour: 0,
+//         minute: 0,
+//         second: 0,
+//         dayPeriod: '',
+//         date: '',
+//         dayName: '',
+//         monthDay: ''
+//       };
+//     }
+//   }, []);
+
+//   const getOffsetString = (iana: string, date: Date = new Date()) => {
+//     try {
+//       const parts = new Intl.DateTimeFormat('en-US', { timeZone: iana, timeZoneName: 'shortOffset' }).formatToParts(date);
+//       return parts.find(p => p.type === 'timeZoneName')?.value || 'GMT+0';
+//     } catch {
+//       return 'GMT+0';
+//     }
+//   };
+
+//   const getLongTimeZoneName = (iana: string, date: Date = new Date()) => {
+//     try {
+//       const parts = new Intl.DateTimeFormat('en-US', { timeZone: iana, timeZoneName: 'long' }).formatToParts(date);
+//       return parts.find(p => p.type === 'timeZoneName')?.value || iana;
+//     } catch {
+//       return iana;
+//     }
+//   };
+
+//   const getOffsetHours = (iana: string, date: Date = new Date()) => {
+//     try {
+//       const parts = new Intl.DateTimeFormat('en-US', { timeZone: iana, timeZoneName: 'longOffset' }).formatToParts(date);
+//       const offsetStr = parts.find(p => p.type === 'timeZoneName')?.value || 'GMT+0';
+//       const match = offsetStr.match(/GMT([+-])(\d{1,2})(?::(\d{2}))?/);
+//       if (!match) return 0;
+//       const sign = match[1] === '-' ? -1 : 1;
+//       const h = parseInt(match[2], 10);
+//       const m = match[3] ? parseInt(match[3], 10) : 0;
+//       return sign * (h + m / 60);
+//     } catch {
+//       return 0;
+//     }
+//   };
+
+//   const formatHourRange = (start: number, end: number) => {
+//     const formatPoint = (value: number) => {
+//       const whole = Math.floor(value);
+//       const minute = Math.round((value - whole) * 60);
+//       const normalizedHour = ((whole % 24) + 24) % 24;
+//       const hour12 = ((normalizedHour + 11) % 12) + 1;
+//       const suffix = normalizedHour < 12 ? 'am' : 'pm';
+//       if (minute === 0) return `${hour12}${suffix}`;
+//       return `${hour12}:${String(minute).padStart(2, '0')}${suffix}`;
+//     };
+//     return `${formatPoint(start)}-${formatPoint(end)}`;
+//   };
+
+//   const getRelativeOffset = (iana: string, refIana: string) => {
+//     try {
+//       const now = new Date();
+//       const diff = getOffsetHours(iana, now) - getOffsetHours(refIana, now);
+//       return diff === 0 ? '0' : diff > 0 ? `+${diff}` : `${diff}`;
+//     } catch {
+//       return '0';
+//     }
+//   };
+
+//   const getTimeDifferenceLine = useCallback(
+//     (srcName: string, srcIana: string, tgtName: string, tgtIana: string) => {
+//       const diff = Number(getRelativeOffset(tgtIana, srcIana));
+//       if (Number.isNaN(diff)) return `Time difference between ${srcName} and ${tgtName} updates live.`;
+//       if (diff === 0) return `${srcName} and ${tgtName} are currently at the same time offset.`;
+//       const abs = Math.abs(diff);
+//       return `${tgtName} is currently ${abs} hour${abs === 1 ? '' : 's'} ${diff > 0 ? 'ahead of' : 'behind'} ${srcName}.`;
+//     },
+//     []
+//   );
+
+//   const trackRelatedRouteClick = useCallback((href: string, label: string, rank: number) => {
+//     const payload = {
+//       event: 'related_route_click',
+//       from: sourceTz.name,
+//       to: targets[0]?.name || '',
+//       href,
+//       label,
+//       rank
+//     };
+
+//     if (typeof window !== 'undefined') {
+//       (window as any).dataLayer = (window as any).dataLayer || [];
+//       (window as any).dataLayer.push(payload);
+//       window.dispatchEvent(new CustomEvent('related_route_click', { detail: payload }));
+//     }
+//   }, [sourceTz.name, targets]);
+
+//   const pushHistory = useCallback(
+//     (query: string, src: Timezone, tgt: Timezone, at: Date) => {
+//       const srcInfo = getTzInfo(at, src.iana);
+//       const tgtInfo = getTzInfo(at, tgt.iana);
+
+//       const entry: ConversionHistoryItem = {
+//         id: Math.random().toString(36).substr(2, 9),
+//         query,
+//         sourceName: src.name,
+//         sourceIana: src.iana,
+//         sourceTime: srcInfo.time,
+//         targetName: tgt.name,
+//         targetIana: tgt.iana,
+//         targetTime: tgtInfo.time,
+//         createdAt: Date.now()
+//       };
+
+//       setHistory(prev => {
+//         const top = prev[0];
+//         if (
+//           top &&
+//           top.query === entry.query &&
+//           top.sourceIana === entry.sourceIana &&
+//           top.targetIana === entry.targetIana &&
+//           Date.now() - top.createdAt < 1500
+//         ) {
+//           return prev;
+//         }
+//         return [entry, ...prev].slice(0, 3);
+//       });
+//     },
+//     [getTzInfo]
+//   );
+
+//   useEffect(() => {
+//     if (!fromSlug || !toSlug) return;
+
+//     const fromQuery = fromSlug.replace(/-/g, ' ');
+//     const toQuery = toSlug.replace(/-/g, ' ');
+
+//     const fromIana = resolveIanaFromQuery(fromQuery);
+//     const toIana = resolveIanaFromQuery(toQuery);
+
+//     let routeSource: Timezone | null = null;
+//     let routeTarget: Timezone | null = null;
+
+//     if (fromIana) {
+//       // FIX: use humanizeSlug to preserve the city name from the URL slug (e.g. "Delhi", "London")
+//       // Previously used toZoneLabel(fromIana) which gave the IANA city part (e.g. "Kolkata" for Delhi)
+//       const fromName = isTimezoneCodeRoute
+//         ? fromSlug!.toUpperCase()
+//         : humanizeSlug(fromSlug!);
+//       routeSource = { name: fromName, iana: fromIana, offset: 0 };
+//       setSourceTz(routeSource);
+//     }
+
+//     if (toIana) {
+//       // FIX: same fix for target
+//       const toName = isTimezoneCodeRoute
+//         ? toSlug!.toUpperCase()
+//         : humanizeSlug(toSlug!);
+//       routeTarget = { name: toName, iana: toIana, offset: 0 };
+//       setTargets([routeTarget]);
+//     }
+
+//     const query = `${fromQuery} to ${toQuery}`;
+//     setNaturalInput(query);
+//     setIsLive(true);
+//     setHasSearchedConversion(true);
+
+//     if (routeSource && routeTarget) {
+//       pushHistory(query, routeSource, routeTarget, new Date());
+//     }
+//   }, [fromSlug, toSlug, pushHistory]);
+
+//   const performLocalParse = (input: string, commitToHistory: boolean = false) => {
+//     const text = input.toUpperCase().trim();
+//     if (!text) return;
+
+//     const zoneParts = text
+//       .replace(/\b(\d{1,2})(?::(\d{2}))?(?::(\d{2}))?\s*(AM|PM)?\b/gi, '')
+//       .split(/\s+(?:TO|INTO|IN|AND|AT)\s+/i);
+
+//     // Keep original-case parts for display name resolution
+//     const originalParts = input
+//       .replace(/\b(\d{1,2})(?::(\d{2}))?(?::(\d{2}))?\s*(AM|PM)?\b/gi, '')
+//       .split(/\s+(?:to|into|in|and|at)\s+/i);
+
+//     // FIX: findZone now takes the original (non-uppercased) query to use as display name
+//     const findZone = (uppercaseQuery: string, originalQuery: string): Timezone | null => {
+//       const iana = resolveIanaFromQuery(uppercaseQuery);
+//       if (!iana) return null;
+//       // Use getDisplayName to distinguish timezone codes from city names
+//       const displayName = getDisplayName(originalQuery.trim(), iana);
+//       return { name: displayName, iana, offset: 0 };
+//     };
+
+//     let activeSrc = sourceTz;
+//     let activeTgt = targets[0] || { name: 'Target', iana: 'UTC', offset: 0 };
+
+//     if (zoneParts.length >= 2) {
+//       const src = findZone(zoneParts[0], originalParts[0] || zoneParts[0]);
+//       const tgt = findZone(zoneParts[1], originalParts[1] || zoneParts[1]);
+//       if (src) {
+//         setSourceTz(src);
+//         activeSrc = src;
+//       }
+//       if (tgt) {
+//         setTargets([tgt]);
+//         activeTgt = tgt;
+//       }
+//     } else if (zoneParts.length === 1) {
+//       const single = findZone(zoneParts[0], originalParts[0] || zoneParts[0]);
+//       if (single) {
+//         setSourceTz(single);
+//         activeSrc = single;
+//       }
+//     }
+
+//     let effectiveTime = baseTime;
+//     const timeMatch = text.match(/\b(\d{1,2})(?::(\d{2}))?(?::(\d{2}))?\s*(AM|PM)?\b/i);
+
+//     if (timeMatch) {
+//       let h = parseInt(timeMatch[1], 10);
+//       const m = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
+//       const s = timeMatch[3] ? parseInt(timeMatch[3], 10) : 0;
+//       const period = timeMatch[4];
+
+//       if (period === 'PM' && h < 12) h += 12;
+//       if (period === 'AM' && h === 12) h = 0;
+
+//       const now = new Date();
+//       const zoneNowParts = getZoneDateParts(now, activeSrc.iana);
+//       const targetUtc = zonedTimeToUtc(
+//         {
+//           year: zoneNowParts.year,
+//           month: zoneNowParts.month,
+//           day: zoneNowParts.day,
+//           hour: h,
+//           minute: m,
+//           second: s
+//         },
+//         activeSrc.iana
+//       );
+
+//       setBaseTime(targetUtc);
+//       setIsLive(false);
+//       setTimelineStartUtc(buildTimelineStart(targetUtc));
+//       setTimelineFocusIndex(15);
+//       effectiveTime = targetUtc;
+//     }
+
+//     if (commitToHistory) {
+//       pushHistory(input, activeSrc, activeTgt, effectiveTime);
+//     }
+//   };
+
+//   const handleConvert = () => {
+//     const trimmed = naturalInput.trim();
+//     setIsLoading(true);
+//     if (!trimmed) {
+//       setIsLive(true);
+//       setIsLoading(false);
+//       return;
+//     }
+//     setHasSearchedConversion(true);
+//     performLocalParse(trimmed, true);
+//     setIsLoading(false);
+//   };
+
+//   const getTimelineData = (iana: string, startUtc: Date) => {
+//     const cells = [];
+//     const startTime = new Date(startUtc);
+
+//     for (let i = 0; i < 48; i++) {
+//       const d = new Date(startTime.getTime() + i * 30 * 60000);
+//       const parts = getZoneDateParts(d, iana);
+//       const info = getTzInfo(d, iana);
+
+//       const hour24 = parts.hour % 24;
+//       const minute = parts.minute;
+//       const isHalf = minute !== 0;
+//       const hour12 = ((hour24 + 11) % 12) + 1;
+//       const period = hour24 < 12 ? 'am' : 'pm';
+//       const isWorkingHour = hour24 >= 9 && hour24 < 18;
+//       const cellType: 'night' | 'day' = hour24 < 6 || hour24 >= 18 ? 'night' : 'day';
+
+//       cells.push({
+//         fullDate: d,
+//         hourLabel: isHalf ? '' : hour12,
+//         period: isHalf ? '' : period,
+//         isHalf,
+//         cellType,
+//         isWorkingHour,
+//         dayName: info.dayName,
+//         monthDay: info.monthDay,
+//         isDayStart: hour24 === 0 && minute === 0
+//       });
+//     }
+//     return cells;
+//   };
+
+//   const allTzs = [sourceTz, ...targets];
+//   const textColor = isDark ? 'text-white' : 'text-black';
+//   const bgColor = isDark ? 'bg-black' : 'bg-white';
+//   const borderClass = isDark ? 'border-zinc-800' : 'border-zinc-200';
+
+//   const panelBg = isDark ? 'bg-black' : 'bg-white';
+//   const panelBorder = isDark ? 'border-zinc-900' : 'border-zinc-200';
+//   const panelBorderSoft = isDark ? 'border-zinc-900/50' : 'border-zinc-200/70';
+//   const panelBorderSofter = isDark ? 'border-zinc-900/30' : 'border-zinc-200/50';
+
+//   const titleText = isDark ? 'text-white' : 'text-black';
+//   const inputBg = isDark ? 'bg-white/5' : 'bg-black/[0.03]';
+//   const convertBtn = isDark ? 'bg-white text-black hover:bg-zinc-200' : 'bg-black text-white hover:bg-zinc-800';
+
+//   const timelineWrapBg = isDark ? 'bg-[#0a0a0a]' : 'bg-zinc-50 shadow-xl';
+//   const timelineLabelBg = isDark ? 'from-zinc-950/50' : 'from-zinc-200/40';
+//   const timelineLabelPill = isDark ? 'bg-zinc-800' : 'bg-zinc-200';
+
+//   const addRowBg = isDark ? 'bg-black/40' : 'bg-zinc-100';
+//   const addInputBg = isDark ? 'bg-zinc-900/50 border-zinc-800' : 'bg-white border-zinc-300';
+//   const addBtnBg = isDark ? 'hover:bg-zinc-800 border-zinc-800' : 'hover:bg-zinc-200 border-zinc-300';
+
+//   const mutedText = isDark ? 'text-zinc-300' : 'text-zinc-600';
+//   const subtleText = isDark ? 'text-zinc-400' : 'text-zinc-500';
+//   const faintText = isDark ? 'text-zinc-500' : 'text-zinc-500';
+
+//   const fromRouteSlug = fromSlug?.trim() ? fromSlug.toLowerCase() : slugifyRoutePart(sourceTz.name);
+//   const toRouteSlug = toSlug?.trim() ? toSlug.toLowerCase() : slugifyRoutePart(targets[0]?.name || 'toronto');
+//   const currentRoute = `${fromRouteSlug}-to-${toRouteSlug}`;
+
+//   const relatedRoutes = useMemo(() => {
+//     const itemMap = new Map<string, RelatedRouteItem>();
+//     const currentHref = `/${currentRoute}`;
+
+//     const addRoute = (from: string, to: string, score: number) => {
+//       if (!from || !to || from === to) return;
+//       const href = `/${from}-to-${to}`;
+//       if (href === currentHref) return;
+//       const label = `${humanizeSlug(from)} → ${humanizeSlug(to)}`;
+//       const existing = itemMap.get(href);
+//       if (!existing || score > existing.score) {
+//         itemMap.set(href, { href, label, score });
+//       }
+//     };
+
+//     const TZ_TO_CITIES: Record<string, string[]> = {
+//       'ist':  ['mumbai', 'delhi', 'bangalore', 'hyderabad', 'chennai'],
+//       'est':  ['new-york', 'boston', 'miami', 'atlanta', 'washington-dc'],
+//       'pst':  ['los-angeles', 'san-francisco', 'seattle', 'las-vegas'],
+//       'cst':  ['chicago', 'houston', 'dallas'],
+//       'mst':  ['denver'],
+//       'gmt':  ['london', 'dublin'],
+//       'cet':  ['berlin', 'paris', 'amsterdam', 'rome', 'madrid'],
+//       'jst':  ['tokyo', 'osaka'],
+//       'sgt':  ['singapore'],
+//       'aest': ['sydney', 'melbourne', 'brisbane'],
+//       'gst':  ['dubai', 'abu-dhabi'],
+//     };
+
+//     const TZ_POPULAR_PAIRS: Record<string, string[]> = {
+//       'ist':  ['est', 'pst', 'gmt', 'cet', 'jst', 'sgt', 'gst', 'aest', 'cst'],
+//       'est':  ['ist', 'gmt', 'pst', 'cet', 'jst', 'sgt', 'aest', 'cst', 'gst'],
+//       'pst':  ['ist', 'gmt', 'est', 'cet', 'jst', 'sgt', 'aest', 'cst'],
+//       'cst':  ['est', 'ist', 'gmt', 'pst', 'cet', 'jst', 'sgt'],
+//       'mst':  ['est', 'pst', 'gmt', 'cst', 'ist'],
+//       'gmt':  ['ist', 'est', 'pst', 'cet', 'jst', 'sgt', 'aest', 'gst', 'cst'],
+//       'cet':  ['gmt', 'est', 'ist', 'pst', 'jst', 'sgt', 'aest'],
+//       'jst':  ['est', 'pst', 'ist', 'sgt', 'aest', 'gmt', 'cet'],
+//       'sgt':  ['ist', 'gmt', 'est', 'jst', 'aest', 'cet', 'pst'],
+//       'aest': ['ist', 'gmt', 'est', 'jst', 'sgt', 'pst', 'cet'],
+//       'gst':  ['ist', 'gmt', 'est', 'cet', 'jst', 'pst'],
+//     };
+
+//     const isFromTz = Boolean(TZ_TO_CITIES[fromRouteSlug]);
+//     const isToTz = Boolean(TZ_TO_CITIES[toRouteSlug]);
+
+//     if (isFromTz || isToTz) {
+//       addRoute(toRouteSlug, fromRouteSlug, 100);
+
+//       if (isFromTz && isToTz) {
+//         (TZ_POPULAR_PAIRS[fromRouteSlug] || [])
+//           .filter(tz => tz !== toRouteSlug)
+//           .slice(0, 4)
+//           .forEach((tz, i) => addRoute(fromRouteSlug, tz, 90 - i));
+
+//         (TZ_POPULAR_PAIRS[toRouteSlug] || [])
+//           .filter(tz => tz !== fromRouteSlug)
+//           .slice(0, 3)
+//           .forEach((tz, i) => addRoute(tz, toRouteSlug, 80 - i));
+
+//         const fromCities = (TZ_TO_CITIES[fromRouteSlug] || []).slice(0, 2);
+//         const toCities = (TZ_TO_CITIES[toRouteSlug] || []).slice(0, 2);
+//         fromCities.forEach((fc, i) => {
+//           toCities.forEach((tc, j) => addRoute(fc, tc, 70 - i - j));
+//         });
+
+//       } else if (isFromTz && !isToTz) {
+//         const fromCities = (TZ_TO_CITIES[fromRouteSlug] || []).slice(0, 3);
+//         fromCities.forEach((fc, i) => addRoute(fc, toRouteSlug, 90 - i));
+//         (TZ_POPULAR_PAIRS[fromRouteSlug] || []).slice(0, 4)
+//           .forEach((tz, i) => addRoute(fromRouteSlug, tz, 80 - i));
+
+//       } else if (!isFromTz && isToTz) {
+//         const toCities = (TZ_TO_CITIES[toRouteSlug] || []).slice(0, 3);
+//         toCities.forEach((tc, i) => addRoute(fromRouteSlug, tc, 90 - i));
+//         (TZ_POPULAR_PAIRS[toRouteSlug] || []).slice(0, 4)
+//           .forEach((tz, i) => addRoute(tz, toRouteSlug, 80 - i));
+//       }
+
+//     } else {
+//       const fromNode = ROUTE_ALIAS[fromRouteSlug] || fromRouteSlug;
+//       const toNode = ROUTE_ALIAS[toRouteSlug] || toRouteSlug;
+
+//       addRoute(toRouteSlug, fromRouteSlug, 100);
+
+//       (ROUTE_GRAPH[fromNode] || []).forEach(edge => {
+//         if (edge.to === toNode) return;
+//         const targetCandidates = HUB_CITY_VARIANTS[edge.to] || [edge.to];
+//         targetCandidates.slice(0, 2).forEach(city => addRoute(fromRouteSlug, city, edge.score));
+//       });
+
+//       Object.entries(ROUTE_GRAPH).forEach(([sourceNode, edges]) => {
+//         const edge = edges.find(e => e.to === toNode);
+//         if (!edge) return;
+//         const sourceCandidates = HUB_CITY_VARIANTS[sourceNode] || [sourceNode];
+//         sourceCandidates.slice(0, 2).forEach(city => addRoute(city, toRouteSlug, edge.score - 5));
+//       });
+
+//       if (toNode === 'usa' || ['new-york', 'los-angeles', 'chicago', 'seattle', 'dallas', 'san-francisco'].includes(toRouteSlug)) {
+//         ['new-york', 'los-angeles', 'chicago', 'seattle', 'dallas', 'san-francisco']
+//           .filter(city => city !== toRouteSlug)
+//           .forEach((city, idx) => addRoute(fromRouteSlug, city, 82 - idx));
+//       }
+
+//       if (itemMap.size < 6) {
+//         const fromRegion = CITY_REGION_MAP[fromRouteSlug];
+//         const toRegion = CITY_REGION_MAP[toRouteSlug];
+//         (fromRegion ? REGION_CLUSTERS[fromRegion] || [] : []).forEach((city, idx) => {
+//           if (city !== fromRouteSlug && city !== toRouteSlug) addRoute(fromRouteSlug, city, 50 - idx);
+//         });
+//         (toRegion ? REGION_CLUSTERS[toRegion] || [] : []).forEach((city, idx) => {
+//           if (city !== fromRouteSlug && city !== toRouteSlug) addRoute(city, toRouteSlug, 45 - idx);
+//         });
+//       }
+//     }
+
+//     if (itemMap.size < 6) {
+//       const globalFallback = [
+//         ['mumbai', 'london'], ['new-york', 'london'], ['london', 'new-york'],
+//         ['mumbai', 'new-york'], ['singapore', 'london'], ['dubai', 'london'],
+//         ['sydney', 'london'], ['tokyo', 'new-york'], ['berlin', 'new-york'],
+//       ];
+//       globalFallback.forEach(([f, t]) => {
+//         if (f !== fromRouteSlug && t !== toRouteSlug) addRoute(f, t, 30);
+//       });
+//     }
+
+//     return Array.from(itemMap.values())
+//       .sort((a, b) => b.score - a.score)
+//       .slice(0, 6);
+//   }, [fromRouteSlug, toRouteSlug, currentRoute]);
+
+//   const faqData = useMemo(() => {
+//     const target = targets[0];
+//     if (!target) return null;
+
+//     const srcOffsetHours = getOffsetHours(sourceTz.iana, baseTime);
+//     const tgtOffsetHours = getOffsetHours(target.iana, baseTime);
+//     const diff = srcOffsetHours - tgtOffsetHours;
+//     const absDiff = Math.abs(diff);
+
+//     const srcLongName = getLongTimeZoneName(sourceTz.iana, baseTime);
+//     const tgtLongName = getLongTimeZoneName(target.iana, baseTime);
+
+//     const srcTime = getTzInfo(baseTime, sourceTz.iana).time;
+//     const tgtTime = getTzInfo(baseTime, target.iana).time;
+
+//     const businessStart = 9;
+//     const businessEnd = 17;
+//     const targetBusinessInSourceStart = businessStart + diff;
+//     const targetBusinessInSourceEnd = businessEnd + diff;
+
+//     const overlapStart = Math.max(businessStart, targetBusinessInSourceStart);
+//     const overlapEnd = Math.min(businessEnd, targetBusinessInSourceEnd);
+
+//     const overlap =
+//       overlapStart < overlapEnd
+//         ? {
+//             srcRange: formatHourRange(overlapStart, overlapEnd),
+//             tgtRange: formatHourRange(overlapStart - diff, overlapEnd - diff)
+//           }
+//         : null;
+
+//     return {
+//       srcName: sourceTz.name,
+//       tgtName: target.name,
+//       srcLongName,
+//       tgtLongName,
+//       srcTime,
+//       tgtTime,
+//       srcOffset: getOffsetString(sourceTz.iana, baseTime),
+//       tgtOffset: getOffsetString(target.iana, baseTime),
+//       diffHours: Number.isInteger(absDiff) ? String(absDiff) : absDiff.toFixed(1).replace(/\.0$/, ''),
+//       isAhead: diff > 0,
+//       overlap
+//     };
+//   }, [sourceTz, targets, baseTime, getTzInfo]);
+
+//   const showRelatedRoutes = hasSearchedConversion && relatedRoutes.length > 0;
+//   const relatedRoutesDiffLine = targets[0]
+//     ? getTimeDifferenceLine(sourceTz.name, sourceTz.iana, targets[0].name, targets[0].iana)
+//     : '';
+
+//   const primaryTargetName = targets[0]?.name || 'Target Timezone';
+//   const meetingButtonLabel = `Best Time to Schedule a Meeting between ${sourceTz.name} and ${primaryTargetName}`;
+
+//   const scrollToTimeline = () => {
+//     document.getElementById('timeline-section')?.scrollIntoView({
+//       behavior: 'smooth',
+//       block: 'start'
+//     });
+//   };
+
+//   return (
+//     <div className={`timezone-no-shadow p-4 sm:p-8 space-y-8 sm:space-y-12 ${bgColor} ${textColor} font-['Helvetica']`}>
+//       <header className="space-y-2 sm:space-y-4 text-center">
+//         <h1 className="text-xl sm:text-3xl md:text-5xl font-black uppercase tracking-tighter whitespace-nowrap">
+//           Timezone Converter
+//         </h1>
+//       </header>
+
+//       <div className="max-w-4xl mx-auto flex flex-col sm:flex-row gap-4">
+//         <div className={`flex-grow flex items-center px-4 sm:px-5 py-3 sm:py-2 rounded-full border-2 ${borderClass} focus-within:border-blue-500 transition-all shadow-2xl ${inputBg}`}>
+//           <svg aria-hidden="true" className={`w-5 h-5 sm:w-6 sm:h-6 ${subtleText} mr-3 sm:mr-4`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+//           </svg>
+//           <input
+//             aria-label="Timezone conversion query"
+//             className="flex-grow bg-transparent border-none outline-none font-bold text-base sm:text-lg min-w-0"
+//             placeholder={!fromSlug && !toSlug ? '5 pm London to New York' : 'e.g. 8 pm russia to london'}
+//             value={naturalInput}
+//             onChange={e => {
+//               setNaturalInput(e.target.value);
+//               if (e.target.value.length > 1) performLocalParse(e.target.value, false);
+//             }}
+//             onKeyDown={e => e.key === 'Enter' && handleConvert()}
+//           />
+//         </div>
+//         <button
+//           type="button"
+//           aria-label="Convert timezone"
+//           onClick={handleConvert}
+//           className={`w-full sm:w-auto px-6 sm:px-10 py-4 rounded-full font-black uppercase text-xs sm:text-sm tracking-[0.2em] sm:tracking-widest transition-all active:scale-95 shadow-lg ${convertBtn}`}
+//         >
+//           {isLoading ? 'Syncing...' : 'Convert'}
+//         </button>
+//       </div>
+
+//       <div className="max-w-6xl mx-auto">
+//         <div className={`border ${panelBorder} rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl transition-all duration-300`}>
+//           <div className={`hidden sm:grid grid-cols-12 px-12 pt-8 pb-4 border-b ${panelBorderSoft}`}>
+//             <div className={`col-span-5 text-[10px] font-black uppercase tracking-[0.3em] ${subtleText}`}>Source Timezone</div>
+//             <div className={`col-span-2 text-center text-[10px] font-black uppercase tracking-[0.3em] ${subtleText}`}>Direction</div>
+//             <div className={`col-span-5 text-right text-[10px] font-black uppercase tracking-[0.3em] ${subtleText}`}>Target Local Time</div>
+//           </div>
+
+//           {targets.map((tz, idx) => {
+//             const srcInfo = getTzInfo(baseTime, sourceTz.iana);
+//             const tgtInfo = getTzInfo(baseTime, tz.iana);
+//             return (
+//               <div key={`${tz.iana}-${idx}`} className={`grid grid-cols-12 px-4 sm:px-12 py-6 sm:pt-8 sm:pb-10 items-center last:border-0 border-b ${panelBorderSofter}`}>
+//                 <div className="col-span-5 space-y-1 text-left">
+//                   <div className={`text-sm sm:text-4xl font-normal tracking-tight ${titleText} uppercase truncate`}>
+//                     {sourceTz.name}
+//                   </div>
+//                   <div className={`text-[7px] sm:text-[10px] font-bold uppercase tracking-tight sm:tracking-tighter ${subtleText}`}>
+//                     {sourceTz.iana.toUpperCase()} (GMT{getOffsetString(sourceTz.iana, baseTime)})
+//                   </div>
+//                   <div className="text-xl sm:text-6xl font-normal tracking-tighter text-blue-500 tabular-nums whitespace-nowrap">
+//                     {srcInfo.time}
+//                   </div>
+//                 </div>
+
+//                 <div className={`col-span-2 flex flex-col items-center justify-center ${subtleText}`}>
+//                   <svg aria-hidden="true" className="w-5 h-5 sm:w-10 sm:h-10 mb-1 sm:mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+//                   </svg>
+//                   <span className="text-[7px] sm:text-[10px] font-normal uppercase tracking-[0.15em] sm:tracking-[0.2em] text-center">
+//                     Synced
+//                   </span>
+//                 </div>
+
+//                 <div className="col-span-5 text-right space-y-1">
+//                   <div className={`text-sm sm:text-4xl font-normal tracking-tight ${titleText} uppercase truncate`}>
+//                     {tz.name}
+//                   </div>
+//                   <div className={`text-[7px] sm:text-[10px] font-bold uppercase tracking-tight sm:tracking-tighter ${subtleText}`}>
+//                     {tz.iana.toUpperCase()} (GMT{getOffsetString(tz.iana, baseTime)})
+//                   </div>
+//                   <div className="text-xl sm:text-6xl font-normal tracking-tighter text-green-500 tabular-nums whitespace-nowrap">
+//                     {tgtInfo.time}
+//                   </div>
+//                 </div>
+//               </div>
+//             );
+//           })}
+//         </div>
+
+//         <button
+//           type="button"
+//           aria-label={meetingButtonLabel}
+//           onClick={scrollToTimeline}
+//           className={`
+//             mt-6 sm:mt-8 w-full py-4 px-4 sm:px-6 rounded-full border font-bold uppercase
+//             text-[8px] sm:text-xs tracking-[0.1em] sm:tracking-[0.2em] leading-relaxed text-center
+//             ${borderClass}
+//             ${panelBg} ${textColor}
+//             hover:border-yellow-400 focus-visible:border-yellow-400 active:border-yellow-400
+//             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/40
+//             transition-all duration-200 active:scale-[0.99]
+//           `}
+//         >
+//           {meetingButtonLabel}
+//         </button>
+//       </div>
+
+//       {showRelatedRoutes && (
+//         <div className="max-w-6xl mx-auto mt-12 sm:mt-20">
+//           <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-4 sm:mb-5`}>
+//             <div className="w-10 sm:w-20 h-px bg-current"></div>Related Routes
+//           </div>
+
+//           <div className="text-[10px] sm:text-xs font-bold tracking-wide uppercase mb-4 sm:mb-6 font-['Helvetica'] text-yellow-400">
+//             {relatedRoutesDiffLine}
+//           </div>
+
+//           <div className="flex flex-wrap gap-2 sm:gap-3">
+//             {relatedRoutes.map((route, idx) => (
+//               <a
+//                 key={route.href}
+//                 href={route.href}
+//                 onClick={() => trackRelatedRouteClick(route.href, route.label, idx + 1)}
+//                 className={`
+//                   inline-flex items-center w-fit max-w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border
+//                   ${isDark ? 'border-zinc-700 hover:border-blue-500 hover:bg-zinc-950' : 'border-zinc-300 hover:border-blue-500 hover:bg-blue-50'}
+//                   font-['Helvetica'] font-bold text-xs sm:text-sm tracking-tight whitespace-nowrap
+//                   transition-all duration-200
+//                 `}
+//               >
+//                 {route.label}
+//               </a>
+//             ))}
+//           </div>
+//         </div>
+//       )}
+
+//       <div className="max-w-6xl mx-auto mt-12 sm:mt-20">
+//         <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
+//           <div className="w-10 sm:w-20 h-px bg-current"></div>Past Searches
+//         </div>
+//         <div className={`border ${panelBorder} rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-6 sm:p-10`}>
+//           {history.length === 0 ? (
+//             <div className={`py-10 sm:py-12 text-center text-xs sm:text-sm font-black uppercase tracking-[0.2em] sm:tracking-widest ${mutedText}`}>
+//               No recent conversions
+//             </div>
+//           ) : (
+//             <div className="space-y-6 sm:space-y-10">
+//               {history.map(item => (
+//                 <div key={item.id} className={`grid grid-cols-1 sm:grid-cols-12 gap-4 sm:gap-8 items-center pb-6 sm:pb-10 border-b ${panelBorder} last:border-0 last:pb-0`}>
+//                   <div className="sm:col-span-3">
+//                     <div className={`text-[10px] font-black uppercase tracking-widest mb-1 ${subtleText}`}>Query context</div>
+//                     <div className={`text-xs sm:text-sm font-bold truncate uppercase tracking-tight ${mutedText}`}>{item.query}</div>
+//                   </div>
+//                   <div className="sm:col-span-3">
+//                     <div className={`text-[10px] font-black uppercase tracking-widest mb-1 truncate ${subtleText}`}>{item.sourceName}</div>
+//                     <div className="text-xl sm:text-2xl font-black text-blue-500 tabular-nums tracking-tighter">{item.sourceTime}</div>
+//                   </div>
+//                   <div className={`sm:col-span-2 text-left sm:text-center ${subtleText}`}>
+//                     <svg aria-hidden="true" className="w-5 h-5 sm:w-6 sm:h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                       <path d="M14 5l7 7m0 0l-7 7m7-7H3" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+//                     </svg>
+//                     <div className="text-[9px] font-black uppercase tracking-widest">Synced</div>
+//                   </div>
+//                   <div className="sm:col-span-4 text-left sm:text-right">
+//                     <div className={`text-[10px] font-black uppercase tracking-widest mb-1 truncate ${subtleText}`}>{item.targetName}</div>
+//                     <div className="text-xl sm:text-2xl font-black text-green-500 tabular-nums tracking-tighter">{item.targetTime}</div>
+//                   </div>
+//                 </div>
+//               ))}
+//             </div>
+//           )}
+//         </div>
+//       </div>
+
+//       <div id="timeline-section" className="max-w-6xl mx-auto mt-12 sm:mt-20 scroll-mt-24">
+//         <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
+//           <div className="w-10 sm:w-20 h-px bg-current"></div>Business Hour Overlap
+//         </div>
+//         <div className={`border ${borderClass} rounded-xl overflow-hidden ${timelineWrapBg}`}>
+//           <div className="flex flex-col lg:flex-row">
+//             <div className={`w-full lg:w-80 lg:flex-none border-b lg:border-b-0 lg:border-r ${panelBorder}`}>
+//               {allTzs.map((tz, rowIndex) => {
+//                 const currentTzInfo = getTzInfo(baseTime, tz.iana);
+//                 const relativeOffset = getRelativeOffset(tz.iana, sourceTz.iana);
+//                 const isSource = rowIndex === 0;
+//                 return (
+//                   <div
+//                     key={`${tz.iana}-label-${rowIndex}`}
+//                     className={`h-28 sm:h-40 p-4 sm:p-6 border-b ${panelBorder} last:border-0 flex flex-col justify-center relative bg-gradient-to-r ${timelineLabelBg} to-transparent group`}
+//                   >
+//                     <div className="flex justify-between items-start gap-3">
+//                       <div className="space-y-1 min-w-0">
+//                         <div className="flex items-center gap-2 min-w-0">
+//                           <h3 className="text-lg sm:text-xl font-black tracking-tight uppercase truncate max-w-[120px] sm:max-w-[140px]">
+//                             {tz.name}
+//                           </h3>
+//                           <div className={`px-2 py-0.5 rounded ${timelineLabelPill} text-[9px] sm:text-[10px] font-bold ${subtleText}`}>
+//                             {getOffsetString(tz.iana, baseTime)}
+//                           </div>
+//                         </div>
+//                         <div className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest truncate ${subtleText}`}>
+//                           {tz.iana.split('/')[0]}
+//                         </div>
+//                       </div>
+//                       <div className="text-right shrink-0">
+//                         <div className="text-lg sm:text-2xl font-black tracking-tighter leading-none whitespace-nowrap">
+//                           {currentTzInfo.shortTime.slice(0, -1)}
+//                           <span className={`text-[10px] sm:text-xs ml-0.5 font-bold ${subtleText}`}>
+//                             {currentTzInfo.shortTime.slice(-1)}
+//                           </span>
+//                         </div>
+//                         <div className={`text-[8px] sm:text-[9px] font-black uppercase tracking-tight sm:tracking-tighter mt-1 ${subtleText}`}>
+//                           {currentTzInfo.date}
+//                         </div>
+//                       </div>
+//                     </div>
+//                     <div className={`absolute left-4 sm:left-6 bottom-3 sm:bottom-4 flex items-center gap-2 ${faintText}`}>
+//                       {!isSource && <span className="text-[9px] sm:text-[10px] font-black tracking-widest">{relativeOffset}H RELATIVE</span>}
+//                       {isSource && (
+//                         <svg aria-hidden="true" className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+//                           <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z" />
+//                         </svg>
+//                       )}
+//                     </div>
+//                     {!isSource && (
+//                       <button
+//                         type="button"
+//                         aria-label={`Remove ${tz.name} from timeline`}
+//                         onClick={() => setTargets(prev => prev.filter((_, i) => i !== rowIndex - 1))}
+//                         className={`absolute top-2 right-2 p-1 transition-opacity ${isDark ? 'opacity-70 lg:opacity-0 group-hover:opacity-70 hover:opacity-100' : 'opacity-80 lg:opacity-0 group-hover:opacity-80 hover:opacity-100'}`}
+//                       >
+//                         <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+//                         </svg>
+//                       </button>
+//                     )}
+//                   </div>
+//                 );
+//               })}
+//               <div className={`h-20 sm:h-16 p-4 border-t ${panelBorder} ${addRowBg} flex items-center gap-3 sm:gap-4`}>
+//                 <div className="relative flex-grow">
+//                   <input
+//                     type="text"
+//                     aria-label="Add timezone to timeline"
+//                     placeholder="ADD TIMEZONE..."
+//                     className={`w-full ${addInputBg} border rounded-lg px-4 py-3 sm:py-2 text-[10px] font-black tracking-[0.15em] sm:tracking-widest uppercase outline-none focus:border-blue-500 transition-colors`}
+//                     onKeyDown={e => {
+//                       if (e.key === 'Enter') {
+//                         const val = (e.target as HTMLInputElement).value;
+//                         const iana = resolveIanaFromQuery(val);
+//                         if (iana) {
+//                           // FIX: use getDisplayName here too for consistent naming
+//                           const displayName = getDisplayName(val, iana);
+//                           setTargets(prev => [...prev, { name: displayName, iana, offset: 0 }]);
+//                           (e.target as HTMLInputElement).value = '';
+//                         }
+//                       }
+//                     }}
+//                   />
+//                 </div>
+//                 <button
+//                   type="button"
+//                   aria-label="Add timezone"
+//                   className={`w-12 h-12 sm:w-10 sm:h-10 flex-none rounded-lg border ${addBtnBg} flex items-center justify-center transition-colors`}
+//                 >
+//                   <svg aria-hidden="true" className="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+//                   </svg>
+//                 </button>
+//               </div>
+//             </div>
+
+//             <div className="flex-grow overflow-x-auto scrollbar-custom">
+//               <div className="min-w-max">
+//                 {allTzs.map((tz, rowIndex) => {
+//                   const timeline = getTimelineData(tz.iana, timelineStartUtc);
+//                   return (
+//                     <div key={`${tz.iana}-timeline-${rowIndex}`} className={`flex h-28 sm:h-40 border-b ${panelBorder} last:border-0`}>
+//                       {timeline.map((cell, cIdx) => {
+//                         const isFocused = timelineFocusIndex === cIdx;
+//                         return (
+//                           <div
+//                             key={cIdx}
+//                             onClick={() => {
+//                               setTimelineFocusIndex(cIdx);
+//                               setBaseTime(cell.fullDate);
+//                               setIsLive(false);
+//                             }}
+//                             className={`w-10 sm:w-12 flex flex-col items-center justify-center border-r ${panelBorderSofter} cursor-pointer transition-all relative group/cell
+//                               ${cell.cellType === 'night' ? (isDark ? 'bg-[#0c0c0e]' : 'bg-zinc-200/70') : (isDark ? 'bg-[#151518]' : 'bg-zinc-100')}
+//                               ${isFocused ? (isDark ? 'bg-indigo-900/40' : 'bg-blue-200/50') : ''}
+//                               ${cell.isWorkingHour ? 'ring-1 ring-zinc-700/30' : ''}
+//                               hover:bg-zinc-800/80`}
+//                           >
+//                             {cell.isDayStart && (
+//                               <div className="absolute top-2 left-1 whitespace-nowrap">
+//                                 <div className={`text-[7px] sm:text-[8px] font-black uppercase ${subtleText}`}>{cell.dayName}</div>
+//                                 <div className={`text-[7px] sm:text-[8px] font-black ${subtleText}`}>{cell.monthDay}</div>
+//                               </div>
+//                             )}
+//                             <div
+//                               className={`text-[10px] sm:text-xs font-black transition-colors duration-200
+//                               ${isFocused ? 'text-yellow-400 opacity-100 scale-110' : `${isDark ? 'text-white' : 'text-black'} opacity-100 group-hover/cell:text-yellow-400`}
+//                               ${cell.isHalf ? 'text-[7px] sm:text-[8px] mt-1' : ''}`}
+//                             >
+//                               {cell.hourLabel}
+//                             </div>
+//                             {!cell.isHalf && (
+//                               <div
+//                                 className={`text-[7px] sm:text-[8px] font-bold uppercase transition-colors duration-200
+//                                 ${isFocused ? 'text-yellow-400/80 opacity-100' : `${subtleText} group-hover/cell:text-yellow-400/80`}`}
+//                               >
+//                                 {cell.period}
+//                               </div>
+//                             )}
+//                             {cell.isHalf && !cell.hourLabel && <div className="w-0.5 h-0.5 rounded-full bg-zinc-700 group-hover/cell:bg-yellow-400"></div>}
+//                           </div>
+//                         );
+//                       })}
+//                     </div>
+//                   );
+//                 })}
+//                 <div className={`h-20 sm:h-16 border-t ${panelBorder} ${addRowBg}`}></div>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+
+//       {faqData && (
+//         <div className="max-w-6xl mx-auto mt-12 sm:mt-16">
+//           <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
+//             <div className="w-10 sm:w-20 h-px bg-current"></div>Timezone Conversion FAQ and Fact
+//           </div>
+
+//           <div className={`border ${panelBorder} rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-6 sm:p-10 space-y-8`}>
+//             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12">
+//               <div className="space-y-4">
+//                 <h4 className="text-xs font-black uppercase tracking-widest text-blue-500">Time Difference</h4>
+//                 <div className="space-y-2">
+//                   <p className="text-sm sm:text-base lg:text-xl font-bold leading-relaxed">
+//                     {faqData.srcLongName} is {faqData.diffHours} hours {faqData.isAhead ? 'ahead of' : 'behind'} {faqData.tgtLongName}
+//                   </p>
+//                   <p className={`text-xs sm:text-sm ${subtleText} leading-relaxed`}>
+//                     {faqData.srcTime} in {faqData.srcName} is {faqData.tgtTime} in {faqData.tgtName}
+//                   </p>
+//                 </div>
+//               </div>
+
+//               <div className="space-y-4">
+//                 <h4 className="text-xs font-black uppercase tracking-widest text-green-500">
+//                   {faqData.srcName} to {faqData.tgtName} Call Time
+//                 </h4>
+//                 <div className="space-y-2">
+//                   {faqData.overlap ? (
+//                     <p className="text-sm sm:text-base lg:text-xl font-bold leading-relaxed">
+//                       Best time for a conference call or a meeting is between {faqData.overlap.srcRange} in {faqData.srcName} which corresponds to {faqData.overlap.tgtRange} in {faqData.tgtName}
+//                     </p>
+//                   ) : (
+//                     <p className={`text-sm sm:text-base lg:text-xl font-bold leading-relaxed ${subtleText}`}>
+//                       No standard business hour overlap found. Consider scheduling during early morning or late evening.
+//                     </p>
+//                   )}
+//                 </div>
+//               </div>
+//             </div>
+
+//             <div className={`pt-8 border-t ${panelBorderSoft} grid grid-cols-1 md:grid-cols-2 gap-6`}>
+//               <div className="flex items-center gap-4">
+//                 <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center flex-none">
+//                   <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+//                   </svg>
+//                 </div>
+//                 <div>
+//                   <div className={`text-[10px] font-black uppercase tracking-widest ${subtleText}`}>
+//                     {faqData.srcName} ({faqData.srcLongName})
+//                   </div>
+//                   <div className="text-sm sm:text-lg font-bold">Offset {faqData.srcOffset}</div>
+//                 </div>
+//               </div>
+
+//               <div className="flex items-center gap-4">
+//                 <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center flex-none">
+//                   <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+//                   </svg>
+//                 </div>
+//                 <div>
+//                   <div className={`text-[10px] font-black uppercase tracking-widest ${subtleText}`}>
+//                     {faqData.tgtName} ({faqData.tgtLongName})
+//                   </div>
+//                   <div className="text-sm sm:text-lg font-bold">Offset {faqData.tgtOffset}</div>
+//                 </div>
+//               </div>
+//             </div>
+
+//             <div className="text-center pt-4">
+//               <div className={`inline-block px-4 py-2 rounded-full ${isDark ? 'bg-zinc-500/5' : 'bg-zinc-900/5'} text-[10px] font-black uppercase tracking-widest ${faintText}`}>
+//                 {faqData.srcTime} {faqData.srcName} / {faqData.tgtTime} {faqData.tgtName}
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+
+//       <div className={`text-center text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] pt-6 sm:pt-8 ${faintText}`}>
+//         Global resolution context • Wall-clock anchored drift-free engine
+//       </div>
+
+//       <style>{`
+//         .scrollbar-custom::-webkit-scrollbar {
+//           height: 6px;
+//         }
+//         .scrollbar-custom::-webkit-scrollbar-track {
+//           background: #000000;
+//           border-radius: 10px;
+//         }
+//         .scrollbar-custom::-webkit-scrollbar-thumb {
+//           background: #333333;
+//           border-radius: 10px;
+//         }
+//         .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+//           background: #555555;
+//         }
+//         ${!isDark ? `
+//           .scrollbar-custom::-webkit-scrollbar-track {
+//             background: #f4f4f5;
+//           }
+//           .scrollbar-custom::-webkit-scrollbar-thumb {
+//             background: #d4d4d8;
+//           }
+//           .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+//             background: #a1a1aa;
+//           }
+//         ` : ''}
+
+//         .timezone-no-shadow,
+//         .timezone-no-shadow * {
+//           box-shadow: none !important;
+//         }
+//       `}</style>
+//     </div>
+//   );
+// };
+
+// export default TimezoneConverter;
+
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import * as ct from 'countries-and-timezones';
 import { COMMON_TIMEZONES } from '../constants';
@@ -102,7 +1547,6 @@ const EXTENDED_ZONE_MAP: Record<string, string> = {
   'SAO PAULO': 'America/Sao_Paulo'
 };
 
-// Timezone abbreviation codes — these should display as codes, not city names
 const TIMEZONE_CODES = new Set([
   'IST', 'EST', 'EDT', 'PST', 'PDT', 'CST', 'CDT', 'MST', 'MDT',
   'GMT', 'BST', 'CET', 'CEST', 'JST', 'AEST', 'AEDT', 'SGT',
@@ -178,16 +1622,9 @@ const toZoneLabel = (iana: string) => {
   return last.charAt(0).toUpperCase() + last.slice(1);
 };
 
-/**
- * Given a raw query string (e.g. "delhi", "New York", "IST"),
- * return the best display name:
- * - If it's a known timezone code (IST, GMT, PST…) → return the code in uppercase
- * - Otherwise → title-case the original query (preserves "Delhi", "New York", "London")
- */
 const getDisplayName = (query: string, iana: string): string => {
   const upperQuery = query.toUpperCase().trim();
   if (TIMEZONE_CODES.has(upperQuery)) return upperQuery;
-  // Title-case the original human query
   return query
     .trim()
     .split(/\s+/)
@@ -213,44 +1650,17 @@ const humanizeSlug = (slug: string) =>
 type RouteEdge = { to: string; score: number };
 
 const ROUTE_ALIAS: Record<string, string> = {
-  india: 'india',
-  delhi: 'india',
-  mumbai: 'india',
-  bangalore: 'india',
-  hyderabad: 'india',
-  chennai: 'india',
-  usa: 'usa',
-  'new-york': 'usa',
-  'los-angeles': 'usa',
-  chicago: 'usa',
-  seattle: 'usa',
-  dallas: 'usa',
-  'san-francisco': 'usa',
-  texas: 'usa',
-  california: 'usa',
-  uk: 'uk',
-  london: 'uk',
-  manchester: 'uk',
-  birmingham: 'uk',
-  canada: 'canada',
-  toronto: 'canada',
-  vancouver: 'canada',
-  montreal: 'canada',
-  uae: 'uae',
-  dubai: 'uae',
-  'abu-dhabi': 'uae',
-  australia: 'australia',
-  sydney: 'australia',
-  melbourne: 'australia',
-  perth: 'australia',
+  india: 'india', delhi: 'india', mumbai: 'india', bangalore: 'india',
+  hyderabad: 'india', chennai: 'india',
+  usa: 'usa', 'new-york': 'usa', 'los-angeles': 'usa', chicago: 'usa',
+  seattle: 'usa', dallas: 'usa', 'san-francisco': 'usa', texas: 'usa', california: 'usa',
+  uk: 'uk', london: 'uk', manchester: 'uk', birmingham: 'uk',
+  canada: 'canada', toronto: 'canada', vancouver: 'canada', montreal: 'canada',
+  uae: 'uae', dubai: 'uae', 'abu-dhabi': 'uae',
+  australia: 'australia', sydney: 'australia', melbourne: 'australia', perth: 'australia',
   singapore: 'singapore',
-  japan: 'japan',
-  tokyo: 'japan',
-  osaka: 'japan',
-  germany: 'germany',
-  berlin: 'germany',
-  frankfurt: 'germany',
-  munich: 'germany'
+  japan: 'japan', tokyo: 'japan', osaka: 'japan',
+  germany: 'germany', berlin: 'germany', frankfurt: 'germany', munich: 'germany'
 };
 
 const HUB_CITY_VARIANTS: Record<string, string[]> = {
@@ -267,76 +1677,30 @@ const HUB_CITY_VARIANTS: Record<string, string[]> = {
 
 const ROUTE_GRAPH: Record<string, RouteEdge[]> = {
   india: [
-    { to: 'usa', score: 100 },
-    { to: 'uk', score: 95 },
-    { to: 'uae', score: 90 },
-    { to: 'canada', score: 88 },
-    { to: 'australia', score: 82 },
-    { to: 'singapore', score: 70 }
+    { to: 'usa', score: 100 }, { to: 'uk', score: 95 }, { to: 'uae', score: 90 },
+    { to: 'canada', score: 88 }, { to: 'australia', score: 82 }, { to: 'singapore', score: 70 }
   ],
   usa: [
-    { to: 'india', score: 96 },
-    { to: 'uk', score: 90 },
-    { to: 'germany', score: 78 },
-    { to: 'uae', score: 72 },
-    { to: 'japan', score: 74 }
+    { to: 'india', score: 96 }, { to: 'uk', score: 90 }, { to: 'germany', score: 78 },
+    { to: 'uae', score: 72 }, { to: 'japan', score: 74 }
   ],
-  uk: [
-    { to: 'india', score: 91 },
-    { to: 'usa', score: 92 },
-    { to: 'uae', score: 68 }
-  ],
-  canada: [
-    { to: 'india', score: 86 },
-    { to: 'usa', score: 84 },
-    { to: 'uk', score: 62 }
-  ],
-  uae: [
-    { to: 'india', score: 89 },
-    { to: 'uk', score: 65 },
-    { to: 'usa', score: 60 }
-  ],
-  australia: [
-    { to: 'india', score: 80 },
-    { to: 'singapore', score: 66 },
-    { to: 'uk', score: 58 }
-  ],
-  singapore: [
-    { to: 'india', score: 74 },
-    { to: 'australia', score: 64 },
-    { to: 'japan', score: 59 }
-  ],
-  japan: [
-    { to: 'usa', score: 76 },
-    { to: 'singapore', score: 57 },
-    { to: 'india', score: 55 }
-  ],
-  germany: [
-    { to: 'india', score: 69 },
-    { to: 'usa', score: 67 },
-    { to: 'uk', score: 63 }
-  ]
+  uk: [{ to: 'india', score: 91 }, { to: 'usa', score: 92 }, { to: 'uae', score: 68 }],
+  canada: [{ to: 'india', score: 86 }, { to: 'usa', score: 84 }, { to: 'uk', score: 62 }],
+  uae: [{ to: 'india', score: 89 }, { to: 'uk', score: 65 }, { to: 'usa', score: 60 }],
+  australia: [{ to: 'india', score: 80 }, { to: 'singapore', score: 66 }, { to: 'uk', score: 58 }],
+  singapore: [{ to: 'india', score: 74 }, { to: 'australia', score: 64 }, { to: 'japan', score: 59 }],
+  japan: [{ to: 'usa', score: 76 }, { to: 'singapore', score: 57 }, { to: 'india', score: 55 }],
+  germany: [{ to: 'india', score: 69 }, { to: 'usa', score: 67 }, { to: 'uk', score: 63 }]
 };
 
 const CITY_REGION_MAP: Record<string, string> = {
-  dubai: 'middle-east',
-  riyadh: 'middle-east',
-  doha: 'middle-east',
-  mumbai: 'india',
-  delhi: 'india',
-  bangalore: 'india',
-  london: 'europe',
-  paris: 'europe',
-  berlin: 'europe',
-  'new-york': 'us',
-  'los-angeles': 'us',
-  chicago: 'us',
+  dubai: 'middle-east', riyadh: 'middle-east', doha: 'middle-east',
+  mumbai: 'india', delhi: 'india', bangalore: 'india',
+  london: 'europe', paris: 'europe', berlin: 'europe',
+  'new-york': 'us', 'los-angeles': 'us', chicago: 'us',
   toronto: 'canada',
-  singapore: 'asia',
-  tokyo: 'asia',
-  'hong-kong': 'asia',
-  sydney: 'australia',
-  melbourne: 'australia'
+  singapore: 'asia', tokyo: 'asia', 'hong-kong': 'asia',
+  sydney: 'australia', melbourne: 'australia'
 };
 
 const REGION_CLUSTERS: Record<string, string[]> = {
@@ -361,15 +1725,9 @@ const TZ_DISPLAY_FORMATTER_CACHE: Record<string, Intl.DateTimeFormat> = {};
 const getPartsFormatter = (iana: string) => {
   if (!TZ_PARTS_FORMATTER_CACHE[iana]) {
     TZ_PARTS_FORMATTER_CACHE[iana] = new Intl.DateTimeFormat('en-US', {
-      timeZone: iana,
-      hour12: false,
-      hourCycle: 'h23',
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      second: 'numeric'
+      timeZone: iana, hour12: false, hourCycle: 'h23',
+      year: 'numeric', month: 'numeric', day: 'numeric',
+      hour: 'numeric', minute: 'numeric', second: 'numeric'
     });
   }
   return TZ_PARTS_FORMATTER_CACHE[iana];
@@ -378,14 +1736,8 @@ const getPartsFormatter = (iana: string) => {
 const getDisplayFormatter = (iana: string) => {
   if (!TZ_DISPLAY_FORMATTER_CACHE[iana]) {
     TZ_DISPLAY_FORMATTER_CACHE[iana] = new Intl.DateTimeFormat('en-US', {
-      timeZone: iana,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true,
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric'
+      timeZone: iana, hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: true, weekday: 'short', month: 'short', day: 'numeric'
     });
   }
   return TZ_DISPLAY_FORMATTER_CACHE[iana];
@@ -398,15 +1750,8 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
     d.setSeconds(0, 0);
     return d;
   });
-  const [sourceTz, setSourceTz] = useState<Timezone>({
-  name: 'London',
-  iana: 'Europe/London',
-  offset: 0
-});
-  const [targets, setTargets] = useState<Timezone[]>([
-  { name: 'New York', iana: 'America/New_York', offset: -5 }
-]);
-
+  const [sourceTz, setSourceTz] = useState<Timezone>({ name: 'London', iana: 'Europe/London', offset: 0 });
+  const [targets, setTargets] = useState<Timezone[]>([{ name: 'New York', iana: 'America/New_York', offset: -5 }]);
   const [history, setHistory] = useState<ConversionHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLive, setIsLive] = useState(true);
@@ -420,14 +1765,12 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
 
   useEffect(() => {
     if (!isLive) return;
-
     const interval = setInterval(() => {
       const now = new Date();
       setBaseTime(now);
       setTimelineStartUtc(buildTimelineStart(now));
       setTimelineFocusIndex(15);
     }, 1000);
-
     return () => clearInterval(interval);
   }, [isLive]);
 
@@ -458,33 +1801,18 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
     try {
       const parts = getDisplayFormatter(iana).formatToParts(date);
       const p = (type: string) => parts.find(part => part.type === type)?.value || '';
-
       const timeStr = `${p('hour')}:${p('minute')}:${p('second')} ${p('dayPeriod')}`;
       const shortTime = `${p('hour')}:${p('minute')}${p('dayPeriod')?.toLowerCase().charAt(0)}`;
-
       return {
-        time: timeStr,
-        shortTime,
-        hour: parseInt(p('hour')),
-        minute: parseInt(p('minute')),
-        second: parseInt(p('second')),
+        time: timeStr, shortTime,
+        hour: parseInt(p('hour')), minute: parseInt(p('minute')), second: parseInt(p('second')),
         dayPeriod: p('dayPeriod')?.toLowerCase() || '',
         date: `${p('weekday')}, ${p('month')} ${p('day')}`.toUpperCase(),
         dayName: p('weekday').toUpperCase(),
         monthDay: `${p('month')} ${p('day')}`.toUpperCase()
       };
     } catch {
-      return {
-        time: '--:--:--',
-        shortTime: '--:--',
-        hour: 0,
-        minute: 0,
-        second: 0,
-        dayPeriod: '',
-        date: '',
-        dayName: '',
-        monthDay: ''
-      };
+      return { time: '--:--:--', shortTime: '--:--', hour: 0, minute: 0, second: 0, dayPeriod: '', date: '', dayName: '', monthDay: '' };
     }
   }, []);
 
@@ -492,18 +1820,14 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
     try {
       const parts = new Intl.DateTimeFormat('en-US', { timeZone: iana, timeZoneName: 'shortOffset' }).formatToParts(date);
       return parts.find(p => p.type === 'timeZoneName')?.value || 'GMT+0';
-    } catch {
-      return 'GMT+0';
-    }
+    } catch { return 'GMT+0'; }
   };
 
   const getLongTimeZoneName = (iana: string, date: Date = new Date()) => {
     try {
       const parts = new Intl.DateTimeFormat('en-US', { timeZone: iana, timeZoneName: 'long' }).formatToParts(date);
       return parts.find(p => p.type === 'timeZoneName')?.value || iana;
-    } catch {
-      return iana;
-    }
+    } catch { return iana; }
   };
 
   const getOffsetHours = (iana: string, date: Date = new Date()) => {
@@ -516,9 +1840,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       const h = parseInt(match[2], 10);
       const m = match[3] ? parseInt(match[3], 10) : 0;
       return sign * (h + m / 60);
-    } catch {
-      return 0;
-    }
+    } catch { return 0; }
   };
 
   const formatHourRange = (start: number, end: number) => {
@@ -539,9 +1861,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       const now = new Date();
       const diff = getOffsetHours(iana, now) - getOffsetHours(refIana, now);
       return diff === 0 ? '0' : diff > 0 ? `+${diff}` : `${diff}`;
-    } catch {
-      return '0';
-    }
+    } catch { return '0'; }
   };
 
   const getTimeDifferenceLine = useCallback(
@@ -551,20 +1871,11 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       if (diff === 0) return `${srcName} and ${tgtName} are currently at the same time offset.`;
       const abs = Math.abs(diff);
       return `${tgtName} is currently ${abs} hour${abs === 1 ? '' : 's'} ${diff > 0 ? 'ahead of' : 'behind'} ${srcName}.`;
-    },
-    []
+    }, []
   );
 
   const trackRelatedRouteClick = useCallback((href: string, label: string, rank: number) => {
-    const payload = {
-      event: 'related_route_click',
-      from: sourceTz.name,
-      to: targets[0]?.name || '',
-      href,
-      label,
-      rank
-    };
-
+    const payload = { event: 'related_route_click', from: sourceTz.name, to: targets[0]?.name || '', href, label, rank };
     if (typeof window !== 'undefined') {
       (window as any).dataLayer = (window as any).dataLayer || [];
       (window as any).dataLayer.push(payload);
@@ -576,167 +1887,99 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
     (query: string, src: Timezone, tgt: Timezone, at: Date) => {
       const srcInfo = getTzInfo(at, src.iana);
       const tgtInfo = getTzInfo(at, tgt.iana);
-
       const entry: ConversionHistoryItem = {
         id: Math.random().toString(36).substr(2, 9),
-        query,
-        sourceName: src.name,
-        sourceIana: src.iana,
-        sourceTime: srcInfo.time,
-        targetName: tgt.name,
-        targetIana: tgt.iana,
-        targetTime: tgtInfo.time,
-        createdAt: Date.now()
+        query, sourceName: src.name, sourceIana: src.iana, sourceTime: srcInfo.time,
+        targetName: tgt.name, targetIana: tgt.iana, targetTime: tgtInfo.time, createdAt: Date.now()
       };
-
       setHistory(prev => {
         const top = prev[0];
-        if (
-          top &&
-          top.query === entry.query &&
-          top.sourceIana === entry.sourceIana &&
-          top.targetIana === entry.targetIana &&
-          Date.now() - top.createdAt < 1500
-        ) {
-          return prev;
-        }
+        if (top && top.query === entry.query && top.sourceIana === entry.sourceIana &&
+            top.targetIana === entry.targetIana && Date.now() - top.createdAt < 1500) return prev;
         return [entry, ...prev].slice(0, 3);
       });
-    },
-    [getTzInfo]
+    }, [getTzInfo]
   );
 
   useEffect(() => {
     if (!fromSlug || !toSlug) return;
-
     const fromQuery = fromSlug.replace(/-/g, ' ');
     const toQuery = toSlug.replace(/-/g, ' ');
-
     const fromIana = resolveIanaFromQuery(fromQuery);
     const toIana = resolveIanaFromQuery(toQuery);
-
     let routeSource: Timezone | null = null;
     let routeTarget: Timezone | null = null;
-
     if (fromIana) {
-      // FIX: use humanizeSlug to preserve the city name from the URL slug (e.g. "Delhi", "London")
-      // Previously used toZoneLabel(fromIana) which gave the IANA city part (e.g. "Kolkata" for Delhi)
-      const fromName = isTimezoneCodeRoute
-        ? fromSlug!.toUpperCase()
-        : humanizeSlug(fromSlug!);
+      const fromName = isTimezoneCodeRoute ? fromSlug!.toUpperCase() : humanizeSlug(fromSlug!);
       routeSource = { name: fromName, iana: fromIana, offset: 0 };
       setSourceTz(routeSource);
     }
-
     if (toIana) {
-      // FIX: same fix for target
-      const toName = isTimezoneCodeRoute
-        ? toSlug!.toUpperCase()
-        : humanizeSlug(toSlug!);
+      const toName = isTimezoneCodeRoute ? toSlug!.toUpperCase() : humanizeSlug(toSlug!);
       routeTarget = { name: toName, iana: toIana, offset: 0 };
       setTargets([routeTarget]);
     }
-
     const query = `${fromQuery} to ${toQuery}`;
     setNaturalInput(query);
     setIsLive(true);
     setHasSearchedConversion(true);
-
-    if (routeSource && routeTarget) {
-      pushHistory(query, routeSource, routeTarget, new Date());
-    }
+    if (routeSource && routeTarget) pushHistory(query, routeSource, routeTarget, new Date());
   }, [fromSlug, toSlug, pushHistory]);
 
   const performLocalParse = (input: string, commitToHistory: boolean = false) => {
     const text = input.toUpperCase().trim();
     if (!text) return;
-
     const zoneParts = text
       .replace(/\b(\d{1,2})(?::(\d{2}))?(?::(\d{2}))?\s*(AM|PM)?\b/gi, '')
       .split(/\s+(?:TO|INTO|IN|AND|AT)\s+/i);
-
-    // Keep original-case parts for display name resolution
     const originalParts = input
       .replace(/\b(\d{1,2})(?::(\d{2}))?(?::(\d{2}))?\s*(AM|PM)?\b/gi, '')
       .split(/\s+(?:to|into|in|and|at)\s+/i);
-
-    // FIX: findZone now takes the original (non-uppercased) query to use as display name
     const findZone = (uppercaseQuery: string, originalQuery: string): Timezone | null => {
       const iana = resolveIanaFromQuery(uppercaseQuery);
       if (!iana) return null;
-      // Use getDisplayName to distinguish timezone codes from city names
       const displayName = getDisplayName(originalQuery.trim(), iana);
       return { name: displayName, iana, offset: 0 };
     };
-
     let activeSrc = sourceTz;
     let activeTgt = targets[0] || { name: 'Target', iana: 'UTC', offset: 0 };
-
     if (zoneParts.length >= 2) {
       const src = findZone(zoneParts[0], originalParts[0] || zoneParts[0]);
       const tgt = findZone(zoneParts[1], originalParts[1] || zoneParts[1]);
-      if (src) {
-        setSourceTz(src);
-        activeSrc = src;
-      }
-      if (tgt) {
-        setTargets([tgt]);
-        activeTgt = tgt;
-      }
+      if (src) { setSourceTz(src); activeSrc = src; }
+      if (tgt) { setTargets([tgt]); activeTgt = tgt; }
     } else if (zoneParts.length === 1) {
       const single = findZone(zoneParts[0], originalParts[0] || zoneParts[0]);
-      if (single) {
-        setSourceTz(single);
-        activeSrc = single;
-      }
+      if (single) { setSourceTz(single); activeSrc = single; }
     }
-
     let effectiveTime = baseTime;
     const timeMatch = text.match(/\b(\d{1,2})(?::(\d{2}))?(?::(\d{2}))?\s*(AM|PM)?\b/i);
-
     if (timeMatch) {
       let h = parseInt(timeMatch[1], 10);
       const m = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
       const s = timeMatch[3] ? parseInt(timeMatch[3], 10) : 0;
       const period = timeMatch[4];
-
       if (period === 'PM' && h < 12) h += 12;
       if (period === 'AM' && h === 12) h = 0;
-
       const now = new Date();
       const zoneNowParts = getZoneDateParts(now, activeSrc.iana);
       const targetUtc = zonedTimeToUtc(
-        {
-          year: zoneNowParts.year,
-          month: zoneNowParts.month,
-          day: zoneNowParts.day,
-          hour: h,
-          minute: m,
-          second: s
-        },
+        { year: zoneNowParts.year, month: zoneNowParts.month, day: zoneNowParts.day, hour: h, minute: m, second: s },
         activeSrc.iana
       );
-
       setBaseTime(targetUtc);
       setIsLive(false);
       setTimelineStartUtc(buildTimelineStart(targetUtc));
       setTimelineFocusIndex(15);
       effectiveTime = targetUtc;
     }
-
-    if (commitToHistory) {
-      pushHistory(input, activeSrc, activeTgt, effectiveTime);
-    }
+    if (commitToHistory) pushHistory(input, activeSrc, activeTgt, effectiveTime);
   };
 
   const handleConvert = () => {
     const trimmed = naturalInput.trim();
     setIsLoading(true);
-    if (!trimmed) {
-      setIsLive(true);
-      setIsLoading(false);
-      return;
-    }
+    if (!trimmed) { setIsLive(true); setIsLoading(false); return; }
     setHasSearchedConversion(true);
     performLocalParse(trimmed, true);
     setIsLoading(false);
@@ -745,12 +1988,10 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
   const getTimelineData = (iana: string, startUtc: Date) => {
     const cells = [];
     const startTime = new Date(startUtc);
-
     for (let i = 0; i < 48; i++) {
       const d = new Date(startTime.getTime() + i * 30 * 60000);
       const parts = getZoneDateParts(d, iana);
       const info = getTzInfo(d, iana);
-
       const hour24 = parts.hour % 24;
       const minute = parts.minute;
       const isHalf = minute !== 0;
@@ -758,16 +1999,9 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       const period = hour24 < 12 ? 'am' : 'pm';
       const isWorkingHour = hour24 >= 9 && hour24 < 18;
       const cellType: 'night' | 'day' = hour24 < 6 || hour24 >= 18 ? 'night' : 'day';
-
       cells.push({
-        fullDate: d,
-        hourLabel: isHalf ? '' : hour12,
-        period: isHalf ? '' : period,
-        isHalf,
-        cellType,
-        isWorkingHour,
-        dayName: info.dayName,
-        monthDay: info.monthDay,
+        fullDate: d, hourLabel: isHalf ? '' : hour12, period: isHalf ? '' : period,
+        isHalf, cellType, isWorkingHour, dayName: info.dayName, monthDay: info.monthDay,
         isDayStart: hour24 === 0 && minute === 0
       });
     }
@@ -778,24 +2012,19 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
   const textColor = isDark ? 'text-white' : 'text-black';
   const bgColor = isDark ? 'bg-black' : 'bg-white';
   const borderClass = isDark ? 'border-zinc-800' : 'border-zinc-200';
-
   const panelBg = isDark ? 'bg-black' : 'bg-white';
   const panelBorder = isDark ? 'border-zinc-900' : 'border-zinc-200';
   const panelBorderSoft = isDark ? 'border-zinc-900/50' : 'border-zinc-200/70';
   const panelBorderSofter = isDark ? 'border-zinc-900/30' : 'border-zinc-200/50';
-
   const titleText = isDark ? 'text-white' : 'text-black';
   const inputBg = isDark ? 'bg-white/5' : 'bg-black/[0.03]';
   const convertBtn = isDark ? 'bg-white text-black hover:bg-zinc-200' : 'bg-black text-white hover:bg-zinc-800';
-
   const timelineWrapBg = isDark ? 'bg-[#0a0a0a]' : 'bg-zinc-50 shadow-xl';
   const timelineLabelBg = isDark ? 'from-zinc-950/50' : 'from-zinc-200/40';
   const timelineLabelPill = isDark ? 'bg-zinc-800' : 'bg-zinc-200';
-
   const addRowBg = isDark ? 'bg-black/40' : 'bg-zinc-100';
   const addInputBg = isDark ? 'bg-zinc-900/50 border-zinc-800' : 'bg-white border-zinc-300';
   const addBtnBg = isDark ? 'hover:bg-zinc-800 border-zinc-800' : 'hover:bg-zinc-200 border-zinc-300';
-
   const mutedText = isDark ? 'text-zinc-300' : 'text-zinc-600';
   const subtleText = isDark ? 'text-zinc-400' : 'text-zinc-500';
   const faintText = isDark ? 'text-zinc-500' : 'text-zinc-500';
@@ -807,18 +2036,14 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
   const relatedRoutes = useMemo(() => {
     const itemMap = new Map<string, RelatedRouteItem>();
     const currentHref = `/${currentRoute}`;
-
     const addRoute = (from: string, to: string, score: number) => {
       if (!from || !to || from === to) return;
       const href = `/${from}-to-${to}`;
       if (href === currentHref) return;
       const label = `${humanizeSlug(from)} → ${humanizeSlug(to)}`;
       const existing = itemMap.get(href);
-      if (!existing || score > existing.score) {
-        itemMap.set(href, { href, label, score });
-      }
+      if (!existing || score > existing.score) itemMap.set(href, { href, label, score });
     };
-
     const TZ_TO_CITIES: Record<string, string[]> = {
       'ist':  ['mumbai', 'delhi', 'bangalore', 'hyderabad', 'chennai'],
       'est':  ['new-york', 'boston', 'miami', 'atlanta', 'washington-dc'],
@@ -832,7 +2057,6 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       'aest': ['sydney', 'melbourne', 'brisbane'],
       'gst':  ['dubai', 'abu-dhabi'],
     };
-
     const TZ_POPULAR_PAIRS: Record<string, string[]> = {
       'ist':  ['est', 'pst', 'gmt', 'cet', 'jst', 'sgt', 'gst', 'aest', 'cst'],
       'est':  ['ist', 'gmt', 'pst', 'cet', 'jst', 'sgt', 'aest', 'cst', 'gst'],
@@ -846,68 +2070,41 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       'aest': ['ist', 'gmt', 'est', 'jst', 'sgt', 'pst', 'cet'],
       'gst':  ['ist', 'gmt', 'est', 'cet', 'jst', 'pst'],
     };
-
     const isFromTz = Boolean(TZ_TO_CITIES[fromRouteSlug]);
     const isToTz = Boolean(TZ_TO_CITIES[toRouteSlug]);
-
     if (isFromTz || isToTz) {
       addRoute(toRouteSlug, fromRouteSlug, 100);
-
       if (isFromTz && isToTz) {
-        (TZ_POPULAR_PAIRS[fromRouteSlug] || [])
-          .filter(tz => tz !== toRouteSlug)
-          .slice(0, 4)
-          .forEach((tz, i) => addRoute(fromRouteSlug, tz, 90 - i));
-
-        (TZ_POPULAR_PAIRS[toRouteSlug] || [])
-          .filter(tz => tz !== fromRouteSlug)
-          .slice(0, 3)
-          .forEach((tz, i) => addRoute(tz, toRouteSlug, 80 - i));
-
+        (TZ_POPULAR_PAIRS[fromRouteSlug] || []).filter(tz => tz !== toRouteSlug).slice(0, 4).forEach((tz, i) => addRoute(fromRouteSlug, tz, 90 - i));
+        (TZ_POPULAR_PAIRS[toRouteSlug] || []).filter(tz => tz !== fromRouteSlug).slice(0, 3).forEach((tz, i) => addRoute(tz, toRouteSlug, 80 - i));
         const fromCities = (TZ_TO_CITIES[fromRouteSlug] || []).slice(0, 2);
         const toCities = (TZ_TO_CITIES[toRouteSlug] || []).slice(0, 2);
-        fromCities.forEach((fc, i) => {
-          toCities.forEach((tc, j) => addRoute(fc, tc, 70 - i - j));
-        });
-
+        fromCities.forEach((fc, i) => { toCities.forEach((tc, j) => addRoute(fc, tc, 70 - i - j)); });
       } else if (isFromTz && !isToTz) {
-        const fromCities = (TZ_TO_CITIES[fromRouteSlug] || []).slice(0, 3);
-        fromCities.forEach((fc, i) => addRoute(fc, toRouteSlug, 90 - i));
-        (TZ_POPULAR_PAIRS[fromRouteSlug] || []).slice(0, 4)
-          .forEach((tz, i) => addRoute(fromRouteSlug, tz, 80 - i));
-
+        (TZ_TO_CITIES[fromRouteSlug] || []).slice(0, 3).forEach((fc, i) => addRoute(fc, toRouteSlug, 90 - i));
+        (TZ_POPULAR_PAIRS[fromRouteSlug] || []).slice(0, 4).forEach((tz, i) => addRoute(fromRouteSlug, tz, 80 - i));
       } else if (!isFromTz && isToTz) {
-        const toCities = (TZ_TO_CITIES[toRouteSlug] || []).slice(0, 3);
-        toCities.forEach((tc, i) => addRoute(fromRouteSlug, tc, 90 - i));
-        (TZ_POPULAR_PAIRS[toRouteSlug] || []).slice(0, 4)
-          .forEach((tz, i) => addRoute(tz, toRouteSlug, 80 - i));
+        (TZ_TO_CITIES[toRouteSlug] || []).slice(0, 3).forEach((tc, i) => addRoute(fromRouteSlug, tc, 90 - i));
+        (TZ_POPULAR_PAIRS[toRouteSlug] || []).slice(0, 4).forEach((tz, i) => addRoute(tz, toRouteSlug, 80 - i));
       }
-
     } else {
       const fromNode = ROUTE_ALIAS[fromRouteSlug] || fromRouteSlug;
       const toNode = ROUTE_ALIAS[toRouteSlug] || toRouteSlug;
-
       addRoute(toRouteSlug, fromRouteSlug, 100);
-
       (ROUTE_GRAPH[fromNode] || []).forEach(edge => {
         if (edge.to === toNode) return;
-        const targetCandidates = HUB_CITY_VARIANTS[edge.to] || [edge.to];
-        targetCandidates.slice(0, 2).forEach(city => addRoute(fromRouteSlug, city, edge.score));
+        (HUB_CITY_VARIANTS[edge.to] || [edge.to]).slice(0, 2).forEach(city => addRoute(fromRouteSlug, city, edge.score));
       });
-
       Object.entries(ROUTE_GRAPH).forEach(([sourceNode, edges]) => {
         const edge = edges.find(e => e.to === toNode);
         if (!edge) return;
-        const sourceCandidates = HUB_CITY_VARIANTS[sourceNode] || [sourceNode];
-        sourceCandidates.slice(0, 2).forEach(city => addRoute(city, toRouteSlug, edge.score - 5));
+        (HUB_CITY_VARIANTS[sourceNode] || [sourceNode]).slice(0, 2).forEach(city => addRoute(city, toRouteSlug, edge.score - 5));
       });
-
       if (toNode === 'usa' || ['new-york', 'los-angeles', 'chicago', 'seattle', 'dallas', 'san-francisco'].includes(toRouteSlug)) {
         ['new-york', 'los-angeles', 'chicago', 'seattle', 'dallas', 'san-francisco']
           .filter(city => city !== toRouteSlug)
           .forEach((city, idx) => addRoute(fromRouteSlug, city, 82 - idx));
       }
-
       if (itemMap.size < 6) {
         const fromRegion = CITY_REGION_MAP[fromRouteSlug];
         const toRegion = CITY_REGION_MAP[toRouteSlug];
@@ -919,92 +2116,68 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
         });
       }
     }
-
     if (itemMap.size < 6) {
-      const globalFallback = [
-        ['mumbai', 'london'], ['new-york', 'london'], ['london', 'new-york'],
-        ['mumbai', 'new-york'], ['singapore', 'london'], ['dubai', 'london'],
-        ['sydney', 'london'], ['tokyo', 'new-york'], ['berlin', 'new-york'],
-      ];
-      globalFallback.forEach(([f, t]) => {
-        if (f !== fromRouteSlug && t !== toRouteSlug) addRoute(f, t, 30);
-      });
+      [['mumbai','london'],['new-york','london'],['london','new-york'],['mumbai','new-york'],
+       ['singapore','london'],['dubai','london'],['sydney','london'],['tokyo','new-york'],['berlin','new-york']]
+        .forEach(([f, t]) => { if (f !== fromRouteSlug && t !== toRouteSlug) addRoute(f, t, 30); });
     }
-
-    return Array.from(itemMap.values())
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 6);
+    return Array.from(itemMap.values()).sort((a, b) => b.score - a.score).slice(0, 7);
   }, [fromRouteSlug, toRouteSlug, currentRoute]);
 
   const faqData = useMemo(() => {
     const target = targets[0];
     if (!target) return null;
-
     const srcOffsetHours = getOffsetHours(sourceTz.iana, baseTime);
     const tgtOffsetHours = getOffsetHours(target.iana, baseTime);
     const diff = srcOffsetHours - tgtOffsetHours;
     const absDiff = Math.abs(diff);
-
     const srcLongName = getLongTimeZoneName(sourceTz.iana, baseTime);
     const tgtLongName = getLongTimeZoneName(target.iana, baseTime);
-
     const srcTime = getTzInfo(baseTime, sourceTz.iana).time;
     const tgtTime = getTzInfo(baseTime, target.iana).time;
-
-    const businessStart = 9;
-    const businessEnd = 17;
-    const targetBusinessInSourceStart = businessStart + diff;
-    const targetBusinessInSourceEnd = businessEnd + diff;
-
-    const overlapStart = Math.max(businessStart, targetBusinessInSourceStart);
-    const overlapEnd = Math.min(businessEnd, targetBusinessInSourceEnd);
-
-    const overlap =
-      overlapStart < overlapEnd
-        ? {
-            srcRange: formatHourRange(overlapStart, overlapEnd),
-            tgtRange: formatHourRange(overlapStart - diff, overlapEnd - diff)
-          }
-        : null;
-
+    const businessStart = 9, businessEnd = 17;
+    const overlapStart = Math.max(businessStart, businessStart + diff);
+    const overlapEnd = Math.min(businessEnd, businessEnd + diff);
+    const overlap = overlapStart < overlapEnd
+      ? { srcRange: formatHourRange(overlapStart, overlapEnd), tgtRange: formatHourRange(overlapStart - diff, overlapEnd - diff) }
+      : null;
     return {
-      srcName: sourceTz.name,
-      tgtName: target.name,
-      srcLongName,
-      tgtLongName,
-      srcTime,
-      tgtTime,
+      srcName: sourceTz.name, tgtName: target.name, srcLongName, tgtLongName,
+      srcTime, tgtTime,
       srcOffset: getOffsetString(sourceTz.iana, baseTime),
       tgtOffset: getOffsetString(target.iana, baseTime),
       diffHours: Number.isInteger(absDiff) ? String(absDiff) : absDiff.toFixed(1).replace(/\.0$/, ''),
-      isAhead: diff > 0,
-      overlap
+      isAhead: diff > 0, overlap
     };
   }, [sourceTz, targets, baseTime, getTzInfo]);
-
-  const showRelatedRoutes = hasSearchedConversion && relatedRoutes.length > 0;
-  const relatedRoutesDiffLine = targets[0]
-    ? getTimeDifferenceLine(sourceTz.name, sourceTz.iana, targets[0].name, targets[0].iana)
-    : '';
 
   const primaryTargetName = targets[0]?.name || 'Target Timezone';
   const meetingButtonLabel = `Best Time to Schedule a Meeting between ${sourceTz.name} and ${primaryTargetName}`;
 
   const scrollToTimeline = () => {
-    document.getElementById('timeline-section')?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start'
-    });
+    document.getElementById('timeline-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  const handleRelatedRouteClick = useCallback((href: string, label: string, idx: number) => {
+    trackRelatedRouteClick(href, label, idx + 1);
+    const query = label.replace(' → ', ' to ').toLowerCase();
+    setNaturalInput(query);
+    performLocalParse(query, true);
+    setHasSearchedConversion(true);
+    window.location.href = href;
+  }, [trackRelatedRouteClick]);
 
   return (
     <div className={`timezone-no-shadow p-4 sm:p-8 space-y-8 sm:space-y-12 ${bgColor} ${textColor} font-['Helvetica']`}>
+
+      {/* ── Header ── */}
       <header className="space-y-2 sm:space-y-4 text-center">
         <h1 className="text-xl sm:text-3xl md:text-5xl font-black uppercase tracking-tighter whitespace-nowrap">
           Timezone Converter
         </h1>
       </header>
 
+      {/* ── Search bar ── */}
       <div className="max-w-4xl mx-auto flex flex-col sm:flex-row gap-4">
         <div className={`flex-grow flex items-center px-4 sm:px-5 py-3 sm:py-2 rounded-full border-2 ${borderClass} focus-within:border-blue-500 transition-all shadow-2xl ${inputBg}`}>
           <svg aria-hidden="true" className={`w-5 h-5 sm:w-6 sm:h-6 ${subtleText} mr-3 sm:mr-4`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1032,6 +2205,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
         </button>
       </div>
 
+      {/* ── Time display panel ── */}
       <div className="max-w-6xl mx-auto">
         <div className={`border ${panelBorder} rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl transition-all duration-300`}>
           <div className={`hidden sm:grid grid-cols-12 px-12 pt-8 pb-4 border-b ${panelBorderSoft}`}>
@@ -1039,49 +2213,35 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
             <div className={`col-span-2 text-center text-[10px] font-black uppercase tracking-[0.3em] ${subtleText}`}>Direction</div>
             <div className={`col-span-5 text-right text-[10px] font-black uppercase tracking-[0.3em] ${subtleText}`}>Target Local Time</div>
           </div>
-
           {targets.map((tz, idx) => {
             const srcInfo = getTzInfo(baseTime, sourceTz.iana);
             const tgtInfo = getTzInfo(baseTime, tz.iana);
             return (
               <div key={`${tz.iana}-${idx}`} className={`grid grid-cols-12 px-4 sm:px-12 py-6 sm:pt-8 sm:pb-10 items-center last:border-0 border-b ${panelBorderSofter}`}>
                 <div className="col-span-5 space-y-1 text-left">
-                  <div className={`text-sm sm:text-4xl font-normal tracking-tight ${titleText} uppercase truncate`}>
-                    {sourceTz.name}
-                  </div>
+                  <div className={`text-sm sm:text-4xl font-normal tracking-tight ${titleText} uppercase truncate`}>{sourceTz.name}</div>
                   <div className={`text-[7px] sm:text-[10px] font-bold uppercase tracking-tight sm:tracking-tighter ${subtleText}`}>
                     {sourceTz.iana.toUpperCase()} (GMT{getOffsetString(sourceTz.iana, baseTime)})
                   </div>
-                  <div className="text-xl sm:text-6xl font-normal tracking-tighter text-blue-500 tabular-nums whitespace-nowrap">
-                    {srcInfo.time}
-                  </div>
+                  <div className="text-xl sm:text-6xl font-normal tracking-tighter text-blue-500 tabular-nums whitespace-nowrap">{srcInfo.time}</div>
                 </div>
-
                 <div className={`col-span-2 flex flex-col items-center justify-center ${subtleText}`}>
                   <svg aria-hidden="true" className="w-5 h-5 sm:w-10 sm:h-10 mb-1 sm:mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                   </svg>
-                  <span className="text-[7px] sm:text-[10px] font-normal uppercase tracking-[0.15em] sm:tracking-[0.2em] text-center">
-                    Synced
-                  </span>
+                  <span className="text-[7px] sm:text-[10px] font-normal uppercase tracking-[0.15em] sm:tracking-[0.2em] text-center">Synced</span>
                 </div>
-
                 <div className="col-span-5 text-right space-y-1">
-                  <div className={`text-sm sm:text-4xl font-normal tracking-tight ${titleText} uppercase truncate`}>
-                    {tz.name}
-                  </div>
+                  <div className={`text-sm sm:text-4xl font-normal tracking-tight ${titleText} uppercase truncate`}>{tz.name}</div>
                   <div className={`text-[7px] sm:text-[10px] font-bold uppercase tracking-tight sm:tracking-tighter ${subtleText}`}>
                     {tz.iana.toUpperCase()} (GMT{getOffsetString(tz.iana, baseTime)})
                   </div>
-                  <div className="text-xl sm:text-6xl font-normal tracking-tighter text-green-500 tabular-nums whitespace-nowrap">
-                    {tgtInfo.time}
-                  </div>
+                  <div className="text-xl sm:text-6xl font-normal tracking-tighter text-green-500 tabular-nums whitespace-nowrap">{tgtInfo.time}</div>
                 </div>
               </div>
             );
           })}
         </div>
-
         <button
           type="button"
           aria-label={meetingButtonLabel}
@@ -1089,8 +2249,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
           className={`
             mt-6 sm:mt-8 w-full py-4 px-4 sm:px-6 rounded-full border font-bold uppercase
             text-[8px] sm:text-xs tracking-[0.1em] sm:tracking-[0.2em] leading-relaxed text-center
-            ${borderClass}
-            ${panelBg} ${textColor}
+            ${borderClass} ${panelBg} ${textColor}
             hover:border-yellow-400 focus-visible:border-yellow-400 active:border-yellow-400
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/40
             transition-all duration-200 active:scale-[0.99]
@@ -1100,36 +2259,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
         </button>
       </div>
 
-      {showRelatedRoutes && (
-        <div className="max-w-6xl mx-auto mt-12 sm:mt-20">
-          <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-4 sm:mb-5`}>
-            <div className="w-10 sm:w-20 h-px bg-current"></div>Related Routes
-          </div>
-
-          <div className="text-[10px] sm:text-xs font-bold tracking-wide uppercase mb-4 sm:mb-6 font-['Helvetica'] text-yellow-400">
-            {relatedRoutesDiffLine}
-          </div>
-
-          <div className="flex flex-wrap gap-2 sm:gap-3">
-            {relatedRoutes.map((route, idx) => (
-              <a
-                key={route.href}
-                href={route.href}
-                onClick={() => trackRelatedRouteClick(route.href, route.label, idx + 1)}
-                className={`
-                  inline-flex items-center w-fit max-w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border
-                  ${isDark ? 'border-zinc-700 hover:border-blue-500 hover:bg-zinc-950' : 'border-zinc-300 hover:border-blue-500 hover:bg-blue-50'}
-                  font-['Helvetica'] font-bold text-xs sm:text-sm tracking-tight whitespace-nowrap
-                  transition-all duration-200
-                `}
-              >
-                {route.label}
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-
+      {/* ── Past Searches ── */}
       <div className="max-w-6xl mx-auto mt-12 sm:mt-20">
         <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
           <div className="w-10 sm:w-20 h-px bg-current"></div>Past Searches
@@ -1168,6 +2298,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
         </div>
       </div>
 
+      {/* ── Timeline ── */}
       <div id="timeline-section" className="max-w-6xl mx-auto mt-12 sm:mt-20 scroll-mt-24">
         <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
           <div className="w-10 sm:w-20 h-px bg-current"></div>Business Hour Overlap
@@ -1187,9 +2318,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
                     <div className="flex justify-between items-start gap-3">
                       <div className="space-y-1 min-w-0">
                         <div className="flex items-center gap-2 min-w-0">
-                          <h3 className="text-lg sm:text-xl font-black tracking-tight uppercase truncate max-w-[120px] sm:max-w-[140px]">
-                            {tz.name}
-                          </h3>
+                          <h3 className="text-lg sm:text-xl font-black tracking-tight uppercase truncate max-w-[120px] sm:max-w-[140px]">{tz.name}</h3>
                           <div className={`px-2 py-0.5 rounded ${timelineLabelPill} text-[9px] sm:text-[10px] font-bold ${subtleText}`}>
                             {getOffsetString(tz.iana, baseTime)}
                           </div>
@@ -1201,9 +2330,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
                       <div className="text-right shrink-0">
                         <div className="text-lg sm:text-2xl font-black tracking-tighter leading-none whitespace-nowrap">
                           {currentTzInfo.shortTime.slice(0, -1)}
-                          <span className={`text-[10px] sm:text-xs ml-0.5 font-bold ${subtleText}`}>
-                            {currentTzInfo.shortTime.slice(-1)}
-                          </span>
+                          <span className={`text-[10px] sm:text-xs ml-0.5 font-bold ${subtleText}`}>{currentTzInfo.shortTime.slice(-1)}</span>
                         </div>
                         <div className={`text-[8px] sm:text-[9px] font-black uppercase tracking-tight sm:tracking-tighter mt-1 ${subtleText}`}>
                           {currentTzInfo.date}
@@ -1245,7 +2372,6 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
                         const val = (e.target as HTMLInputElement).value;
                         const iana = resolveIanaFromQuery(val);
                         if (iana) {
-                          // FIX: use getDisplayName here too for consistent naming
                           const displayName = getDisplayName(val, iana);
                           setTargets(prev => [...prev, { name: displayName, iana, offset: 0 }]);
                           (e.target as HTMLInputElement).value = '';
@@ -1265,7 +2391,6 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
                 </button>
               </div>
             </div>
-
             <div className="flex-grow overflow-x-auto scrollbar-custom">
               <div className="min-w-max">
                 {allTzs.map((tz, rowIndex) => {
@@ -1277,11 +2402,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
                         return (
                           <div
                             key={cIdx}
-                            onClick={() => {
-                              setTimelineFocusIndex(cIdx);
-                              setBaseTime(cell.fullDate);
-                              setIsLive(false);
-                            }}
+                            onClick={() => { setTimelineFocusIndex(cIdx); setBaseTime(cell.fullDate); setIsLive(false); }}
                             className={`w-10 sm:w-12 flex flex-col items-center justify-center border-r ${panelBorderSofter} cursor-pointer transition-all relative group/cell
                               ${cell.cellType === 'night' ? (isDark ? 'bg-[#0c0c0e]' : 'bg-zinc-200/70') : (isDark ? 'bg-[#151518]' : 'bg-zinc-100')}
                               ${isFocused ? (isDark ? 'bg-indigo-900/40' : 'bg-blue-200/50') : ''}
@@ -1294,22 +2415,20 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
                                 <div className={`text-[7px] sm:text-[8px] font-black ${subtleText}`}>{cell.monthDay}</div>
                               </div>
                             )}
-                            <div
-                              className={`text-[10px] sm:text-xs font-black transition-colors duration-200
+                            <div className={`text-[10px] sm:text-xs font-black transition-colors duration-200
                               ${isFocused ? 'text-yellow-400 opacity-100 scale-110' : `${isDark ? 'text-white' : 'text-black'} opacity-100 group-hover/cell:text-yellow-400`}
-                              ${cell.isHalf ? 'text-[7px] sm:text-[8px] mt-1' : ''}`}
-                            >
+                              ${cell.isHalf ? 'text-[7px] sm:text-[8px] mt-1' : ''}`}>
                               {cell.hourLabel}
                             </div>
                             {!cell.isHalf && (
-                              <div
-                                className={`text-[7px] sm:text-[8px] font-bold uppercase transition-colors duration-200
-                                ${isFocused ? 'text-yellow-400/80 opacity-100' : `${subtleText} group-hover/cell:text-yellow-400/80`}`}
-                              >
+                              <div className={`text-[7px] sm:text-[8px] font-bold uppercase transition-colors duration-200
+                                ${isFocused ? 'text-yellow-400/80 opacity-100' : `${subtleText} group-hover/cell:text-yellow-400/80`}`}>
                                 {cell.period}
                               </div>
                             )}
-                            {cell.isHalf && !cell.hourLabel && <div className="w-0.5 h-0.5 rounded-full bg-zinc-700 group-hover/cell:bg-yellow-400"></div>}
+                            {cell.isHalf && !cell.hourLabel && (
+                              <div className="w-0.5 h-0.5 rounded-full bg-zinc-700 group-hover/cell:bg-yellow-400"></div>
+                            )}
                           </div>
                         );
                       })}
@@ -1323,118 +2442,146 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
         </div>
       </div>
 
+      {/* ── FAQ + Related Converters ── */}
       {faqData && (
         <div className="max-w-6xl mx-auto mt-12 sm:mt-16">
-          <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
-            <div className="w-10 sm:w-20 h-px bg-current"></div>Timezone Conversion FAQ and Fact
+
+          {/* Header row: 8-col FAQ label left, 4-col Related label right */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 mb-6 sm:mb-8">
+            <div className={`lg:col-span-8 flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText}`}>
+              <div className="w-10 sm:w-20 h-px bg-current"></div>Timezone Conversion FAQ and Fact
+            </div>
+            <div className={`lg:col-span-4 flex items-center gap-2 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} whitespace-nowrap`}>
+              <div className="w-6 sm:w-8 flex-none h-px bg-current"></div>Related Converters
+            </div>
           </div>
 
-          <div className={`border ${panelBorder} rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-6 sm:p-10 space-y-8`}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12">
-              <div className="space-y-4">
-                <h4 className="text-xs font-black uppercase tracking-widest text-blue-500">Time Difference</h4>
-                <div className="space-y-2">
-                  <p className="text-sm sm:text-base lg:text-xl font-bold leading-relaxed">
-                    {faqData.srcLongName} is {faqData.diffHours} hours {faqData.isAhead ? 'ahead of' : 'behind'} {faqData.tgtLongName}
-                  </p>
-                  <p className={`text-xs sm:text-sm ${subtleText} leading-relaxed`}>
-                    {faqData.srcTime} in {faqData.srcName} is {faqData.tgtTime} in {faqData.tgtName}
-                  </p>
-                </div>
-              </div>
+          {/* Panel row: FAQ 8 cols, Related Converters 4 cols, same height */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-stretch">
 
-              <div className="space-y-4">
-                <h4 className="text-xs font-black uppercase tracking-widest text-green-500">
-                  {faqData.srcName} to {faqData.tgtName} Call Time
-                </h4>
-                <div className="space-y-2">
-                  {faqData.overlap ? (
+            {/* FAQ panel (8/12) */}
+            <div className={`lg:col-span-8 border ${panelBorder} rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-6 sm:p-10 space-y-8`}>
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 sm:gap-12">
+                <div className="space-y-4">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-blue-500">Time Difference</h4>
+                  <div className="space-y-2">
                     <p className="text-sm sm:text-base lg:text-xl font-bold leading-relaxed">
-                      Best time for a conference call or a meeting is between {faqData.overlap.srcRange} in {faqData.srcName} which corresponds to {faqData.overlap.tgtRange} in {faqData.tgtName}
+                      {faqData.srcLongName} is {faqData.diffHours} hours {faqData.isAhead ? 'ahead of' : 'behind'} {faqData.tgtLongName}
                     </p>
-                  ) : (
-                    <p className={`text-sm sm:text-base lg:text-xl font-bold leading-relaxed ${subtleText}`}>
-                      No standard business hour overlap found. Consider scheduling during early morning or late evening.
+                    <p className={`text-xs sm:text-sm ${subtleText} leading-relaxed`}>
+                      {faqData.srcTime} in {faqData.srcName} is {faqData.tgtTime} in {faqData.tgtName}
                     </p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className={`pt-8 border-t ${panelBorderSoft} grid grid-cols-1 md:grid-cols-2 gap-6`}>
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center flex-none">
-                  <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <div className={`text-[10px] font-black uppercase tracking-widest ${subtleText}`}>
-                    {faqData.srcName} ({faqData.srcLongName})
                   </div>
-                  <div className="text-sm sm:text-lg font-bold">Offset {faqData.srcOffset}</div>
                 </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center flex-none">
-                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <div className={`text-[10px] font-black uppercase tracking-widest ${subtleText}`}>
-                    {faqData.tgtName} ({faqData.tgtLongName})
+                <div className="space-y-4">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-green-500">
+                    {faqData.srcName} to {faqData.tgtName} Call Time
+                  </h4>
+                  <div className="space-y-2">
+                    {faqData.overlap ? (
+                      <p className="text-sm sm:text-base lg:text-xl font-bold leading-relaxed">
+                        Best time for a conference call or a meeting is between {faqData.overlap.srcRange} in {faqData.srcName} which corresponds to {faqData.overlap.tgtRange} in {faqData.tgtName}
+                      </p>
+                    ) : (
+                      <p className={`text-sm sm:text-base lg:text-xl font-bold leading-relaxed ${subtleText}`}>
+                        No standard business hour overlap found. Consider scheduling during early morning or late evening.
+                      </p>
+                    )}
                   </div>
-                  <div className="text-sm sm:text-lg font-bold">Offset {faqData.tgtOffset}</div>
+                </div>
+              </div>
+
+              <div className={`pt-8 border-t ${panelBorderSoft} grid grid-cols-1 md:grid-cols-2 gap-6`}>
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center flex-none">
+                    <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className={`text-[10px] font-black uppercase tracking-widest ${subtleText}`}>
+                      {faqData.srcName} ({faqData.srcLongName})
+                    </div>
+                    <div className="text-sm sm:text-lg font-bold">Offset {faqData.srcOffset}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center flex-none">
+                    <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className={`text-[10px] font-black uppercase tracking-widest ${subtleText}`}>
+                      {faqData.tgtName} ({faqData.tgtLongName})
+                    </div>
+                    <div className="text-sm sm:text-lg font-bold">Offset {faqData.tgtOffset}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-center pt-4">
+                <div className={`inline-block px-4 py-2 rounded-full ${isDark ? 'bg-zinc-500/5' : 'bg-zinc-900/5'} text-[10px] font-black uppercase tracking-widest ${faintText}`}>
+                  {faqData.srcTime} {faqData.srcName} / {faqData.tgtTime} {faqData.tgtName}
                 </div>
               </div>
             </div>
 
-            <div className="text-center pt-4">
-              <div className={`inline-block px-4 py-2 rounded-full ${isDark ? 'bg-zinc-500/5' : 'bg-zinc-900/5'} text-[10px] font-black uppercase tracking-widest ${faintText}`}>
-                {faqData.srcTime} {faqData.srcName} / {faqData.tgtTime} {faqData.tgtName}
+            {/* Related Converters panel (4/12) */}
+            <div className={`lg:col-span-4 border ${panelBorder} rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-4 sm:p-6 h-full`}>
+              <div className="space-y-2 sm:space-y-3">
+                {relatedRoutes.map((route, idx) => (
+                  <a
+                    key={route.href}
+                    href={route.href}
+                    onClick={e => {
+                      e.preventDefault();
+                      handleRelatedRouteClick(route.href, route.label, idx);
+                    }}
+                    className={`
+                      flex items-center justify-between w-full px-4 py-3 sm:py-3.5
+                      rounded-xl border
+                      ${isDark
+                        ? 'border-zinc-700 hover:border-blue-500 hover:bg-zinc-900 text-zinc-100'
+                        : 'border-zinc-200 hover:border-blue-500 hover:bg-blue-50/60 text-zinc-700'}
+                      font-bold text-[11px] sm:text-xs uppercase tracking-tight
+                      transition-all duration-200 group cursor-pointer
+                    `}
+                  >
+                    <span className="group-hover:text-blue-400 transition-colors truncate">
+                      {route.label}
+                    </span>
+                    <svg
+                      className="w-3 h-3 flex-none ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400"
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </a>
+                ))}
               </div>
             </div>
+
           </div>
         </div>
       )}
 
+      {/* ── Footer ── */}
       <div className={`text-center text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] pt-6 sm:pt-8 ${faintText}`}>
         Global resolution context • Wall-clock anchored drift-free engine
       </div>
 
       <style>{`
-        .scrollbar-custom::-webkit-scrollbar {
-          height: 6px;
-        }
-        .scrollbar-custom::-webkit-scrollbar-track {
-          background: #000000;
-          border-radius: 10px;
-        }
-        .scrollbar-custom::-webkit-scrollbar-thumb {
-          background: #333333;
-          border-radius: 10px;
-        }
-        .scrollbar-custom::-webkit-scrollbar-thumb:hover {
-          background: #555555;
-        }
+        .scrollbar-custom::-webkit-scrollbar { height: 6px; }
+        .scrollbar-custom::-webkit-scrollbar-track { background: #000000; border-radius: 10px; }
+        .scrollbar-custom::-webkit-scrollbar-thumb { background: #333333; border-radius: 10px; }
+        .scrollbar-custom::-webkit-scrollbar-thumb:hover { background: #555555; }
         ${!isDark ? `
-          .scrollbar-custom::-webkit-scrollbar-track {
-            background: #f4f4f5;
-          }
-          .scrollbar-custom::-webkit-scrollbar-thumb {
-            background: #d4d4d8;
-          }
-          .scrollbar-custom::-webkit-scrollbar-thumb:hover {
-            background: #a1a1aa;
-          }
+          .scrollbar-custom::-webkit-scrollbar-track { background: #f4f4f5; }
+          .scrollbar-custom::-webkit-scrollbar-thumb { background: #d4d4d8; }
+          .scrollbar-custom::-webkit-scrollbar-thumb:hover { background: #a1a1aa; }
         ` : ''}
-
-        .timezone-no-shadow,
-        .timezone-no-shadow * {
-          box-shadow: none !important;
-        }
+        .timezone-no-shadow, .timezone-no-shadow * { box-shadow: none !important; }
       `}</style>
     </div>
   );
