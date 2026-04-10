@@ -52,7 +52,9 @@ export enum Page {
   STOPWATCH = 'stopwatch',
   TIMER = 'timer',
   CALENDAR = 'calendar',
-  SETTINGS = 'settings'
+  SETTINGS = 'settings',
+  ABOUT = 'about',
+  TERMS = 'terms',
 }
 
 export interface Task {

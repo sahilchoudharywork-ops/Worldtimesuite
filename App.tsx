@@ -16,6 +16,8 @@ import {
 const Stopwatch = lazy(() => import('./sections/Stopwatch'));
 const Timer = lazy(() => import('./sections/Timer'));
 const Calendar = lazy(() => import('./sections/Calendar'));
+const About = lazy(() => import('./sections/About'));
+const Terms = lazy(() => import('./sections/Terms'));
 
 const upsertMeta = (attr: 'name' | 'property', key: string, content: string) => {
   let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
@@ -248,6 +250,10 @@ const App: React.FC<AppProps> = ({ initialPath = '/' }) => {
         return <Timer {...props} />;
       case Page.CALENDAR:
         return <Calendar {...props} />;
+      case Page.ABOUT:
+        return <About {...props} />;
+      case Page.TERMS:
+        return <Terms {...props} />;
       default:
         return <TimezoneConverter {...props} />;
     }
@@ -256,6 +262,12 @@ const App: React.FC<AppProps> = ({ initialPath = '/' }) => {
   const isFullView = currentPage === Page.STOPWATCH || currentPage === Page.TIMER;
   const isCalendar = currentPage === Page.CALENDAR;
   const isConverter = currentPage === Page.CONVERTER;
+  const isStaticPage = currentPage === Page.ABOUT || currentPage === Page.TERMS;
+
+  const handleNavigate = (page: Page) => {
+    setCurrentPage(page);
+    setRoutePath(pageToPath[page] || '/');
+  };
 
   return (
     <ErrorBoundary>
@@ -264,14 +276,7 @@ const App: React.FC<AppProps> = ({ initialPath = '/' }) => {
 
         <Header
           currentPage={currentPage}
-          onNavigate={(page: Page) => {
-            setCurrentPage(page);
-            if (page !== Page.CONVERTER) {
-              setRoutePath(pageToPath[page] || '/');
-            } else {
-              setRoutePath('/');
-            }
-          }}
+          onNavigate={handleNavigate}
           theme={theme}
           onToggleTheme={toggleTheme}
         />
@@ -289,19 +294,22 @@ const App: React.FC<AppProps> = ({ initialPath = '/' }) => {
             </div>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-              {!isCalendar && !isConverter && (
+              {!isCalendar && !isConverter && !isStaticPage && (
                 <aside className="hidden lg:block lg:col-span-2">
                   <AdUnit id="left-sidebar" type="sidebar" className="border-none" isDark={isDark} />
                 </aside>
               )}
 
-              <div className={`${isCalendar ? 'lg:col-span-12' : isConverter ? 'lg:col-span-12' : 'lg:col-span-7'} ${bgColor} min-h-[800px] overflow-hidden relative border-zinc-800/10 dark:border-zinc-200/10 transition-all duration-500`}>
+              <div className={`
+                ${isCalendar || isStaticPage ? 'lg:col-span-12' : isConverter ? 'lg:col-span-12' : 'lg:col-span-7'}
+                ${bgColor} min-h-[800px] overflow-hidden relative border-zinc-800/10 dark:border-zinc-200/10 transition-all duration-500
+              `}>
                 <Suspense fallback={loadingFallback}>
                   {renderPage()}
                 </Suspense>
               </div>
 
-              {!isCalendar && (
+              {!isCalendar && !isStaticPage && (
                 <aside className="hidden lg:block lg:col-span-3 flex justify-center">
                   <div className={`${isConverter ? 'top-80' : 'top-48'} sticky`}>
                     <AdUnit
@@ -321,7 +329,13 @@ const App: React.FC<AppProps> = ({ initialPath = '/' }) => {
           </main>
         )}
 
-        {!isFullView && <Footer theme={theme} />}
+        {!isFullView && (
+          <Footer
+            theme={theme}
+            onNavigate={handleNavigate}
+          />
+        )}
+
         {!gdpr.consented && !isFullView && <CookieConsent onAccept={handleConsent} />}
       </div>
     </ErrorBoundary>
