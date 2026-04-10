@@ -1,250 +1,3 @@
-// import fs from 'fs';
-// import path from 'path';
-// import { getRouteState } from '../lib/routing';
-// import { getSeoData } from '../lib/seo';
-// import { TIMEZONE_PAIR_ROUTES, TIMEZONE_BY_SLUG } from '../data/timezones';
-
-// const ROOT = process.cwd();
-// const DIST_DIR = path.join(ROOT, 'dist');
-// const TEMPLATE_PATH = path.join(DIST_DIR, 'index.html');
-// const ORIGIN = 'https://worldtimesuite.com';
-
-// // City pair routes that get prerendered
-// const cityRoutes = [
-//   '/',
-//   '/timer',
-//   '/stopwatch',
-//   '/calendar',
-//   '/london-to-san-francisco',
-//   '/new-york-to-london',
-//   '/london-to-vancouver',
-//   '/los-angeles-to-sydney',
-//   '/sydney-to-new-york',
-//   '/london-to-melbourne',
-//   '/london-to-sydney',
-//   '/sydney-to-perth',
-//   '/melbourne-to-perth',
-//   '/sydney-to-london',
-//   '/india-to-london',
-//   '/new-york-to-singapore',
-//   '/melbourne-to-london',
-//   '/seattle-to-boston',
-//   '/adelaide-to-los-angeles',
-//   '/melbourne-to-sydney',
-//   '/sydney-to-brisbane',
-//   '/brisbane-to-sydney',
-//   '/sydney-to-melbourne',
-//   '/washington-dc-to-vienna',
-//   '/houston-to-las-vegas',
-//   '/perth-to-melbourne',
-//   '/new-york-to-sydney',
-//   '/bangalore-to-san-diego',
-//   '/perth-to-sydney',
-//   '/lisbon-to-rio-de-janeiro',
-//   '/boston-to-warsaw',
-//   '/new-york-to-dubai',
-//   '/perth-to-adelaide',
-//   '/melbourne-to-brisbane',
-//   '/montreal-to-vancouver',
-//   '/cairo-to-washington-dc',
-//   '/seattle-to-copenhagen',
-//   '/mumbai-to-san-francisco',
-//   '/las-vegas-to-honolulu',
-//   '/dubai-to-new-york',
-//   '/san-francisco-to-melbourne',
-//   '/perth-to-dallas',
-//   '/hyderabad-to-mumbai',
-//   '/wellington-to-mumbai',
-//   '/bangalore-to-melbourne',
-//   '/melbourne-to-singapore',
-//   '/sydney-to-adelaide',
-//   '/singapore-to-new-york',
-//   '/athens-to-perth',
-//   '/san-francisco-to-sydney',
-//   '/miami-to-tokyo'
-// ];
-
-// // All routes = timezone code routes + city routes
-// // Timezone routes are listed first so they get priority in the build output
-// const routes = [
-//   ...TIMEZONE_PAIR_ROUTES,
-//   ...cityRoutes
-// ];
-
-// const escapeHtml = (value: string) =>
-//   value
-//     .replace(/&/g, '&amp;')
-//     .replace(/"/g, '&quot;')
-//     .replace(/</g, '&lt;')
-//     .replace(/>/g, '&gt;');
-
-// const titleCase = (value: string) =>
-//   value
-//     .split('-')
-//     .filter(Boolean)
-//     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-//     .join(' ');
-
-// const getStaticBody = (route: string) => {
-//   const routeState = getRouteState(route);
-
-//   // Timezone code pages e.g. /est-to-ist
-//   if (routeState.timezoneRoute) {
-//     const from = TIMEZONE_BY_SLUG[routeState.timezoneRoute.fromSlug];
-//     const to = TIMEZONE_BY_SLUG[routeState.timezoneRoute.toSlug];
-
-//     if (from && to) {
-//       return `
-//         <div style="min-height:100vh;background:#000;color:#fff;font-family:Helvetica,Arial,sans-serif;padding:40px 24px;">
-//           <div style="max-width:1100px;margin:0 auto;">
-//             <div style="font-size:72px;font-weight:900;letter-spacing:-0.04em;line-height:0.95;text-transform:uppercase;">
-//               ${escapeHtml(from.code)} to ${escapeHtml(to.code)} Converter
-//             </div>
-//             <p style="margin-top:24px;font-size:20px;line-height:1.6;color:#a1a1aa;max-width:900px;">
-//               Convert ${escapeHtml(from.name)} (${escapeHtml(from.code)}) to ${escapeHtml(to.name)} (${escapeHtml(to.code)}) instantly.
-//               Use the converter below to see the exact time difference and find the best hours to schedule meetings.
-//             </p>
-//             <div style="margin-top:40px;padding:32px;border:1px solid #27272a;border-radius:32px;background:#09090b;">
-//               <div style="font-size:12px;font-weight:800;letter-spacing:0.35em;text-transform:uppercase;color:#71717a;margin-bottom:16px;">
-//                 Time Zone Conversion
-//               </div>
-//               <div style="font-size:42px;font-weight:800;letter-spacing:-0.03em;text-transform:uppercase;">
-//                 ${escapeHtml(from.code)} → ${escapeHtml(to.code)}
-//               </div>
-//               <div style="margin-top:10px;font-size:16px;color:#71717a;text-transform:uppercase;letter-spacing:0.05em;">
-//                 ${escapeHtml(from.name)} → ${escapeHtml(to.name)}
-//               </div>
-//               <div style="margin-top:24px;">
-//                 <a href="${route}" style="display:inline-block;padding:14px 22px;border-radius:999px;background:#fff;color:#000;text-decoration:none;font-size:12px;font-weight:900;letter-spacing:0.24em;text-transform:uppercase;">
-//                   Open Converter
-//                 </a>
-//               </div>
-//             </div>
-//           </div>
-//         </div>
-//       `;
-//     }
-//   }
-
-//   // City pair pages e.g. /london-to-new-york
-//   if (routeState.cityRoute) {
-//     const fromName = titleCase(routeState.cityRoute.fromSlug);
-//     const toName = titleCase(routeState.cityRoute.toSlug);
-
-//     return `
-//       <div style="min-height:100vh;background:#000;color:#fff;font-family:Helvetica,Arial,sans-serif;padding:40px 24px;">
-//         <div style="max-width:1100px;margin:0 auto;">
-//           <div style="font-size:72px;font-weight:900;letter-spacing:-0.04em;line-height:0.95;text-transform:uppercase;">
-//             ${escapeHtml(fromName)} To ${escapeHtml(toName)} Time Converter
-//           </div>
-//           <p style="margin-top:24px;font-size:20px;line-height:1.6;color:#a1a1aa;max-width:900px;">
-//             Convert time from ${escapeHtml(fromName)} to ${escapeHtml(toName)} instantly. Check the live time difference and compare local time before scheduling meetings.
-//           </p>
-//           <div style="margin-top:40px;padding:32px;border:1px solid #27272a;border-radius:32px;background:#09090b;">
-//             <div style="font-size:12px;font-weight:800;letter-spacing:0.35em;text-transform:uppercase;color:#71717a;margin-bottom:16px;">
-//               Live Route
-//             </div>
-//             <div style="font-size:42px;font-weight:800;letter-spacing:-0.03em;text-transform:uppercase;">
-//               ${escapeHtml(fromName)} → ${escapeHtml(toName)}
-//             </div>
-//             <div style="margin-top:24px;">
-//               <a href="${route}" style="display:inline-block;padding:14px 22px;border-radius:999px;background:#fff;color:#000;text-decoration:none;font-size:12px;font-weight:900;letter-spacing:0.24em;text-transform:uppercase;">
-//                 Open Converter
-//               </a>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//     `;
-//   }
-
-//   // Static pages: homepage, /timer, /stopwatch, /calendar
-//   return `
-//     <div style="min-height:100vh;background:#000;color:#fff;font-family:Helvetica,Arial,sans-serif;padding:40px 24px;">
-//       <div style="max-width:1100px;margin:0 auto;">
-//         <div style="font-size:72px;font-weight:900;letter-spacing:-0.04em;line-height:0.95;text-transform:uppercase;">
-//           Timezone Converter
-//         </div>
-//         <p style="margin-top:24px;font-size:20px;line-height:1.6;color:#a1a1aa;max-width:900px;">
-//           Convert time between cities worldwide with WorldTimeSuite.
-//         </p>
-//         <div style="margin-top:24px;">
-//           <a href="/india-to-new-york" style="display:inline-block;padding:14px 22px;border-radius:999px;background:#fff;color:#000;text-decoration:none;font-size:12px;font-weight:900;letter-spacing:0.24em;text-transform:uppercase;">
-//             Explore Popular Route
-//           </a>
-//         </div>
-//       </div>
-//     </div>
-//   `;
-// };
-
-// const injectHtml = (template: string, route: string) => {
-//   const seo = getSeoData(getRouteState(route));
-//   const canonicalUrl = `${ORIGIN}${seo.canonicalPath}`;
-//   const bodyHtml = getStaticBody(route);
-
-//   return template
-//     .replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(seo.title)}</title>`)
-//     .replace(
-//       /<meta name="description" content="[\s\S]*?">/,
-//       `<meta name="description" content="${escapeHtml(seo.description)}">`
-//     )
-//     .replace(
-//       /<meta property="og:title" content="[\s\S]*?">/,
-//       `<meta property="og:title" content="${escapeHtml(seo.title)}">`
-//     )
-//     .replace(
-//       /<meta property="og:description" content="[\s\S]*?">/,
-//       `<meta property="og:description" content="${escapeHtml(seo.description)}">`
-//     )
-//     .replace(
-//       /<meta property="og:url" content="[\s\S]*?">/,
-//       `<meta property="og:url" content="${canonicalUrl}">`
-//     )
-//     .replace(
-//       /<meta name="twitter:title" content="[\s\S]*?">/,
-//       `<meta name="twitter:title" content="${escapeHtml(seo.title)}">`
-//     )
-//     .replace(
-//       /<meta name="twitter:description" content="[\s\S]*?">/,
-//       `<meta name="twitter:description" content="${escapeHtml(seo.description)}">`
-//     )
-//     .replace(
-//       /<link rel="canonical" href="[\s\S]*?">/,
-//       `<link rel="canonical" href="${canonicalUrl}">`
-//     )
-//     .replace('<!--app-html-->', bodyHtml);
-// };
-
-// const writeRoute = (route: string, html: string) => {
-//   const filePath =
-//     route === '/'
-//       ? path.join(DIST_DIR, 'index.html')
-//       : path.join(DIST_DIR, route.replace(/^\//, ''), 'index.html');
-
-//   fs.mkdirSync(path.dirname(filePath), { recursive: true });
-//   fs.writeFileSync(filePath, html, 'utf8');
-//   console.log(`Wrote ${filePath}`);
-// };
-
-// const main = () => {
-//   if (!fs.existsSync(TEMPLATE_PATH)) {
-//     throw new Error(`Missing build template at ${TEMPLATE_PATH}`);
-//   }
-
-//   const template = fs.readFileSync(TEMPLATE_PATH, 'utf8');
-
-//   for (const route of routes) {
-//     const html = injectHtml(template, route);
-//     writeRoute(route, html);
-//   }
-
-//   console.log(`Prerendered ${routes.length} routes (${TIMEZONE_PAIR_ROUTES.length} timezone + ${cityRoutes.length} city/static).`);
-// };
-
-// main();
-
-
 import fs from 'fs';
 import path from 'path';
 
@@ -419,8 +172,63 @@ const staticSeo: Record<string, { title: string; description: string }> = {
 const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+// ─── CHANGED: Route-specific static body copy ─────────────────────────────────
+// Previously all static pages (/, /timer, /stopwatch, /calendar) shared one
+// generic body that said "Time Zone Converter / Convert time between cities
+// worldwide with WorldTimeSuite / Explore Popular Route".
+//
+// This was wrong because:
+//   - /timer prerendered as "Time Zone Converter" — not "Online Countdown Timer"
+//   - /stopwatch prerendered as "Time Zone Converter" — not "Online Stopwatch"
+//   - /calendar prerendered as "Time Zone Converter" — not "Time Zone Calendar"
+//
+// Google reads the prerendered HTML before React loads. So it was seeing the
+// wrong content for these pages. Now each page gets its own correct body.
+
+interface StaticCopy {
+  heading: string;
+  description: string;
+  ctaHref: string;
+  ctaLabel: string;
+}
+
+const getStaticCopy = (route: string): StaticCopy => {
+  switch (route) {
+    case '/timer':
+      return {
+        heading: 'Online Countdown Timer',
+        description: 'Set a free online countdown timer in seconds. Fast, distraction-free, works instantly on any device — no sign-up needed.',
+        ctaHref: '/timer',
+        ctaLabel: 'Open Timer',
+      };
+    case '/stopwatch':
+      return {
+        heading: 'Online Stopwatch',
+        description: 'Free online stopwatch with lap tracking. Start, stop and record laps instantly on desktop and mobile — no download needed.',
+        ctaHref: '/stopwatch',
+        ctaLabel: 'Open Stopwatch',
+      };
+    case '/calendar':
+      return {
+        heading: 'Time Zone Calendar',
+        description: 'Plan meetings and tasks across time zones. Compare overlapping hours between cities and avoid scheduling mistakes.',
+        ctaHref: '/calendar',
+        ctaLabel: 'Open Calendar',
+      };
+    default:
+      // Homepage (/) and any unrecognised static route
+      return {
+        heading: 'Time Zone Converter',
+        description: 'Convert time between 500+ cities worldwide. See the exact time difference and find the best hours to meet across time zones.',
+        ctaHref: '/london-to-new-york',
+        ctaLabel: 'Explore Popular Route',
+      };
+  }
+};
+
 const buildBody = (route: string, parsed: ParsedConversionRoute | null): string => {
   if (parsed) {
+    // Conversion route: /london-to-new-york or /ist-to-gmt — unchanged
     const { fromName, toName } = parsed;
     return `
     <div style="min-height:100vh;background:#000;color:#fff;font-family:Helvetica,Arial,sans-serif;padding:40px 24px;">
@@ -441,13 +249,23 @@ const buildBody = (route: string, parsed: ParsedConversionRoute | null): string 
       </div>
     </div>`;
   }
+
+  // CHANGED: was one hardcoded generic block for all static pages.
+  // Now uses getStaticCopy() to return page-specific content.
+  const copy = getStaticCopy(route);
   return `
     <div style="min-height:100vh;background:#000;color:#fff;font-family:Helvetica,Arial,sans-serif;padding:40px 24px;">
       <div style="max-width:1100px;margin:0 auto;">
-        <div style="font-size:72px;font-weight:900;letter-spacing:-0.04em;line-height:0.95;text-transform:uppercase;">Time Zone Converter</div>
-        <p style="margin-top:24px;font-size:20px;line-height:1.6;color:#a1a1aa;max-width:900px;">Convert time between cities worldwide with WorldTimeSuite.</p>
+        <div style="font-size:72px;font-weight:900;letter-spacing:-0.04em;line-height:0.95;text-transform:uppercase;">
+          ${esc(copy.heading)}
+        </div>
+        <p style="margin-top:24px;font-size:20px;line-height:1.6;color:#a1a1aa;max-width:900px;">
+          ${esc(copy.description)}
+        </p>
         <div style="margin-top:24px;">
-          <a href="/india-to-new-york" style="display:inline-block;padding:14px 22px;border-radius:999px;background:#fff;color:#000;text-decoration:none;font-size:12px;font-weight:900;letter-spacing:0.24em;text-transform:uppercase;">Explore Popular Route</a>
+          <a href="${esc(copy.ctaHref)}" style="display:inline-block;padding:14px 22px;border-radius:999px;background:#fff;color:#000;text-decoration:none;font-size:12px;font-weight:900;letter-spacing:0.24em;text-transform:uppercase;">
+            ${esc(copy.ctaLabel)}
+          </a>
         </div>
       </div>
     </div>`;
@@ -493,8 +311,6 @@ const buildHtml = (template: string, route: string): string => {
 // ─── Write helper ─────────────────────────────────────────────────────────────
 
 const writeRoute = (route: string, html: string): void => {
-  // KEY FIX: '/' writes to dist/index.html BUT we read the template
-  // from a backup copy so dist/index.html is never used as source again.
   const filePath =
     route === '/'
       ? path.join(DIST_DIR, 'index.html')
@@ -512,11 +328,8 @@ const main = (): void => {
     throw new Error(`dist/index.html not found. Run: npm run build:client first.`);
   }
 
-  // Read the raw template
   const rawTemplate = fs.readFileSync(TEMPLATE_PATH, 'utf8');
 
-  // CRITICAL GUARD: if <!--app-html--> is missing, the template is already
-  // corrupted by a previous prerender run. Abort immediately with a clear message.
   if (!rawTemplate.includes('<!--app-html-->')) {
     console.error('\n❌ ERROR: dist/index.html is missing the <!--app-html--> placeholder.');
     console.error('   This means a previous prerender already overwrote it.');
@@ -526,15 +339,12 @@ const main = (): void => {
     process.exit(1);
   }
 
-  // Save a backup of the clean template so future standalone runs of
-  // build:prerender can always read a clean copy
   const backupPath = path.join(DIST_DIR, '_template.html');
   fs.writeFileSync(backupPath, rawTemplate, 'utf8');
   console.log(`\n  Template backed up to dist/_template.html`);
 
   const allRoutes = [...new Set([...STATIC_ROUTES, ...TIMEZONE_ROUTES, ...CITY_ROUTES])];
 
-  // Sanity check
   const sample = parseConversionRoute('/delhi-to-london');
   console.log(`  Sanity check: parseConversionRoute('/delhi-to-london') =`, JSON.stringify(sample));
 
@@ -544,7 +354,7 @@ const main = (): void => {
   console.log(`  Prerendering ${allRoutes.length} routes...\n`);
 
   for (const route of allRoutes) {
-    const html = buildHtml(rawTemplate, route);  // always uses rawTemplate, never reads disk again
+    const html = buildHtml(rawTemplate, route);
     writeRoute(route, html);
   }
 
