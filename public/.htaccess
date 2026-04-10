@@ -1,10 +1,24 @@
-Options -MultiViews
-RewriteEngine On
-RewriteBase /
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  Options -MultiViews
 
-# Serve existing files and directories directly
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
+  # 1) Legacy → Canonical redirects
+  RewriteRule ^timezone/([a-z0-9-]+)-to-([a-z0-9-]+)/?$ https://worldtimesuite.com/$1-to-$2 [R=301,L,NC]
 
-# For all other requests, serve index.html so React can handle routing
-RewriteRule ^ index.html [L]
+  # 2) Force HTTPS + non-www
+  RewriteCond %{HTTPS} !=on [OR]
+  RewriteCond %{HTTP_HOST} ^www\.worldtimesuite\.com$ [NC]
+  RewriteRule ^ https://worldtimesuite.com%{REQUEST_URI} [R=301,L]
+
+  # 3) Allow SEO files
+  RewriteRule ^(ads\.txt|robots\.txt|sitemap.*\.xml)$ - [L,NC]
+
+  # 4) Serve real files/folders directly
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # 5) SPA fallback
+  RewriteRule ^ index.html [L]
+</IfModule>
