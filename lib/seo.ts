@@ -17,8 +17,8 @@ const titleCase = (value: string) =>
 
 const seoByPage: Partial<Record<Page, Omit<SeoData, 'canonicalPath'>>> = {
   [Page.CONVERTER]: {
-    title: 'Timezone Converter – Convert Time Between Any Two Cities | WorldTimeSuite',
-    description: 'Free timezone converter for 500+ cities worldwide. Instantly see the time difference between any two cities, find meeting-friendly hours, and plan across time zones.'
+    title: 'Time Zone Converter – Convert Time Between Any Two Cities',
+    description: 'Free time zone converter for 500+ cities worldwide. Instantly see the time difference between any two cities, find meeting-friendly hours, and plan across time zones.'
   },
   [Page.STOPWATCH]: {
     title: 'Online Stopwatch with Lap Timer – Free & Instant | WorldTimeSuite',
