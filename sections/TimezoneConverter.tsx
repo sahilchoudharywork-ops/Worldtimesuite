@@ -728,7 +728,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       {/* ── Header ── */}
       <header className="space-y-2 sm:space-y-4 text-center">
         <h1 className="text-xl sm:text-3xl md:text-5xl font-black uppercase tracking-tighter whitespace-nowrap">
-          Timezone Converter
+          Time Zone Converter
         </h1>
       </header>
 

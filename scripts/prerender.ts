@@ -397,8 +397,8 @@ const parseConversionRoute = (route: string): ParsedConversionRoute | null => {
 
 const staticSeo: Record<string, { title: string; description: string }> = {
   '/': {
-    title: 'Timezone Converter – Convert Time Between Any Two Cities | WorldTimeSuite',
-    description: 'Free timezone converter for 500+ cities worldwide. Instantly see the time difference between any two cities, find meeting-friendly hours, and plan across time zones.',
+    title: 'Time Zone Converter – Convert Time Between Any Two Cities',
+    description: 'Free time zone converter for 500+ cities worldwide. Instantly see the time difference between any two cities, find meeting-friendly hours, and plan across time zones.',
   },
   '/stopwatch': {
     title: 'Online Stopwatch with Lap Timer – Free & Instant | WorldTimeSuite',
@@ -444,7 +444,7 @@ const buildBody = (route: string, parsed: ParsedConversionRoute | null): string 
   return `
     <div style="min-height:100vh;background:#000;color:#fff;font-family:Helvetica,Arial,sans-serif;padding:40px 24px;">
       <div style="max-width:1100px;margin:0 auto;">
-        <div style="font-size:72px;font-weight:900;letter-spacing:-0.04em;line-height:0.95;text-transform:uppercase;">Timezone Converter</div>
+        <div style="font-size:72px;font-weight:900;letter-spacing:-0.04em;line-height:0.95;text-transform:uppercase;">Time Zone Converter</div>
         <p style="margin-top:24px;font-size:20px;line-height:1.6;color:#a1a1aa;max-width:900px;">Convert time between cities worldwide with WorldTimeSuite.</p>
         <div style="margin-top:24px;">
           <a href="/india-to-new-york" style="display:inline-block;padding:14px 22px;border-radius:999px;background:#fff;color:#000;text-decoration:none;font-size:12px;font-weight:900;letter-spacing:0.24em;text-transform:uppercase;">Explore Popular Route</a>
