@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import * as ct from 'countries-and-timezones';
-import { COMMON_TIMEZONES } from '../constants';
 import { Timezone } from '../types';
 
 interface TimezoneConverterProps {
@@ -27,6 +26,8 @@ interface RelatedRouteItem {
   label: string;
   score: number;
 }
+
+// ─── Zone maps ────────────────────────────────────────────────────────────────
 
 const EXTENDED_ZONE_MAP: Record<string, string> = {
   IST: 'Asia/Kolkata',
@@ -99,14 +100,14 @@ const EXTENDED_ZONE_MAP: Record<string, string> = {
   LISBON: 'Europe/Lisbon',
   BRT: 'America/Sao_Paulo',
   BRAZIL: 'America/Sao_Paulo',
-  'SAO PAULO': 'America/Sao_Paulo'
+  'SAO PAULO': 'America/Sao_Paulo',
 };
 
 const TIMEZONE_CODES = new Set([
   'IST', 'EST', 'EDT', 'PST', 'PDT', 'CST', 'CDT', 'MST', 'MDT',
   'GMT', 'BST', 'CET', 'CEST', 'JST', 'AEST', 'AEDT', 'SGT',
   'GST', 'MSK', 'HKT', 'WET', 'BRT', 'NY', 'NYC', 'LA', 'SF', 'UK',
-  'PHT', 'EET', 'KST', 'NZDT', 'NZST', 'AST'
+  'PHT', 'EET', 'KST', 'NZDT', 'NZST', 'AST',
 ]);
 
 const IANA_TO_CODE: Record<string, string> = {
@@ -133,6 +134,115 @@ const IANA_TO_CODE: Record<string, string> = {
 };
 
 const normalizeKey = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+// ─── Alias entries for partial city matching ──────────────────────────────────
+// Enables "Del"→Delhi, "Lon"→London, "Mum"→Mumbai, "Syd"→Sydney etc.
+
+type QueryAliasEntry = {
+  key: string;
+  label: string;
+  iana: string;
+  isTimezoneCode?: boolean;
+};
+
+const QUERY_ALIAS_ENTRIES: QueryAliasEntry[] = [
+  { key: 'IST',           label: 'IST',           iana: 'Asia/Kolkata',        isTimezoneCode: true },
+  { key: 'INDIA',         label: 'India',          iana: 'Asia/Kolkata' },
+  { key: 'BOMBAY',        label: 'Mumbai',         iana: 'Asia/Kolkata' },
+  { key: 'MUMBAI',        label: 'Mumbai',         iana: 'Asia/Kolkata' },
+  { key: 'DELHI',         label: 'Delhi',          iana: 'Asia/Kolkata' },
+  { key: 'KOLKATA',       label: 'Kolkata',        iana: 'Asia/Kolkata' },
+  { key: 'BANGALORE',     label: 'Bangalore',      iana: 'Asia/Kolkata' },
+  { key: 'HYDERABAD',     label: 'Hyderabad',      iana: 'Asia/Kolkata' },
+  { key: 'CHENNAI',       label: 'Chennai',        iana: 'Asia/Kolkata' },
+  { key: 'EST',           label: 'EST',            iana: 'America/New_York',    isTimezoneCode: true },
+  { key: 'EDT',           label: 'EDT',            iana: 'America/New_York',    isTimezoneCode: true },
+  { key: 'NEW YORK',      label: 'New York',       iana: 'America/New_York' },
+  { key: 'NY',            label: 'New York',       iana: 'America/New_York' },
+  { key: 'NYC',           label: 'New York',       iana: 'America/New_York' },
+  { key: 'PST',           label: 'PST',            iana: 'America/Los_Angeles', isTimezoneCode: true },
+  { key: 'PDT',           label: 'PDT',            iana: 'America/Los_Angeles', isTimezoneCode: true },
+  { key: 'LA',            label: 'Los Angeles',    iana: 'America/Los_Angeles' },
+  { key: 'LOS ANGELES',   label: 'Los Angeles',    iana: 'America/Los_Angeles' },
+  { key: 'CALIFORNIA',    label: 'California',     iana: 'America/Los_Angeles' },
+  { key: 'SF',            label: 'San Francisco',  iana: 'America/Los_Angeles' },
+  { key: 'SAN FRANCISCO', label: 'San Francisco',  iana: 'America/Los_Angeles' },
+  { key: 'CST',           label: 'CST',            iana: 'America/Chicago',     isTimezoneCode: true },
+  { key: 'CDT',           label: 'CDT',            iana: 'America/Chicago',     isTimezoneCode: true },
+  { key: 'CHICAGO',       label: 'Chicago',        iana: 'America/Chicago' },
+  { key: 'MST',           label: 'MST',            iana: 'America/Denver',      isTimezoneCode: true },
+  { key: 'MDT',           label: 'MDT',            iana: 'America/Denver',      isTimezoneCode: true },
+  { key: 'DENVER',        label: 'Denver',         iana: 'America/Denver' },
+  { key: 'GMT',           label: 'GMT',            iana: 'Europe/London',       isTimezoneCode: true },
+  { key: 'BST',           label: 'BST',            iana: 'Europe/London',       isTimezoneCode: true },
+  { key: 'LONDON',        label: 'London',         iana: 'Europe/London' },
+  { key: 'UK',            label: 'United Kingdom', iana: 'Europe/London' },
+  { key: 'ENGLAND',       label: 'England',        iana: 'Europe/London' },
+  { key: 'CET',           label: 'CET',            iana: 'Europe/Berlin',       isTimezoneCode: true },
+  { key: 'CEST',          label: 'CEST',           iana: 'Europe/Berlin',       isTimezoneCode: true },
+  { key: 'BERLIN',        label: 'Berlin',         iana: 'Europe/Berlin' },
+  { key: 'GERMANY',       label: 'Germany',        iana: 'Europe/Berlin' },
+  { key: 'PARIS',         label: 'Paris',          iana: 'Europe/Paris' },
+  { key: 'FRANCE',        label: 'France',         iana: 'Europe/Paris' },
+  { key: 'JST',           label: 'JST',            iana: 'Asia/Tokyo',          isTimezoneCode: true },
+  { key: 'TOKYO',         label: 'Tokyo',          iana: 'Asia/Tokyo' },
+  { key: 'JAPAN',         label: 'Japan',          iana: 'Asia/Tokyo' },
+  { key: 'AEST',          label: 'AEST',           iana: 'Australia/Sydney',    isTimezoneCode: true },
+  { key: 'AEDT',          label: 'AEDT',           iana: 'Australia/Sydney',    isTimezoneCode: true },
+  { key: 'SYDNEY',        label: 'Sydney',         iana: 'Australia/Sydney' },
+  { key: 'MELBOURNE',     label: 'Melbourne',      iana: 'Australia/Melbourne' },
+  { key: 'SGT',           label: 'SGT',            iana: 'Asia/Singapore',      isTimezoneCode: true },
+  { key: 'SINGAPORE',     label: 'Singapore',      iana: 'Asia/Singapore' },
+  { key: 'GST',           label: 'GST',            iana: 'Asia/Dubai',          isTimezoneCode: true },
+  { key: 'DUBAI',         label: 'Dubai',          iana: 'Asia/Dubai' },
+  { key: 'UAE',           label: 'UAE',            iana: 'Asia/Dubai' },
+  { key: 'PHT',           label: 'PHT',            iana: 'Asia/Manila',         isTimezoneCode: true },
+  { key: 'MANILA',        label: 'Manila',         iana: 'Asia/Manila' },
+  { key: 'PHILIPPINES',   label: 'Philippines',    iana: 'Asia/Manila' },
+  { key: 'EET',           label: 'EET',            iana: 'Europe/Helsinki',     isTimezoneCode: true },
+  { key: 'HELSINKI',      label: 'Helsinki',       iana: 'Europe/Helsinki' },
+  { key: 'KST',           label: 'KST',            iana: 'Asia/Seoul',          isTimezoneCode: true },
+  { key: 'KOREA',         label: 'Korea',          iana: 'Asia/Seoul' },
+  { key: 'SEOUL',         label: 'Seoul',          iana: 'Asia/Seoul' },
+  { key: 'NZDT',          label: 'NZDT',           iana: 'Pacific/Auckland',    isTimezoneCode: true },
+  { key: 'NZST',          label: 'NZST',           iana: 'Pacific/Auckland',    isTimezoneCode: true },
+  { key: 'AUCKLAND',      label: 'Auckland',       iana: 'Pacific/Auckland' },
+  { key: 'AST',           label: 'AST',            iana: 'America/Halifax',     isTimezoneCode: true },
+  { key: 'HALIFAX',       label: 'Halifax',        iana: 'America/Halifax' },
+  { key: 'RUSSIA',        label: 'Russia',         iana: 'Europe/Moscow' },
+  { key: 'MOSCOW',        label: 'Moscow',         iana: 'Europe/Moscow' },
+  { key: 'MSK',           label: 'MSK',            iana: 'Europe/Moscow',       isTimezoneCode: true },
+  { key: 'TORONTO',       label: 'Toronto',        iana: 'America/Toronto' },
+  { key: 'CANADA',        label: 'Canada',         iana: 'America/Toronto' },
+  { key: 'ONTARIO',       label: 'Ontario',        iana: 'America/Toronto' },
+  { key: 'HKT',           label: 'HKT',            iana: 'Asia/Hong_Kong',      isTimezoneCode: true },
+  { key: 'HONG KONG',     label: 'Hong Kong',      iana: 'Asia/Hong_Kong' },
+  { key: 'WET',           label: 'WET',            iana: 'Europe/Lisbon',       isTimezoneCode: true },
+  { key: 'PORTUGAL',      label: 'Portugal',       iana: 'Europe/Lisbon' },
+  { key: 'LISBON',        label: 'Lisbon',         iana: 'Europe/Lisbon' },
+  { key: 'BRT',           label: 'BRT',            iana: 'America/Sao_Paulo',   isTimezoneCode: true },
+  { key: 'BRAZIL',        label: 'Brazil',         iana: 'America/Sao_Paulo' },
+  { key: 'SAO PAULO',     label: 'Sao Paulo',      iana: 'America/Sao_Paulo' },
+];
+
+const QUERY_ALIAS_BY_NORMALIZED_KEY = new Map(
+  QUERY_ALIAS_ENTRIES.map(entry => [normalizeKey(entry.key), entry])
+);
+
+const resolveAliasEntryFromQuery = (query: string): QueryAliasEntry | null => {
+  const norm = normalizeKey(query);
+  if (!norm) return null;
+  const exact = QUERY_ALIAS_BY_NORMALIZED_KEY.get(norm);
+  if (exact) return exact;
+  if (norm.length < 3) return null;
+  return (
+    QUERY_ALIAS_ENTRIES.find(entry => normalizeKey(entry.key).startsWith(norm)) ||
+    QUERY_ALIAS_ENTRIES.find(entry => normalizeKey(entry.label).startsWith(norm)) ||
+    null
+  );
+};
+
+// ─── IANA zone indexes ────────────────────────────────────────────────────────
 
 const ALL_IANA_ZONES: string[] = (() => {
   try {
@@ -161,13 +271,34 @@ Object.values(countries).forEach((country: any) => {
   }
 });
 
+// ─── City resolver — partial matching restored ────────────────────────────────
+// Lookup order:
+//   1. Alias entries (handles partials: Del→Delhi, Lon→London, Syd→Sydney)
+//   2. Exact EXTENDED_ZONE_MAP
+//   3. Exact GLOBAL_ZONE_INDEX
+//   4. Exact COUNTRY_ZONE_INDEX
+//   5. Starts-with GLOBAL_ZONE_INDEX (covers all IANA cities globally)
+//   6. Starts-with COUNTRY_ZONE_INDEX
+//   7. Contains fallback
+
 const resolveIanaFromQuery = (query: string): string | null => {
   const norm = normalizeKey(query);
-  if (!norm) return null;
+  if (!norm || norm.length < 2) return null;
+
+  const aliasMatch = resolveAliasEntryFromQuery(query);
+  if (aliasMatch) return aliasMatch.iana;
+
   const upper = query.toUpperCase().trim();
   if (EXTENDED_ZONE_MAP[upper]) return EXTENDED_ZONE_MAP[upper];
   if (GLOBAL_ZONE_INDEX[norm]) return GLOBAL_ZONE_INDEX[norm];
   if (COUNTRY_ZONE_INDEX[norm]) return COUNTRY_ZONE_INDEX[norm];
+
+  const startsWithZone = Object.keys(GLOBAL_ZONE_INDEX).find(k => k.startsWith(norm));
+  if (startsWithZone) return GLOBAL_ZONE_INDEX[startsWithZone];
+
+  const startsWithCountry = Object.keys(COUNTRY_ZONE_INDEX).find(k => k.startsWith(norm));
+  if (startsWithCountry) return COUNTRY_ZONE_INDEX[startsWithCountry];
+
   return ALL_IANA_ZONES.find(z => normalizeKey(z).includes(norm)) || null;
 };
 
@@ -177,28 +308,37 @@ const toZoneLabel = (iana: string) => {
   return last.charAt(0).toUpperCase() + last.slice(1);
 };
 
+// ─── Display name — returns full city name even for partial input ─────────────
+// "Del" → resolves alias → returns "Delhi" not "Del"
+
 const getDisplayName = (query: string, iana: string): string => {
+  const aliasMatch = resolveAliasEntryFromQuery(query);
+  if (aliasMatch) return aliasMatch.label;
+
   const upperQuery = query.toUpperCase().trim();
   if (TIMEZONE_CODES.has(upperQuery)) return upperQuery;
-  return query
-    .trim()
+
+  const cleaned = query.trim();
+  if (!cleaned) return toZoneLabel(iana);
+
+  return cleaned
+    .replace(/[_-]+/g, ' ')
     .split(/\s+/)
+    .filter(Boolean)
     .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
     .join(' ');
 };
 
+// ─── Route helpers ────────────────────────────────────────────────────────────
+
 const slugifyRoutePart = (value: string) =>
-  value
-    .toLowerCase()
-    .trim()
+  value.toLowerCase().trim()
     .replace(/[^a-z0-9\s-]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-');
 
 const humanizeSlug = (slug: string) =>
-  slug
-    .split('-')
-    .filter(Boolean)
+  slug.split('-').filter(Boolean)
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
 
@@ -215,37 +355,31 @@ const ROUTE_ALIAS: Record<string, string> = {
   australia: 'australia', sydney: 'australia', melbourne: 'australia', perth: 'australia',
   singapore: 'singapore',
   japan: 'japan', tokyo: 'japan', osaka: 'japan',
-  germany: 'germany', berlin: 'germany', frankfurt: 'germany', munich: 'germany'
+  germany: 'germany', berlin: 'germany', frankfurt: 'germany', munich: 'germany',
 };
 
 const HUB_CITY_VARIANTS: Record<string, string[]> = {
-  india: ['delhi', 'mumbai', 'bangalore', 'hyderabad', 'chennai'],
-  usa: ['new-york', 'los-angeles', 'chicago', 'seattle', 'dallas', 'san-francisco'],
-  uk: ['london', 'manchester', 'birmingham'],
-  canada: ['toronto', 'vancouver', 'montreal'],
-  uae: ['dubai', 'abu-dhabi'],
+  india:     ['delhi', 'mumbai', 'bangalore', 'hyderabad', 'chennai'],
+  usa:       ['new-york', 'los-angeles', 'chicago', 'seattle', 'dallas', 'san-francisco'],
+  uk:        ['london', 'manchester', 'birmingham'],
+  canada:    ['toronto', 'vancouver', 'montreal'],
+  uae:       ['dubai', 'abu-dhabi'],
   australia: ['sydney', 'melbourne', 'perth'],
   singapore: ['singapore'],
-  japan: ['tokyo', 'osaka'],
-  germany: ['berlin', 'frankfurt', 'munich']
+  japan:     ['tokyo', 'osaka'],
+  germany:   ['berlin', 'frankfurt', 'munich'],
 };
 
 const ROUTE_GRAPH: Record<string, RouteEdge[]> = {
-  india: [
-    { to: 'usa', score: 100 }, { to: 'uk', score: 95 }, { to: 'uae', score: 90 },
-    { to: 'canada', score: 88 }, { to: 'australia', score: 82 }, { to: 'singapore', score: 70 }
-  ],
-  usa: [
-    { to: 'india', score: 96 }, { to: 'uk', score: 90 }, { to: 'germany', score: 78 },
-    { to: 'uae', score: 72 }, { to: 'japan', score: 74 }
-  ],
-  uk: [{ to: 'india', score: 91 }, { to: 'usa', score: 92 }, { to: 'uae', score: 68 }],
-  canada: [{ to: 'india', score: 86 }, { to: 'usa', score: 84 }, { to: 'uk', score: 62 }],
-  uae: [{ to: 'india', score: 89 }, { to: 'uk', score: 65 }, { to: 'usa', score: 60 }],
+  india:     [{ to: 'usa', score: 100 }, { to: 'uk', score: 95 }, { to: 'uae', score: 90 }, { to: 'canada', score: 88 }, { to: 'australia', score: 82 }, { to: 'singapore', score: 70 }],
+  usa:       [{ to: 'india', score: 96 }, { to: 'uk', score: 90 }, { to: 'germany', score: 78 }, { to: 'uae', score: 72 }, { to: 'japan', score: 74 }],
+  uk:        [{ to: 'india', score: 91 }, { to: 'usa', score: 92 }, { to: 'uae', score: 68 }],
+  canada:    [{ to: 'india', score: 86 }, { to: 'usa', score: 84 }, { to: 'uk', score: 62 }],
+  uae:       [{ to: 'india', score: 89 }, { to: 'uk', score: 65 }, { to: 'usa', score: 60 }],
   australia: [{ to: 'india', score: 80 }, { to: 'singapore', score: 66 }, { to: 'uk', score: 58 }],
   singapore: [{ to: 'india', score: 74 }, { to: 'australia', score: 64 }, { to: 'japan', score: 59 }],
-  japan: [{ to: 'usa', score: 76 }, { to: 'singapore', score: 57 }, { to: 'india', score: 55 }],
-  germany: [{ to: 'india', score: 69 }, { to: 'usa', score: 67 }, { to: 'uk', score: 63 }]
+  japan:     [{ to: 'usa', score: 76 }, { to: 'singapore', score: 57 }, { to: 'india', score: 55 }],
+  germany:   [{ to: 'india', score: 69 }, { to: 'usa', score: 67 }, { to: 'uk', score: 63 }],
 };
 
 const CITY_REGION_MAP: Record<string, string> = {
@@ -255,17 +389,17 @@ const CITY_REGION_MAP: Record<string, string> = {
   'new-york': 'us', 'los-angeles': 'us', chicago: 'us',
   toronto: 'canada',
   singapore: 'asia', tokyo: 'asia', 'hong-kong': 'asia',
-  sydney: 'australia', melbourne: 'australia'
+  sydney: 'australia', melbourne: 'australia',
 };
 
 const REGION_CLUSTERS: Record<string, string[]> = {
-  india: ['mumbai', 'delhi', 'bangalore'],
+  india:         ['mumbai', 'delhi', 'bangalore'],
   'middle-east': ['dubai', 'riyadh', 'doha'],
-  europe: ['london', 'paris', 'berlin'],
-  us: ['new-york', 'los-angeles', 'chicago'],
-  canada: ['toronto'],
-  asia: ['singapore', 'tokyo', 'hong-kong'],
-  australia: ['sydney', 'melbourne']
+  europe:        ['london', 'paris', 'berlin'],
+  us:            ['new-york', 'los-angeles', 'chicago'],
+  canada:        ['toronto'],
+  asia:          ['singapore', 'tokyo', 'hong-kong'],
+  australia:     ['sydney', 'melbourne'],
 };
 
 const buildTimelineStart = (anchor: Date) => {
@@ -282,7 +416,7 @@ const getPartsFormatter = (iana: string) => {
     TZ_PARTS_FORMATTER_CACHE[iana] = new Intl.DateTimeFormat('en-US', {
       timeZone: iana, hour12: false, hourCycle: 'h23',
       year: 'numeric', month: 'numeric', day: 'numeric',
-      hour: 'numeric', minute: 'numeric', second: 'numeric'
+      hour: 'numeric', minute: 'numeric', second: 'numeric',
     });
   }
   return TZ_PARTS_FORMATTER_CACHE[iana];
@@ -292,19 +426,17 @@ const getDisplayFormatter = (iana: string) => {
   if (!TZ_DISPLAY_FORMATTER_CACHE[iana]) {
     TZ_DISPLAY_FORMATTER_CACHE[iana] = new Intl.DateTimeFormat('en-US', {
       timeZone: iana, hour: '2-digit', minute: '2-digit', second: '2-digit',
-      hour12: true, weekday: 'short', month: 'short', day: 'numeric'
+      hour12: true, weekday: 'short', month: 'short', day: 'numeric',
     });
   }
   return TZ_DISPLAY_FORMATTER_CACHE[iana];
 };
 
+// ─── Component ────────────────────────────────────────────────────────────────
+
 const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug, toSlug, isTimezoneCodeRoute = false }) => {
   const [naturalInput, setNaturalInput] = useState('');
-  const [baseTime, setBaseTime] = useState(() => {
-    const d = new Date();
-    d.setSeconds(0, 0);
-    return d;
-  });
+  const [baseTime, setBaseTime] = useState(() => { const d = new Date(); d.setSeconds(0, 0); return d; });
   const [sourceTz, setSourceTz] = useState<Timezone>({ name: 'London', iana: 'Europe/London', offset: 0 });
   const [targets, setTargets] = useState<Timezone[]>([{ name: 'New York', iana: 'America/New_York', offset: -5 }]);
   const [history, setHistory] = useState<ConversionHistoryItem[]>([]);
@@ -337,7 +469,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
 
   const zonedTimeToUtc = (
     input: { year: number; month: number; day: number; hour: number; minute: number; second: number },
-    iana: string
+    iana: string,
   ) => {
     const targetWallMs = Date.UTC(input.year, input.month - 1, input.day, input.hour, input.minute, input.second);
     let utcMillis = targetWallMs;
@@ -364,7 +496,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
         dayPeriod: p('dayPeriod')?.toLowerCase() || '',
         date: `${p('weekday')}, ${p('month')} ${p('day')}`.toUpperCase(),
         dayName: p('weekday').toUpperCase(),
-        monthDay: `${p('month')} ${p('day')}`.toUpperCase()
+        monthDay: `${p('month')} ${p('day')}`.toUpperCase(),
       };
     } catch {
       return { time: '--:--:--', shortTime: '--:--', hour: 0, minute: 0, second: 0, dayPeriod: '', date: '', dayName: '', monthDay: '' };
@@ -426,7 +558,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       if (diff === 0) return `${srcName} and ${tgtName} are currently at the same time offset.`;
       const abs = Math.abs(diff);
       return `${tgtName} is currently ${abs} hour${abs === 1 ? '' : 's'} ${diff > 0 ? 'ahead of' : 'behind'} ${srcName}.`;
-    }, []
+    }, [],
   );
 
   const trackRelatedRouteClick = useCallback((href: string, label: string, rank: number) => {
@@ -445,7 +577,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       const entry: ConversionHistoryItem = {
         id: Math.random().toString(36).substr(2, 9),
         query, sourceName: src.name, sourceIana: src.iana, sourceTime: srcInfo.time,
-        targetName: tgt.name, targetIana: tgt.iana, targetTime: tgtInfo.time, createdAt: Date.now()
+        targetName: tgt.name, targetIana: tgt.iana, targetTime: tgtInfo.time, createdAt: Date.now(),
       };
       setHistory(prev => {
         const top = prev[0];
@@ -453,7 +585,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
             top.targetIana === entry.targetIana && Date.now() - top.createdAt < 1500) return prev;
         return [entry, ...prev].slice(0, 3);
       });
-    }, [getTzInfo]
+    }, [getTzInfo],
   );
 
   useEffect(() => {
@@ -479,7 +611,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
     setIsLive(true);
     setHasSearchedConversion(true);
     if (routeSource && routeTarget) pushHistory(query, routeSource, routeTarget, new Date());
-  }, [fromSlug, toSlug, pushHistory]);
+  }, [fromSlug, toSlug, pushHistory, isTimezoneCodeRoute]);
 
   const performLocalParse = (input: string, commitToHistory: boolean = false) => {
     const text = input.toUpperCase().trim();
@@ -520,7 +652,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       const zoneNowParts = getZoneDateParts(now, activeSrc.iana);
       const targetUtc = zonedTimeToUtc(
         { year: zoneNowParts.year, month: zoneNowParts.month, day: zoneNowParts.day, hour: h, minute: m, second: s },
-        activeSrc.iana
+        activeSrc.iana,
       );
       setBaseTime(targetUtc);
       setIsLive(false);
@@ -557,11 +689,13 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       cells.push({
         fullDate: d, hourLabel: isHalf ? '' : hour12, period: isHalf ? '' : period,
         isHalf, cellType, isWorkingHour, dayName: info.dayName, monthDay: info.monthDay,
-        isDayStart: hour24 === 0 && minute === 0
+        isDayStart: hour24 === 0 && minute === 0,
       });
     }
     return cells;
   };
+
+  // ─── Styling ─────────────────────────────────────────────────────────────────
 
   const allTzs = [sourceTz, ...targets];
   const textColor = isDark ? 'text-white' : 'text-black';
@@ -588,6 +722,8 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
   const toRouteSlug = toSlug?.trim() ? toSlug.toLowerCase() : slugifyRoutePart(targets[0]?.name || 'toronto');
   const currentRoute = `${fromRouteSlug}-to-${toRouteSlug}`;
 
+  // ─── Related routes ───────────────────────────────────────────────────────────
+
   const relatedRoutes = useMemo(() => {
     const itemMap = new Map<string, RelatedRouteItem>();
     const currentHref = `/${currentRoute}`;
@@ -600,30 +736,30 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       if (!existing || score > existing.score) itemMap.set(href, { href, label, score });
     };
     const TZ_TO_CITIES: Record<string, string[]> = {
-      'ist':  ['mumbai', 'delhi', 'bangalore', 'hyderabad', 'chennai'],
-      'est':  ['new-york', 'boston', 'miami', 'atlanta', 'washington-dc'],
-      'pst':  ['los-angeles', 'san-francisco', 'seattle', 'las-vegas'],
-      'cst':  ['chicago', 'houston', 'dallas'],
-      'mst':  ['denver'],
-      'gmt':  ['london', 'dublin'],
-      'cet':  ['berlin', 'paris', 'amsterdam', 'rome', 'madrid'],
-      'jst':  ['tokyo', 'osaka'],
-      'sgt':  ['singapore'],
-      'aest': ['sydney', 'melbourne', 'brisbane'],
-      'gst':  ['dubai', 'abu-dhabi'],
+      ist:  ['mumbai', 'delhi', 'bangalore', 'hyderabad', 'chennai'],
+      est:  ['new-york', 'boston', 'miami', 'atlanta', 'washington-dc'],
+      pst:  ['los-angeles', 'san-francisco', 'seattle', 'las-vegas'],
+      cst:  ['chicago', 'houston', 'dallas'],
+      mst:  ['denver'],
+      gmt:  ['london', 'dublin'],
+      cet:  ['berlin', 'paris', 'amsterdam', 'rome', 'madrid'],
+      jst:  ['tokyo', 'osaka'],
+      sgt:  ['singapore'],
+      aest: ['sydney', 'melbourne', 'brisbane'],
+      gst:  ['dubai', 'abu-dhabi'],
     };
     const TZ_POPULAR_PAIRS: Record<string, string[]> = {
-      'ist':  ['est', 'pst', 'gmt', 'cet', 'jst', 'sgt', 'gst', 'aest', 'cst'],
-      'est':  ['ist', 'gmt', 'pst', 'cet', 'jst', 'sgt', 'aest', 'cst', 'gst'],
-      'pst':  ['ist', 'gmt', 'est', 'cet', 'jst', 'sgt', 'aest', 'cst'],
-      'cst':  ['est', 'ist', 'gmt', 'pst', 'cet', 'jst', 'sgt'],
-      'mst':  ['est', 'pst', 'gmt', 'cst', 'ist'],
-      'gmt':  ['ist', 'est', 'pst', 'cet', 'jst', 'sgt', 'aest', 'gst', 'cst'],
-      'cet':  ['gmt', 'est', 'ist', 'pst', 'jst', 'sgt', 'aest'],
-      'jst':  ['est', 'pst', 'ist', 'sgt', 'aest', 'gmt', 'cet'],
-      'sgt':  ['ist', 'gmt', 'est', 'jst', 'aest', 'cet', 'pst'],
-      'aest': ['ist', 'gmt', 'est', 'jst', 'sgt', 'pst', 'cet'],
-      'gst':  ['ist', 'gmt', 'est', 'cet', 'jst', 'pst'],
+      ist:  ['est', 'pst', 'gmt', 'cet', 'jst', 'sgt', 'gst', 'aest', 'cst'],
+      est:  ['ist', 'gmt', 'pst', 'cet', 'jst', 'sgt', 'aest', 'cst', 'gst'],
+      pst:  ['ist', 'gmt', 'est', 'cet', 'jst', 'sgt', 'aest', 'cst'],
+      cst:  ['est', 'ist', 'gmt', 'pst', 'cet', 'jst', 'sgt'],
+      mst:  ['est', 'pst', 'gmt', 'cst', 'ist'],
+      gmt:  ['ist', 'est', 'pst', 'cet', 'jst', 'sgt', 'aest', 'gst', 'cst'],
+      cet:  ['gmt', 'est', 'ist', 'pst', 'jst', 'sgt', 'aest'],
+      jst:  ['est', 'pst', 'ist', 'sgt', 'aest', 'gmt', 'cet'],
+      sgt:  ['ist', 'gmt', 'est', 'jst', 'aest', 'cet', 'pst'],
+      aest: ['ist', 'gmt', 'est', 'jst', 'sgt', 'pst', 'cet'],
+      gst:  ['ist', 'gmt', 'est', 'cet', 'jst', 'pst'],
     };
     const isFromTz = Boolean(TZ_TO_CITIES[fromRouteSlug]);
     const isToTz = Boolean(TZ_TO_CITIES[toRouteSlug]);
@@ -672,8 +808,8 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       }
     }
     if (itemMap.size < 6) {
-      [['mumbai','london'],['new-york','london'],['london','new-york'],['mumbai','new-york'],
-       ['singapore','london'],['dubai','london'],['sydney','london'],['tokyo','new-york'],['berlin','new-york']]
+      [['mumbai', 'london'], ['new-york', 'london'], ['london', 'new-york'], ['mumbai', 'new-york'],
+       ['singapore', 'london'], ['dubai', 'london'], ['sydney', 'london'], ['tokyo', 'new-york'], ['berlin', 'new-york']]
         .forEach(([f, t]) => { if (f !== fromRouteSlug && t !== toRouteSlug) addRoute(f, t, 30); });
     }
     return Array.from(itemMap.values()).sort((a, b) => b.score - a.score).slice(0, 7);
@@ -702,9 +838,15 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       srcOffset: getOffsetString(sourceTz.iana, baseTime),
       tgtOffset: getOffsetString(target.iana, baseTime),
       diffHours: Number.isInteger(absDiff) ? String(absDiff) : absDiff.toFixed(1).replace(/\.0$/, ''),
-      isAhead: diff > 0, overlap
+      isAhead: diff > 0, overlap,
     };
   }, [sourceTz, targets, baseTime, getTzInfo]);
+
+  // showRelatedRoutes: always true when routes exist — good for SEO internal linking
+  const showRelatedRoutes = relatedRoutes.length > 0;
+  const relatedRoutesDiffLine = targets[0]
+    ? getTimeDifferenceLine(sourceTz.name, sourceTz.iana, targets[0].name, targets[0].iana)
+    : '';
 
   const primaryTargetName = targets[0]?.name || 'Target Timezone';
   const meetingButtonLabel = `Best Time to Schedule a Meeting between ${sourceTz.name} and ${primaryTargetName}`;
@@ -721,6 +863,8 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
     setHasSearchedConversion(true);
     window.location.href = href;
   }, [trackRelatedRouteClick]);
+
+  // ─── Render ───────────────────────────────────────────────────────────────────
 
   return (
     <div className={`timezone-no-shadow p-4 sm:p-8 space-y-8 sm:space-y-12 ${bgColor} ${textColor} font-['Helvetica']`}>
@@ -813,6 +957,35 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
           {meetingButtonLabel}
         </button>
       </div>
+
+      {/* ── Related Searches tile (above Past Searches) ── */}
+      {showRelatedRoutes && (
+        <div className="max-w-6xl mx-auto mt-12 sm:mt-20">
+          <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-4 sm:mb-5`}>
+            <div className="w-10 sm:w-20 h-px bg-current"></div>Related Searches
+          </div>
+          <div className="text-[10px] sm:text-xs font-bold tracking-wide uppercase mb-4 sm:mb-6 font-['Helvetica'] text-yellow-400">
+            {relatedRoutesDiffLine}
+          </div>
+          <div className="flex flex-wrap gap-2 sm:gap-3">
+            {relatedRoutes.map((route, idx) => (
+              <a
+                key={route.href}
+                href={route.href}
+                onClick={() => trackRelatedRouteClick(route.href, route.label, idx + 1)}
+                className={`
+                  inline-flex items-center w-fit max-w-full px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border
+                  ${isDark ? 'border-zinc-700 hover:border-blue-500 hover:bg-zinc-950' : 'border-zinc-300 hover:border-blue-500 hover:bg-blue-50'}
+                  font-['Helvetica'] font-bold text-xs sm:text-sm tracking-tight whitespace-nowrap
+                  transition-all duration-200
+                `}
+              >
+                {route.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Past Searches ── */}
       <div className="max-w-6xl mx-auto mt-12 sm:mt-20">
@@ -946,6 +1119,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
                 </button>
               </div>
             </div>
+
             <div className="flex-grow overflow-x-auto scrollbar-custom">
               <div className="min-w-max">
                 {allTzs.map((tz, rowIndex) => {
@@ -1001,7 +1175,6 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       {faqData && (
         <div className="max-w-6xl mx-auto mt-12 sm:mt-16">
 
-          {/* Header row: 8-col FAQ label left, 4-col Related label right */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 mb-6 sm:mb-8">
             <div className={`lg:col-span-8 flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText}`}>
               <div className="w-10 sm:w-20 h-px bg-current"></div>Timezone Conversion FAQ and Fact
@@ -1011,10 +1184,9 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
             </div>
           </div>
 
-          {/* Panel row: FAQ 8 cols, Related Converters 4 cols, same height */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-stretch">
 
-            {/* FAQ panel (8/12) */}
+            {/* FAQ panel */}
             <div className={`lg:col-span-8 border ${panelBorder} rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-6 sm:p-10 space-y-8`}>
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 sm:gap-12">
                 <div className="space-y-4">
@@ -1082,7 +1254,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
               </div>
             </div>
 
-            {/* Related Converters panel (4/12) */}
+            {/* Related Converters panel */}
             <div className={`lg:col-span-4 border ${panelBorder} rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-4 sm:p-6 h-full`}>
               <div className="space-y-2 sm:space-y-3">
                 {relatedRoutes.map((route, idx) => (

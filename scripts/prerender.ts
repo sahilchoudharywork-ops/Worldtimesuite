@@ -6,7 +6,7 @@ const DIST_DIR = path.join(ROOT, 'dist');
 const TEMPLATE_PATH = path.join(DIST_DIR, 'index.html');
 const ORIGIN = 'https://worldtimesuite.com';
 
-// ─── Routes ───────────────────────────────────────────────────────────────────
+// Routes
 
 const STATIC_ROUTES = ['/', '/timer', '/stopwatch', '/calendar'];
 
@@ -112,14 +112,166 @@ const CITY_ROUTES: string[] = [
   '/london-to-bangkok',
 ];
 
-// ─── Route parsing ────────────────────────────────────────────────────────────
+// Route parsing
 
 const TIMEZONE_CODES = new Set([
-  'ist','est','edt','pst','pdt','cst','cdt','mst','mdt',
-  'gmt','bst','cet','cest','jst','aest','aedt','sgt',
-  'gst','msk','hkt','wet','brt','pht','eet','kst',
-  'nzdt','nzst','ast'
+  'ist',
+  'est',
+  'edt',
+  'pst',
+  'pdt',
+  'cst',
+  'cdt',
+  'mst',
+  'mdt',
+  'gmt',
+  'bst',
+  'cet',
+  'cest',
+  'jst',
+  'aest',
+  'aedt',
+  'sgt',
+  'gst',
+  'msk',
+  'hkt',
+  'wet',
+  'brt',
+  'pht',
+  'eet',
+  'kst',
+  'nzdt',
+  'nzst',
+  'ast',
 ]);
+
+type TimezoneData = {
+  code: string;
+  name: string;
+  iana: string;
+};
+
+const TIMEZONE_DATA_BY_SLUG: Record<string, TimezoneData> = {
+  ist: { code: 'IST', name: 'India Standard Time', iana: 'Asia/Kolkata' },
+  est: { code: 'EST', name: 'Eastern Time', iana: 'America/New_York' },
+  edt: { code: 'EDT', name: 'Eastern Daylight Time', iana: 'America/New_York' },
+  pst: { code: 'PST', name: 'Pacific Time', iana: 'America/Los_Angeles' },
+  pdt: { code: 'PDT', name: 'Pacific Daylight Time', iana: 'America/Los_Angeles' },
+  cst: { code: 'CST', name: 'Central Time', iana: 'America/Chicago' },
+  cdt: { code: 'CDT', name: 'Central Daylight Time', iana: 'America/Chicago' },
+  mst: { code: 'MST', name: 'Mountain Time', iana: 'America/Denver' },
+  mdt: { code: 'MDT', name: 'Mountain Daylight Time', iana: 'America/Denver' },
+  gmt: { code: 'GMT', name: 'Greenwich Mean Time', iana: 'Etc/GMT' },
+  bst: { code: 'BST', name: 'British Summer Time', iana: 'Europe/London' },
+  cet: { code: 'CET', name: 'Central European Time', iana: 'Europe/Berlin' },
+  cest: { code: 'CEST', name: 'Central European Summer Time', iana: 'Europe/Berlin' },
+  jst: { code: 'JST', name: 'Japan Standard Time', iana: 'Asia/Tokyo' },
+  aest: { code: 'AEST', name: 'Australian Eastern Time', iana: 'Australia/Sydney' },
+  aedt: { code: 'AEDT', name: 'Australian Eastern Daylight Time', iana: 'Australia/Sydney' },
+  sgt: { code: 'SGT', name: 'Singapore Time', iana: 'Asia/Singapore' },
+  gst: { code: 'GST', name: 'Gulf Standard Time', iana: 'Asia/Dubai' },
+  msk: { code: 'MSK', name: 'Moscow Standard Time', iana: 'Europe/Moscow' },
+  hkt: { code: 'HKT', name: 'Hong Kong Time', iana: 'Asia/Hong_Kong' },
+  wet: { code: 'WET', name: 'Western European Time', iana: 'Europe/Lisbon' },
+  brt: { code: 'BRT', name: 'Brasilia Time', iana: 'America/Sao_Paulo' },
+  pht: { code: 'PHT', name: 'Philippine Time', iana: 'Asia/Manila' },
+  eet: { code: 'EET', name: 'Eastern European Time', iana: 'Europe/Helsinki' },
+  kst: { code: 'KST', name: 'Korea Standard Time', iana: 'Asia/Seoul' },
+  nzdt: { code: 'NZDT', name: 'New Zealand Daylight Time', iana: 'Pacific/Auckland' },
+  nzst: { code: 'NZST', name: 'New Zealand Standard Time', iana: 'Pacific/Auckland' },
+  ast: { code: 'AST', name: 'Atlantic Standard Time', iana: 'America/Halifax' },
+};
+
+const CITY_IANA_MAP: Record<string, string> = {
+  london: 'Europe/London',
+  'new-york': 'America/New_York',
+  'los-angeles': 'America/Los_Angeles',
+  chicago: 'America/Chicago',
+  toronto: 'America/Toronto',
+  vancouver: 'America/Vancouver',
+  montreal: 'America/Toronto',
+  sydney: 'Australia/Sydney',
+  melbourne: 'Australia/Melbourne',
+  brisbane: 'Australia/Brisbane',
+  perth: 'Australia/Perth',
+  delhi: 'Asia/Kolkata',
+  mumbai: 'Asia/Kolkata',
+  bangalore: 'Asia/Kolkata',
+  hyderabad: 'Asia/Kolkata',
+  chennai: 'Asia/Kolkata',
+  kolkata: 'Asia/Kolkata',
+  dubai: 'Asia/Dubai',
+  singapore: 'Asia/Singapore',
+  tokyo: 'Asia/Tokyo',
+  osaka: 'Asia/Tokyo',
+  'hong-kong': 'Asia/Hong_Kong',
+  paris: 'Europe/Paris',
+  berlin: 'Europe/Berlin',
+  amsterdam: 'Europe/Amsterdam',
+  rome: 'Europe/Rome',
+  madrid: 'Europe/Madrid',
+  moscow: 'Europe/Moscow',
+  istanbul: 'Europe/Istanbul',
+  bangkok: 'Asia/Bangkok',
+  jakarta: 'Asia/Jakarta',
+  manila: 'Asia/Manila',
+  karachi: 'Asia/Karachi',
+  lahore: 'Asia/Karachi',
+  dhaka: 'Asia/Dhaka',
+  riyadh: 'Asia/Riyadh',
+  cairo: 'Africa/Cairo',
+  nairobi: 'Africa/Nairobi',
+  johannesburg: 'Africa/Johannesburg',
+  lagos: 'Africa/Lagos',
+  accra: 'Africa/Accra',
+  seattle: 'America/Los_Angeles',
+  'san-francisco': 'America/Los_Angeles',
+  dallas: 'America/Chicago',
+  houston: 'America/Chicago',
+  atlanta: 'America/New_York',
+  miami: 'America/New_York',
+  boston: 'America/New_York',
+  'washington-dc': 'America/New_York',
+  denver: 'America/Denver',
+  phoenix: 'America/Phoenix',
+  'mexico-city': 'America/Mexico_City',
+  'sao-paulo': 'America/Sao_Paulo',
+  'buenos-aires': 'America/Argentina/Buenos_Aires',
+  lima: 'America/Lima',
+  bogota: 'America/Bogota',
+  santiago: 'America/Santiago',
+  lisbon: 'Europe/Lisbon',
+  zurich: 'Europe/Zurich',
+  vienna: 'Europe/Vienna',
+  stockholm: 'Europe/Stockholm',
+  oslo: 'Europe/Oslo',
+  helsinki: 'Europe/Helsinki',
+  warsaw: 'Europe/Warsaw',
+  prague: 'Europe/Prague',
+  budapest: 'Europe/Budapest',
+  bucharest: 'Europe/Bucharest',
+  athens: 'Europe/Athens',
+  sofia: 'Europe/Sofia',
+  kyiv: 'Europe/Kyiv',
+  kiev: 'Europe/Kyiv',
+  beijing: 'Asia/Shanghai',
+  shanghai: 'Asia/Shanghai',
+  seoul: 'Asia/Seoul',
+  taipei: 'Asia/Taipei',
+  'kuala-lumpur': 'Asia/Kuala_Lumpur',
+  colombo: 'Asia/Colombo',
+  kathmandu: 'Asia/Kathmandu',
+  kabul: 'Asia/Kabul',
+  tehran: 'Asia/Tehran',
+  baghdad: 'Asia/Baghdad',
+  'abu-dhabi': 'Asia/Dubai',
+  muscat: 'Asia/Muscat',
+  auckland: 'Pacific/Auckland',
+  wellington: 'Pacific/Auckland',
+  honolulu: 'Pacific/Honolulu',
+  anchorage: 'America/Anchorage',
+  halifax: 'America/Halifax',
+};
 
 interface ParsedConversionRoute {
   fromSlug: string;
@@ -129,61 +281,143 @@ interface ParsedConversionRoute {
 }
 
 const titleCase = (slug: string): string =>
-  slug.split('-').filter(Boolean)
-    .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+  slug
+    .split('-')
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
 
 const parseConversionRoute = (route: string): ParsedConversionRoute | null => {
   const match = route.match(/^\/([a-z0-9-]+)-to-([a-z0-9-]+)$/i);
   if (!match) return null;
+
   const fromSlug = match[1].toLowerCase();
-  const toSlug   = match[2].toLowerCase();
+  const toSlug = match[2].toLowerCase();
+
   return {
     fromSlug,
     toSlug,
     fromName: TIMEZONE_CODES.has(fromSlug) ? fromSlug.toUpperCase() : titleCase(fromSlug),
-    toName:   TIMEZONE_CODES.has(toSlug)   ? toSlug.toUpperCase()   : titleCase(toSlug),
+    toName: TIMEZONE_CODES.has(toSlug) ? toSlug.toUpperCase() : titleCase(toSlug),
   };
 };
 
-// ─── SEO ──────────────────────────────────────────────────────────────────────
+// SEO helpers
+
+const formatHourValue = (value: number) => {
+  if (Number.isInteger(value)) return String(value);
+  return value.toFixed(2).replace(/0$/, '').replace(/\.0$/, '');
+};
+
+const getOffsetHours = (iana: string, date: Date = new Date()) => {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: iana,
+      timeZoneName: 'longOffset',
+    }).formatToParts(date);
+
+    const offsetStr = parts.find(part => part.type === 'timeZoneName')?.value || 'GMT+0';
+    const match = offsetStr.match(/GMT([+-])(\d{1,2})(?::(\d{2}))?/);
+
+    if (!match) return 0;
+
+    const sign = match[1] === '-' ? -1 : 1;
+    const hours = parseInt(match[2], 10);
+    const minutes = match[3] ? parseInt(match[3], 10) : 0;
+
+    return sign * (hours + minutes / 60);
+  } catch {
+    return 0;
+  }
+};
+
+const getCurrentTimeZoneName = (iana: string, fallback: string) => {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: iana,
+      timeZoneName: 'long',
+    }).formatToParts(new Date());
+
+    return parts.find(part => part.type === 'timeZoneName')?.value || fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const formatOffsetPhrase = (fromIana: string, toIana: string) => {
+  const diff = getOffsetHours(fromIana) - getOffsetHours(toIana);
+
+  if (diff === 0) return 'at the same time as';
+
+  const abs = Math.abs(diff);
+  const hours = formatHourValue(abs);
+
+  return `${hours} hour${abs === 1 ? '' : 's'} ${diff > 0 ? 'ahead of' : 'behind'}`;
+};
+
+const buildConversionDescription = (parsed: ParsedConversionRoute) => {
+  const { fromSlug, toSlug, fromName, toName } = parsed;
+
+  const fromTimezone = TIMEZONE_DATA_BY_SLUG[fromSlug];
+  const toTimezone = TIMEZONE_DATA_BY_SLUG[toSlug];
+
+  if (fromTimezone && toTimezone) {
+    const offsetPhrase = formatOffsetPhrase(fromTimezone.iana, toTimezone.iana);
+    const fromLongName = getCurrentTimeZoneName(fromTimezone.iana, fromTimezone.name);
+    const toLongName = getCurrentTimeZoneName(toTimezone.iana, toTimezone.name);
+
+    if (offsetPhrase === 'at the same time as') {
+      return `${fromTimezone.code}, ${fromLongName} is at the same time as ${toLongName}. Convert time between ${fromTimezone.code} and ${toTimezone.code}. See the exact time difference and best hours to schedule meetings.`;
+    }
+
+    return `${fromTimezone.code}, ${fromLongName} is ${offsetPhrase} ${toLongName}. Convert time between ${fromTimezone.code} and ${toTimezone.code}. See the exact time difference and best hours to schedule meetings.`;
+  }
+
+  const fromIana = CITY_IANA_MAP[fromSlug];
+  const toIana = CITY_IANA_MAP[toSlug];
+
+  if (fromIana && toIana) {
+    const offsetPhrase = formatOffsetPhrase(fromIana, toIana);
+
+    if (offsetPhrase === 'at the same time as') {
+      return `${fromName} and ${toName} are currently at the same time. Convert time between ${fromName} and ${toName}. See the exact time difference and best hours to schedule meetings.`;
+    }
+
+    return `${fromName} time is ${offsetPhrase} ${toName}. Convert time between ${fromName} and ${toName}. See the exact time difference and best hours to schedule meetings.`;
+  }
+
+  return `Convert time between ${fromName} and ${toName}. See the exact time difference and best hours to schedule meetings.`;
+};
+
+// Static page SEO
 
 const staticSeo: Record<string, { title: string; description: string }> = {
   '/': {
-    title: 'Time Zone Converter – Convert Time Between Any Two Cities',
+    title: 'Time Zone Converter - Convert Time Between Any Two Cities',
     description: 'Free time zone converter for 500+ cities worldwide. Instantly see the time difference between any two cities, find meeting-friendly hours, and plan across time zones.',
   },
   '/stopwatch': {
-    title: 'Online Stopwatch with Lap Timer – Free & Instant | WorldTimeSuite',
-    description: 'Free online stopwatch with lap tracking. Start, stop and record laps instantly — no download needed. Works on desktop and mobile.',
+    title: 'Online Stopwatch with Lap Timer - Free & Instant | WorldTimeSuite',
+    description: 'Free online stopwatch with lap tracking. Start, stop and record laps instantly - no download needed. Works on desktop and mobile.',
   },
   '/timer': {
-    title: 'Online Countdown Timer – Free, Fast & No Sign-up | WorldTimeSuite',
-    description: 'Set a free online countdown timer in seconds. Simple, distraction-free timer that works instantly on any device — no app or account needed.',
+    title: 'Online Countdown Timer - Free, Fast & No Sign-up | WorldTimeSuite',
+    description: 'Set a free online countdown timer in seconds. Simple, distraction-free timer that works instantly on any device - no app or account needed.',
   },
   '/calendar': {
-    title: 'Time Zone Calendar – Plan Meetings Across Time Zones | WorldTimeSuite',
+    title: 'Time Zone Calendar - Plan Meetings Across Time Zones | WorldTimeSuite',
     description: 'Plan and schedule across time zones with our timezone-aware calendar. See overlapping hours between cities and avoid scheduling mistakes.',
   },
 };
 
-// ─── HTML helpers ─────────────────────────────────────────────────────────────
+// HTML helpers
 
-const esc = (s: string) =>
-  s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-// ─── CHANGED: Route-specific static body copy ─────────────────────────────────
-// Previously all static pages (/, /timer, /stopwatch, /calendar) shared one
-// generic body that said "Time Zone Converter / Convert time between cities
-// worldwide with WorldTimeSuite / Explore Popular Route".
-//
-// This was wrong because:
-//   - /timer prerendered as "Time Zone Converter" — not "Online Countdown Timer"
-//   - /stopwatch prerendered as "Time Zone Converter" — not "Online Stopwatch"
-//   - /calendar prerendered as "Time Zone Converter" — not "Time Zone Calendar"
-//
-// Google reads the prerendered HTML before React loads. So it was seeing the
-// wrong content for these pages. Now each page gets its own correct body.
+const esc = (value: string) =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 
 interface StaticCopy {
   heading: string;
@@ -197,14 +431,14 @@ const getStaticCopy = (route: string): StaticCopy => {
     case '/timer':
       return {
         heading: 'Online Countdown Timer',
-        description: 'Set a free online countdown timer in seconds. Fast, distraction-free, works instantly on any device — no sign-up needed.',
+        description: 'Set a free online countdown timer in seconds. Fast, distraction-free, works instantly on any device - no sign-up needed.',
         ctaHref: '/timer',
         ctaLabel: 'Open Timer',
       };
     case '/stopwatch':
       return {
         heading: 'Online Stopwatch',
-        description: 'Free online stopwatch with lap tracking. Start, stop and record laps instantly on desktop and mobile — no download needed.',
+        description: 'Free online stopwatch with lap tracking. Start, stop and record laps instantly on desktop and mobile - no download needed.',
         ctaHref: '/stopwatch',
         ctaLabel: 'Open Stopwatch',
       };
@@ -216,7 +450,6 @@ const getStaticCopy = (route: string): StaticCopy => {
         ctaLabel: 'Open Calendar',
       };
     default:
-      // Homepage (/) and any unrecognised static route
       return {
         heading: 'Time Zone Converter',
         description: 'Convert time between 500+ cities worldwide. See the exact time difference and find the best hours to meet across time zones.',
@@ -226,10 +459,10 @@ const getStaticCopy = (route: string): StaticCopy => {
   }
 };
 
-const buildBody = (route: string, parsed: ParsedConversionRoute | null): string => {
+const buildBody = (route: string, parsed: ParsedConversionRoute | null, conversionDescription?: string): string => {
   if (parsed) {
-    // Conversion route: /london-to-new-york or /ist-to-gmt — unchanged
     const { fromName, toName } = parsed;
+
     return `
     <div style="min-height:100vh;background:#000;color:#fff;font-family:Helvetica,Arial,sans-serif;padding:40px 24px;">
       <div style="max-width:1100px;margin:0 auto;">
@@ -237,11 +470,11 @@ const buildBody = (route: string, parsed: ParsedConversionRoute | null): string 
           ${esc(fromName)} To ${esc(toName)} Time Converter
         </div>
         <p style="margin-top:24px;font-size:20px;line-height:1.6;color:#a1a1aa;max-width:900px;">
-          Convert time from ${esc(fromName)} to ${esc(toName)} instantly. Check the live time difference and compare local time before scheduling meetings.
+          ${esc(conversionDescription || `Convert time between ${fromName} and ${toName}. See the exact time difference and best hours to schedule meetings.`)}
         </p>
         <div style="margin-top:40px;padding:32px;border:1px solid #27272a;border-radius:32px;background:#09090b;">
           <div style="font-size:12px;font-weight:800;letter-spacing:0.35em;text-transform:uppercase;color:#71717a;margin-bottom:16px;">Live Route</div>
-          <div style="font-size:42px;font-weight:800;letter-spacing:-0.03em;text-transform:uppercase;">${esc(fromName)} → ${esc(toName)}</div>
+          <div style="font-size:42px;font-weight:800;letter-spacing:-0.03em;text-transform:uppercase;">${esc(fromName)} &rarr; ${esc(toName)}</div>
           <div style="margin-top:24px;">
             <a href="${route}" style="display:inline-block;padding:14px 22px;border-radius:999px;background:#fff;color:#000;text-decoration:none;font-size:12px;font-weight:900;letter-spacing:0.24em;text-transform:uppercase;">Open Converter</a>
           </div>
@@ -250,9 +483,8 @@ const buildBody = (route: string, parsed: ParsedConversionRoute | null): string 
     </div>`;
   }
 
-  // CHANGED: was one hardcoded generic block for all static pages.
-  // Now uses getStaticCopy() to return page-specific content.
   const copy = getStaticCopy(route);
+
   return `
     <div style="min-height:100vh;background:#000;color:#fff;font-family:Helvetica,Arial,sans-serif;padding:40px 24px;">
       <div style="max-width:1100px;margin:0 auto;">
@@ -274,41 +506,40 @@ const buildBody = (route: string, parsed: ParsedConversionRoute | null): string 
 const buildHtml = (template: string, route: string): string => {
   const parsed = parseConversionRoute(route);
 
-  // SEO values
   let title: string;
   let description: string;
   let canonicalPath: string;
 
   if (parsed) {
-    title        = `${parsed.fromName} to ${parsed.toName} Time Converter | Current Time & Difference`;
-    description  = `What time is it in ${parsed.toName} when it is a given time in ${parsed.fromName}? Convert time between ${parsed.fromName} and ${parsed.toName} instantly. See the exact time difference and best hours to schedule meetings.`;
+    title = `${parsed.fromName} to ${parsed.toName} Time Converter | Current Time & Difference`;
+    description = buildConversionDescription(parsed);
     canonicalPath = `/${parsed.fromSlug}-to-${parsed.toSlug}`;
   } else {
-    const seo   = staticSeo[route] ?? staticSeo['/'];
-    title        = seo.title;
-    description  = seo.description;
+    const seo = staticSeo[route] ?? staticSeo['/'];
+    title = seo.title;
+    description = seo.description;
     canonicalPath = route;
   }
 
   const canonicalUrl = `${ORIGIN}${canonicalPath}`;
-  const body         = buildBody(route, parsed);
+  const body = buildBody(route, parsed, parsed ? description : undefined);
 
-  // Apply all replacements to a fresh copy of the template
   let html = template;
-  html = html.replace(/<title>[^<]*<\/title>/,                                    `<title>${esc(title)}</title>`);
-  html = html.replace(/<meta name="description" content="[^"]*">/,                `<meta name="description" content="${esc(description)}">`);
-  html = html.replace(/<meta property="og:title" content="[^"]*">/,               `<meta property="og:title" content="${esc(title)}">`);
-  html = html.replace(/<meta property="og:description" content="[^"]*">/,         `<meta property="og:description" content="${esc(description)}">`);
-  html = html.replace(/<meta property="og:url" content="[^"]*">/,                 `<meta property="og:url" content="${canonicalUrl}">`);
-  html = html.replace(/<meta name="twitter:title" content="[^"]*">/,              `<meta name="twitter:title" content="${esc(title)}">`);
-  html = html.replace(/<meta name="twitter:description" content="[^"]*">/,        `<meta name="twitter:description" content="${esc(description)}">`);
-  html = html.replace(/<link rel="canonical" href="[^"]*">/,                      `<link rel="canonical" href="${canonicalUrl}">`);
-  html = html.replace('<!--app-html-->',                                           body);
+
+  html = html.replace(/<title>[^<]*<\/title>/, `<title>${esc(title)}</title>`);
+  html = html.replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${esc(description)}">`);
+  html = html.replace(/<meta property="og:title" content="[^"]*">/, `<meta property="og:title" content="${esc(title)}">`);
+  html = html.replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${esc(description)}">`);
+  html = html.replace(/<meta property="og:url" content="[^"]*">/, `<meta property="og:url" content="${canonicalUrl}">`);
+  html = html.replace(/<meta name="twitter:title" content="[^"]*">/, `<meta name="twitter:title" content="${esc(title)}">`);
+  html = html.replace(/<meta name="twitter:description" content="[^"]*">/, `<meta name="twitter:description" content="${esc(description)}">`);
+  html = html.replace(/<link rel="canonical" href="[^"]*">/, `<link rel="canonical" href="${canonicalUrl}">`);
+  html = html.replace('<!--app-html-->', body);
 
   return html;
 };
 
-// ─── Write helper ─────────────────────────────────────────────────────────────
+// Write helper
 
 const writeRoute = (route: string, html: string): void => {
   const filePath =
@@ -318,10 +549,10 @@ const writeRoute = (route: string, html: string): void => {
 
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   fs.writeFileSync(filePath, html, 'utf8');
-  console.log(`  ✓ ${route}`);
+  console.log(`  ${route}`);
 };
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// Main
 
 const main = (): void => {
   if (!fs.existsSync(TEMPLATE_PATH)) {
@@ -331,38 +562,37 @@ const main = (): void => {
   const rawTemplate = fs.readFileSync(TEMPLATE_PATH, 'utf8');
 
   if (!rawTemplate.includes('<!--app-html-->')) {
-    console.error('\n❌ ERROR: dist/index.html is missing the <!--app-html--> placeholder.');
-    console.error('   This means a previous prerender already overwrote it.');
-    console.error('   Fix: run the following commands, then try again:\n');
-    console.error('     rm -rf dist');
-    console.error('     npm run build\n');
+    console.error('\nERROR: dist/index.html is missing the <!--app-html--> placeholder.');
+    console.error('This means a previous prerender already overwrote it.');
+    console.error('Fix: delete dist, run npm run build, then try again.\n');
     process.exit(1);
   }
 
   const backupPath = path.join(DIST_DIR, '_template.html');
   fs.writeFileSync(backupPath, rawTemplate, 'utf8');
-  console.log(`\n  Template backed up to dist/_template.html`);
+  console.log(`\nTemplate backed up to dist/_template.html`);
 
   const allRoutes = [...new Set([...STATIC_ROUTES, ...TIMEZONE_ROUTES, ...CITY_ROUTES])];
 
   const sample = parseConversionRoute('/delhi-to-london');
-  console.log(`  Sanity check: parseConversionRoute('/delhi-to-london') =`, JSON.stringify(sample));
+  console.log(`Sanity check: parseConversionRoute('/delhi-to-london') =`, JSON.stringify(sample));
 
-  const tzSample = parseConversionRoute('/ist-to-gmt');
-  console.log(`  Sanity check: parseConversionRoute('/ist-to-gmt') =`, JSON.stringify(tzSample));
+  const timezoneSample = parseConversionRoute('/ist-to-gmt');
+  console.log(`Sanity check: parseConversionRoute('/ist-to-gmt') =`, JSON.stringify(timezoneSample));
+
   console.log();
-  console.log(`  Prerendering ${allRoutes.length} routes...\n`);
+  console.log(`Prerendering ${allRoutes.length} routes...\n`);
 
   for (const route of allRoutes) {
     const html = buildHtml(rawTemplate, route);
     writeRoute(route, html);
   }
 
-  console.log(`\n✅ Done.`);
-  console.log(`   Static:    ${STATIC_ROUTES.length}`);
-  console.log(`   Timezone:  ${TIMEZONE_ROUTES.length}`);
-  console.log(`   City:      ${CITY_ROUTES.length}`);
-  console.log(`   Total:     ${allRoutes.length}`);
+  console.log(`\nDone.`);
+  console.log(`Static:   ${STATIC_ROUTES.length}`);
+  console.log(`Timezone: ${TIMEZONE_ROUTES.length}`);
+  console.log(`City:     ${CITY_ROUTES.length}`);
+  console.log(`Total:    ${allRoutes.length}`);
 };
 
 main();
