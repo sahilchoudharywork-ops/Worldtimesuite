@@ -389,6 +389,88 @@ const buildConversionDescription = (parsed: ParsedConversionRoute) => {
   return `Convert time between ${fromName} and ${toName}. See the exact time difference and best hours to schedule meetings.`;
 };
 
+const formatTime12h = (totalMinutes: number): string => {
+  const normalized = ((totalMinutes % 1440) + 1440) % 1440;
+  const hour24 = Math.floor(normalized / 60);
+  const minute = normalized % 60;
+  const period = hour24 < 12 ? 'AM' : 'PM';
+  const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+
+  return `${hour12}:${String(minute).padStart(2, '0')} ${period}`;
+};
+
+const buildNoscriptTable = (
+  fromIana: string,
+  toIana: string,
+  fromName: string,
+  toName: string
+): string => {
+  try {
+    const fromOffsetHours = getOffsetHours(fromIana);
+    const toOffsetHours = getOffsetHours(toIana);
+    const diffMinutes = Math.round((toOffsetHours - fromOffsetHours) * 60);
+
+    const rows = Array.from({ length: 24 }, (_, hour) => {
+      const fromMinutes = hour * 60;
+      const toMinutes = fromMinutes + diffMinutes;
+
+      return `        <tr>
+          <td>${esc(formatTime12h(fromMinutes))} in ${esc(fromName)}</td>
+          <td>${esc(formatTime12h(toMinutes))} in ${esc(toName)}</td>
+        </tr>`;
+    }).join('\n');
+
+    return `
+    <noscript>
+      <section aria-label="${esc(fromName)} to ${esc(toName)} time conversion table">
+        <h2>${esc(fromName)} to ${esc(toName)} Time Conversion Table</h2>
+        <p>Use this table to convert time between ${esc(fromName)} and ${esc(toName)} without JavaScript.</p>
+        <table>
+          <caption>${esc(fromName)} to ${esc(toName)} hourly time conversion</caption>
+          <thead>
+            <tr>
+              <th>${esc(fromName)} Time</th>
+              <th>${esc(toName)} Time</th>
+            </tr>
+          </thead>
+          <tbody>
+${rows}
+          </tbody>
+        </table>
+      </section>
+    </noscript>`;
+  } catch {
+    return '';
+  }
+};
+
+const buildNoscriptTableForRoute = (parsed: ParsedConversionRoute | null): string => {
+  if (!parsed) return '';
+
+  const { fromSlug, toSlug, fromName, toName } = parsed;
+
+  const fromTimezone = TIMEZONE_DATA_BY_SLUG[fromSlug];
+  const toTimezone = TIMEZONE_DATA_BY_SLUG[toSlug];
+
+  if (fromTimezone && toTimezone) {
+    return buildNoscriptTable(
+      fromTimezone.iana,
+      toTimezone.iana,
+      fromTimezone.code,
+      toTimezone.code
+    );
+  }
+
+  const fromIana = CITY_IANA_MAP[fromSlug];
+  const toIana = CITY_IANA_MAP[toSlug];
+
+  if (fromIana && toIana) {
+    return buildNoscriptTable(fromIana, toIana, fromName, toName);
+  }
+
+  return '';
+};
+
 // Static page SEO
 
 const staticSeo: Record<string, { title: string; description: string }> = {
@@ -462,15 +544,18 @@ const getStaticCopy = (route: string): StaticCopy => {
 const buildBody = (route: string, parsed: ParsedConversionRoute | null, conversionDescription?: string): string => {
   if (parsed) {
     const { fromName, toName } = parsed;
+    const descText =
+      conversionDescription ||
+      `Convert time between ${fromName} and ${toName}. See the exact time difference and best hours to schedule meetings.`;
 
     return `
     <div style="min-height:100vh;background:#000;color:#fff;font-family:Helvetica,Arial,sans-serif;padding:40px 24px;">
       <div style="max-width:1100px;margin:0 auto;">
-        <div style="font-size:72px;font-weight:900;letter-spacing:-0.04em;line-height:0.95;text-transform:uppercase;">
-          ${esc(fromName)} To ${esc(toName)} Time Converter
-        </div>
+        <h1 style="font-size:72px;font-weight:900;letter-spacing:-0.04em;line-height:0.95;text-transform:uppercase;color:#fff;margin:0;padding:0;">
+          ${esc(fromName)} to ${esc(toName)} Time Converter
+        </h1>
         <p style="margin-top:24px;font-size:20px;line-height:1.6;color:#a1a1aa;max-width:900px;">
-          ${esc(conversionDescription || `Convert time between ${fromName} and ${toName}. See the exact time difference and best hours to schedule meetings.`)}
+          ${esc(descText)}
         </p>
         <div style="margin-top:40px;padding:32px;border:1px solid #27272a;border-radius:32px;background:#09090b;">
           <div style="font-size:12px;font-weight:800;letter-spacing:0.35em;text-transform:uppercase;color:#71717a;margin-bottom:16px;">Live Route</div>
@@ -488,9 +573,9 @@ const buildBody = (route: string, parsed: ParsedConversionRoute | null, conversi
   return `
     <div style="min-height:100vh;background:#000;color:#fff;font-family:Helvetica,Arial,sans-serif;padding:40px 24px;">
       <div style="max-width:1100px;margin:0 auto;">
-        <div style="font-size:72px;font-weight:900;letter-spacing:-0.04em;line-height:0.95;text-transform:uppercase;">
+        <h1 style="font-size:72px;font-weight:900;letter-spacing:-0.04em;line-height:0.95;text-transform:uppercase;color:#fff;margin:0;padding:0;">
           ${esc(copy.heading)}
-        </div>
+        </h1>
         <p style="margin-top:24px;font-size:20px;line-height:1.6;color:#a1a1aa;max-width:900px;">
           ${esc(copy.description)}
         </p>
@@ -523,6 +608,7 @@ const buildHtml = (template: string, route: string): string => {
 
   const canonicalUrl = `${ORIGIN}${canonicalPath}`;
   const body = buildBody(route, parsed, parsed ? description : undefined);
+  const noscriptTable = buildNoscriptTableForRoute(parsed);
 
   let html = template;
 
@@ -534,7 +620,7 @@ const buildHtml = (template: string, route: string): string => {
   html = html.replace(/<meta name="twitter:title" content="[^"]*">/, `<meta name="twitter:title" content="${esc(title)}">`);
   html = html.replace(/<meta name="twitter:description" content="[^"]*">/, `<meta name="twitter:description" content="${esc(description)}">`);
   html = html.replace(/<link rel="canonical" href="[^"]*">/, `<link rel="canonical" href="${canonicalUrl}">`);
-  html = html.replace('<!--app-html-->', body);
+  html = html.replace('<!--app-html-->', `${body}\n${noscriptTable}`);
 
   return html;
 };
