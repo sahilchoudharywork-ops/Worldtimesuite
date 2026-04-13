@@ -151,6 +151,8 @@ type TimezoneData = {
   iana: string;
 };
 
+type ConversionLabelMode = 'timezone' | 'city';
+
 const TIMEZONE_DATA_BY_SLUG: Record<string, TimezoneData> = {
   ist: { code: 'IST', name: 'India Standard Time', iana: 'Asia/Kolkata' },
   est: { code: 'EST', name: 'Eastern Time', iana: 'America/New_York' },
@@ -399,6 +401,118 @@ const formatTime12h = (totalMinutes: number): string => {
   return `${hour12}:${String(minute).padStart(2, '0')} ${period}`;
 };
 
+const buildVisibleConversionTable = (
+  fromIana: string,
+  toIana: string,
+  fromName: string,
+  toName: string,
+  fromFullName: string,
+  toFullName: string,
+  labelMode: ConversionLabelMode
+): string => {
+  try {
+    const fromOffsetHours = getOffsetHours(fromIana);
+    const toOffsetHours = getOffsetHours(toIana);
+    const diffMinutes = Math.round((toOffsetHours - fromOffsetHours) * 60);
+    const offsetPhrase = formatOffsetPhrase(fromIana, toIana);
+    const firstToTime = formatTime12h(diffMinutes);
+    const keyHours = [0, 6, 9, 12, 15, 18, 21, 23];
+
+    const rows = keyHours
+      .map(hour => {
+        const fromMinutes = hour * 60;
+        const toMinutes = fromMinutes + diffMinutes;
+        const fromTime = formatTime12h(fromMinutes);
+        const toTime = formatTime12h(toMinutes);
+
+        return `          <tr>
+            <td style="padding:10px 16px;color:#a1a1aa;border-bottom:1px solid #18181b;">${esc(fromTime)} ${esc(fromName)}</td>
+            <td style="padding:10px 16px;color:#ffffff;border-bottom:1px solid #18181b;font-weight:600;">${esc(toTime)} ${esc(toName)}</td>
+          </tr>`;
+      })
+      .join('\n');
+
+    const offsetStatement =
+      offsetPhrase === 'at the same time as'
+        ? labelMode === 'timezone'
+          ? `${esc(fromName)} (${esc(fromFullName)}) and ${esc(toName)} (${esc(toFullName)}) are currently at the same time.`
+          : `${esc(fromName)} and ${esc(toName)} are currently at the same time. ${esc(fromName)} uses ${esc(fromFullName)} and ${esc(toName)} uses ${esc(toFullName)}.`
+        : labelMode === 'timezone'
+          ? `${esc(fromName)} is known as <em>${esc(fromFullName)}</em>. ${esc(toName)} is known as <em>${esc(toFullName)}</em>. ${esc(fromName)} is ${esc(offsetPhrase)} ${esc(toName)}.`
+          : `${esc(fromName)} uses <em>${esc(fromFullName)}</em>. ${esc(toName)} uses <em>${esc(toFullName)}</em>. ${esc(fromName)} time is ${esc(offsetPhrase)} ${esc(toName)}.`;
+
+    return `
+        <section style="margin-top:32px;">
+          <p style="font-size:16px;line-height:1.7;color:#a1a1aa;max-width:900px;margin:0;">
+            ${offsetStatement} So, when it is 12:00 AM in ${esc(fromName)}, it is ${esc(firstToTime)} in ${esc(toName)}.
+          </p>
+          <div style="margin-top:32px;padding:32px;border:1px solid #27272a;border-radius:32px;background:#09090b;">
+            <h2 style="font-size:16px;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;color:#ffffff;margin:0 0 6px 0;">
+              ${esc(fromName)} to ${esc(toName)} Time Conversion
+            </h2>
+            <p style="font-size:13px;color:#71717a;margin:0 0 20px 0;">
+              Common ${esc(fromName)} times and their ${esc(toName)} equivalents.
+            </p>
+            <table style="width:100%;border-collapse:collapse;font-size:14px;">
+              <thead>
+                <tr>
+                  <th style="text-align:left;padding:8px 16px;color:#71717a;font-weight:600;font-size:12px;letter-spacing:0.05em;text-transform:uppercase;border-bottom:1px solid #27272a;">${esc(fromName)} Time</th>
+                  <th style="text-align:left;padding:8px 16px;color:#71717a;font-weight:600;font-size:12px;letter-spacing:0.05em;text-transform:uppercase;border-bottom:1px solid #27272a;">${esc(toName)} Time</th>
+                </tr>
+              </thead>
+              <tbody>
+${rows}
+              </tbody>
+            </table>
+          </div>
+        </section>`;
+  } catch {
+    return '';
+  }
+};
+
+const buildVisibleConversionTableForRoute = (parsed: ParsedConversionRoute): string => {
+  const { fromSlug, toSlug, fromName, toName } = parsed;
+
+  const fromTimezone = TIMEZONE_DATA_BY_SLUG[fromSlug];
+  const toTimezone = TIMEZONE_DATA_BY_SLUG[toSlug];
+
+  if (fromTimezone && toTimezone) {
+    const fromFullName = getCurrentTimeZoneName(fromTimezone.iana, fromTimezone.name);
+    const toFullName = getCurrentTimeZoneName(toTimezone.iana, toTimezone.name);
+
+    return buildVisibleConversionTable(
+      fromTimezone.iana,
+      toTimezone.iana,
+      fromTimezone.code,
+      toTimezone.code,
+      fromFullName,
+      toFullName,
+      'timezone'
+    );
+  }
+
+  const fromIana = CITY_IANA_MAP[fromSlug];
+  const toIana = CITY_IANA_MAP[toSlug];
+
+  if (fromIana && toIana) {
+    const fromFullName = getCurrentTimeZoneName(fromIana, fromName);
+    const toFullName = getCurrentTimeZoneName(toIana, toName);
+
+    return buildVisibleConversionTable(
+      fromIana,
+      toIana,
+      fromName,
+      toName,
+      fromFullName,
+      toFullName,
+      'city'
+    );
+  }
+
+  return '';
+};
+
 const buildNoscriptTable = (
   fromIana: string,
   toIana: string,
@@ -547,6 +661,7 @@ const buildBody = (route: string, parsed: ParsedConversionRoute | null, conversi
     const descText =
       conversionDescription ||
       `Convert time between ${fromName} and ${toName}. See the exact time difference and best hours to schedule meetings.`;
+    const visibleTable = buildVisibleConversionTableForRoute(parsed);
 
     return `
     <div style="min-height:100vh;background:#000;color:#fff;font-family:Helvetica,Arial,sans-serif;padding:40px 24px;">
@@ -564,6 +679,7 @@ const buildBody = (route: string, parsed: ParsedConversionRoute | null, conversi
             <a href="${route}" style="display:inline-block;padding:14px 22px;border-radius:999px;background:#fff;color:#000;text-decoration:none;font-size:12px;font-weight:900;letter-spacing:0.24em;text-transform:uppercase;">Open Converter</a>
           </div>
         </div>
+${visibleTable}
       </div>
     </div>`;
   }
