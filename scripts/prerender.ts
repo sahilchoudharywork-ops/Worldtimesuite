@@ -13,6 +13,7 @@ const STATIC_ROUTES = ['/', '/timer', '/stopwatch', '/calendar'];
 const TIMEZONE_ROUTES: string[] = [
   '/ist-to-gmt',
   '/est-to-gmt',
+  '/gmt-to-est',
   '/ist-to-est',
   '/pst-to-est',
   '/pst-to-gmt',
@@ -59,6 +60,7 @@ const TIMEZONE_ROUTES: string[] = [
   '/ist-to-hkt',
   '/aest-to-pst',
   '/gmt-to-msk',
+  '/est-to-mst',
 ];
 
 const CITY_ROUTES: string[] = [
