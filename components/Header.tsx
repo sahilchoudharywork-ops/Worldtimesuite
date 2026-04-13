@@ -95,7 +95,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, theme, onToggl
   const isDark = theme === 'dark';
 
   const navItems = [
-    { id: Page.CONVERTER, label: 'Timezone Converter' },
+    { id: Page.CONVERTER, label: 'Time Zone Converter' },
     { id: Page.STOPWATCH, label: 'Stopwatch' },
     { id: Page.TIMER, label: 'Timer' },
     { id: Page.CALENDAR, label: 'Calendar' }
@@ -110,7 +110,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, theme, onToggl
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <button
           type="button"
-          aria-label="Go to timezone converter homepage"
+          aria-label="Go to time zone converter homepage"
           onClick={() => onNavigate(Page.CONVERTER)}
           className="flex items-center gap-2 cursor-pointer"
         >

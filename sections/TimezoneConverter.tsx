@@ -883,7 +883,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
-            aria-label="Timezone conversion query"
+            aria-label="Time Zone conversion query"
             className="flex-grow bg-transparent border-none outline-none font-bold text-base sm:text-lg min-w-0"
             placeholder={!fromSlug && !toSlug ? '5 pm London to New York' : 'e.g. 8 pm russia to london'}
             value={naturalInput}
@@ -896,7 +896,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
         </div>
         <button
           type="button"
-          aria-label="Convert timezone"
+          aria-label="Convert time zone"
           onClick={handleConvert}
           className={`w-full sm:w-auto px-6 sm:px-10 py-4 rounded-full font-black uppercase text-xs sm:text-sm tracking-[0.2em] sm:tracking-widest transition-all active:scale-95 shadow-lg ${convertBtn}`}
         >
@@ -908,7 +908,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       <div className="max-w-6xl mx-auto">
         <div className={`border ${panelBorder} rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl transition-all duration-300`}>
           <div className={`hidden sm:grid grid-cols-12 px-12 pt-8 pb-4 border-b ${panelBorderSoft}`}>
-            <div className={`col-span-5 text-[10px] font-black uppercase tracking-[0.3em] ${subtleText}`}>Source Timezone</div>
+            <div className={`col-span-5 text-[10px] font-black uppercase tracking-[0.3em] ${subtleText}`}>Source Time Zone</div>
             <div className={`col-span-2 text-center text-[10px] font-black uppercase tracking-[0.3em] ${subtleText}`}>Direction</div>
             <div className={`col-span-5 text-right text-[10px] font-black uppercase tracking-[0.3em] ${subtleText}`}>Target Local Time</div>
           </div>
@@ -1177,7 +1177,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 mb-6 sm:mb-8">
             <div className={`lg:col-span-8 flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText}`}>
-              <div className="w-10 sm:w-20 h-px bg-current"></div>Timezone Conversion FAQ and Fact
+              <div className="w-10 sm:w-20 h-px bg-current"></div>Time Zone Conversion FAQ and Fact
             </div>
             <div className={`lg:col-span-4 flex items-center gap-2 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} whitespace-nowrap`}>
               <div className="w-6 sm:w-8 flex-none h-px bg-current"></div>Related Converters
