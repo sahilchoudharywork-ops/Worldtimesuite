@@ -1,4 +1,3 @@
-
 // export enum Page {
 //   CONVERTER = 'converter',
 //   STOPWATCH = 'stopwatch',
@@ -55,6 +54,7 @@ export enum Page {
   SETTINGS = 'settings',
   ABOUT = 'about',
   TERMS = 'terms',
+  PRIVACY = 'privacy',
 }
 
 export interface Task {

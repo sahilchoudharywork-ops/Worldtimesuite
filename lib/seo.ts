@@ -218,6 +218,10 @@ const seoByPage: Partial<Record<Page, Omit<SeoData, 'canonicalPath'>>> = {
   [Page.TERMS]: {
     title: 'Terms and Conditions | WorldTimeSuite',
     description: 'Read the terms and conditions for using WorldTimeSuite, including usage policy, accuracy disclaimers, and data handling practices.'
+  },
+  [Page.PRIVACY]: {
+    title: 'Privacy Policy | WorldTimeSuite',
+    description: 'WorldTimeSuite privacy policy — how we handle data, cookies, Google AdSense advertising, and your privacy rights.'
   }
 };
 

@@ -1,4 +1,3 @@
-
 // import React from 'react';
 
 // interface FooterProps {
@@ -160,7 +159,7 @@ const Footer: React.FC<FooterProps> = ({ theme, onNavigate }) => {
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:opacity-50 transition">
+                <a href="/privacy" onClick={handleNav(Page.PRIVACY)} className="hover:opacity-50 transition">
                   Privacy Policy
                 </a>
               </li>

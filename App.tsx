@@ -18,6 +18,7 @@ const Timer = lazy(() => import('./sections/Timer'));
 const Calendar = lazy(() => import('./sections/Calendar'));
 const About = lazy(() => import('./sections/About'));
 const Terms = lazy(() => import('./sections/Terms'));
+const Privacy = lazy(() => import('./sections/Privacy'));
 
 const upsertMeta = (attr: 'name' | 'property', key: string, content: string) => {
   let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
@@ -254,6 +255,8 @@ const App: React.FC<AppProps> = ({ initialPath = '/' }) => {
         return <About {...props} />;
       case Page.TERMS:
         return <Terms {...props} />;
+      case Page.PRIVACY:
+        return <Privacy {...props} />;
       default:
         return <TimezoneConverter {...props} />;
     }
@@ -262,7 +265,7 @@ const App: React.FC<AppProps> = ({ initialPath = '/' }) => {
   const isFullView = currentPage === Page.STOPWATCH || currentPage === Page.TIMER;
   const isCalendar = currentPage === Page.CALENDAR;
   const isConverter = currentPage === Page.CONVERTER;
-  const isStaticPage = currentPage === Page.ABOUT || currentPage === Page.TERMS;
+  const isStaticPage = currentPage === Page.ABOUT || currentPage === Page.TERMS || currentPage === Page.PRIVACY;
 
   const handleNavigate = (page: Page) => {
     setCurrentPage(page);
