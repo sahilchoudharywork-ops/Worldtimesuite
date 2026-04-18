@@ -516,10 +516,10 @@ const buildConversionDescription = (parsed: ParsedConversionRoute) => {
     const toLongName = getCurrentTimeZoneName(toTimezone.iana, toTimezone.name);
 
     if (offsetPhrase === 'at the same time as') {
-      return `${fromTimezone.code}, ${fromLongName} is at the same time as ${toLongName}. Convert time between ${fromTimezone.code} and ${toTimezone.code}. See the exact time difference and best hours to schedule meetings.`;
+      return `${fromTimezone.name} (${fromTimezone.code}) is at the same time as ${toTimezone.name} (${toTimezone.code}). Convert any ${fromTimezone.code} time to ${toTimezone.code} instantly — DST-aware, live clock, and best meeting hours included.`;
     }
 
-    return `${fromTimezone.code}, ${fromLongName} is ${offsetPhrase} ${toLongName}. Convert time between ${fromTimezone.code} and ${toTimezone.code}. See the exact time difference and best hours to schedule meetings.`;
+    return `${fromLongName} (${fromTimezone.code}) is currently ${offsetPhrase} ${toLongName} (${toTimezone.code}). Convert any ${fromTimezone.code} time to ${toTimezone.code} instantly — DST-aware, live clock, and best meeting hours included.`;
   }
 
   const fromIana = CITY_IANA_MAP[fromSlug];
@@ -529,13 +529,13 @@ const buildConversionDescription = (parsed: ParsedConversionRoute) => {
     const offsetPhrase = formatOffsetPhrase(fromIana, toIana);
 
     if (offsetPhrase === 'at the same time as') {
-      return `${fromName} and ${toName} are currently at the same time. Convert time between ${fromName} and ${toName}. See the exact time difference and best hours to schedule meetings.`;
+      return `${fromName} and ${toName} are currently at the same time. Convert time between ${fromName} and ${toName}, see the exact difference, and find the best hours for calls and meetings.`;
     }
 
-    return `${fromName} time is ${offsetPhrase} ${toName}. Convert time between ${fromName} and ${toName}. See the exact time difference and best hours to schedule meetings.`;
+    return `${fromName} is currently ${offsetPhrase} ${toName}. Convert time between ${fromName} and ${toName}, see the exact difference, and find the best hours for calls and meetings.`;
   }
 
-  return `Convert time between ${fromName} and ${toName}. See the exact time difference and best hours to schedule meetings.`;
+  return `Convert time between ${fromName} and ${toName}. See the exact time difference and find the best hours for calls and meetings.`;
 };
 
 const formatTime12h = (totalMinutes: number): string => {
@@ -892,7 +892,10 @@ const buildHtml = (template: string, route: string): string => {
   let canonicalPath: string;
 
   if (parsed) {
-    title = `${parsed.fromName} to ${parsed.toName} Time Converter | Current Time & Difference`;
+    const isTimezoneRoute = Boolean(TIMEZONE_DATA_BY_SLUG[parsed.fromSlug] && TIMEZONE_DATA_BY_SLUG[parsed.toSlug]);
+    title = isTimezoneRoute
+      ? `${parsed.fromName} to ${parsed.toName} Converter | Time Difference & Current Time`
+      : `${parsed.fromName} to ${parsed.toName} Time Converter | Current Time & Difference`;
     description = buildConversionDescription(parsed);
     canonicalPath = `/${parsed.fromSlug}-to-${parsed.toSlug}`;
   } else {

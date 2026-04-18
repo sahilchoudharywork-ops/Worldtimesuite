@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import * as ct from 'countries-and-timezones';
 import { Timezone } from '../types';
+import { buildCityPairContent } from '../lib/cityPairContent';
 
 interface TimezoneConverterProps {
   isDark: boolean;
@@ -842,6 +843,25 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
     };
   }, [sourceTz, targets, baseTime, getTzInfo]);
 
+  // ─── Dynamic SEO content (DST / About / FAQ) ─────────────────────────────────
+  const cityPairContent = useMemo(() => {
+    const target = targets[0];
+    if (!target) return null;
+    try {
+      return buildCityPairContent(
+        sourceTz.iana,
+        target.iana,
+        sourceTz.name,
+        target.name,
+      );
+    } catch {
+      return null;
+    }
+  }, [sourceTz.iana, sourceTz.name, targets]);
+
+  // FAQ accordion state
+  const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(null);
+
   // showRelatedRoutes: always true when routes exist — good for SEO internal linking
   const showRelatedRoutes = relatedRoutes.length > 0;
   const relatedRoutesDiffLine = targets[0]
@@ -871,8 +891,8 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
 
       {/* ── Header ── */}
       <header className="space-y-2 sm:space-y-4 text-center">
-        <h1 className="text-xl sm:text-3xl md:text-5xl font-black uppercase tracking-tighter whitespace-nowrap">
-          Time Zone Converter
+        <h1 className="text-xl sm:text-3xl md:text-5xl font-black tracking-tighter whitespace-nowrap">
+          Time <em className="hero-italic">Zone</em> Converter
         </h1>
       </header>
 
@@ -987,44 +1007,6 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
         </div>
       )}
 
-      {/* ── Past Searches ── */}
-      <div className="max-w-6xl mx-auto mt-12 sm:mt-20">
-        <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
-          <div className="w-10 sm:w-20 h-px bg-current"></div>Past Searches
-        </div>
-        <div className={`border ${panelBorder} rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-6 sm:p-10`}>
-          {history.length === 0 ? (
-            <div className={`py-10 sm:py-12 text-center text-xs sm:text-sm font-black uppercase tracking-[0.2em] sm:tracking-widest ${mutedText}`}>
-              No recent conversions
-            </div>
-          ) : (
-            <div className="space-y-6 sm:space-y-10">
-              {history.map(item => (
-                <div key={item.id} className={`grid grid-cols-1 sm:grid-cols-12 gap-4 sm:gap-8 items-center pb-6 sm:pb-10 border-b ${panelBorder} last:border-0 last:pb-0`}>
-                  <div className="sm:col-span-3">
-                    <div className={`text-[10px] font-black uppercase tracking-widest mb-1 ${subtleText}`}>Query context</div>
-                    <div className={`text-xs sm:text-sm font-bold truncate uppercase tracking-tight ${mutedText}`}>{item.query}</div>
-                  </div>
-                  <div className="sm:col-span-3">
-                    <div className={`text-[10px] font-black uppercase tracking-widest mb-1 truncate ${subtleText}`}>{item.sourceName}</div>
-                    <div className="text-xl sm:text-2xl font-black text-blue-500 tabular-nums tracking-tighter">{item.sourceTime}</div>
-                  </div>
-                  <div className={`sm:col-span-2 text-left sm:text-center ${subtleText}`}>
-                    <svg aria-hidden="true" className="w-5 h-5 sm:w-6 sm:h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path d="M14 5l7 7m0 0l-7 7m7-7H3" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <div className="text-[9px] font-black uppercase tracking-widest">Synced</div>
-                  </div>
-                  <div className="sm:col-span-4 text-left sm:text-right">
-                    <div className={`text-[10px] font-black uppercase tracking-widest mb-1 truncate ${subtleText}`}>{item.targetName}</div>
-                    <div className="text-xl sm:text-2xl font-black text-green-500 tabular-nums tracking-tighter">{item.targetTime}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
 
       {/* ── Timeline ── */}
       <div id="timeline-section" className="max-w-6xl mx-auto mt-12 sm:mt-20 scroll-mt-24">
@@ -1133,9 +1115,14 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
                             key={cIdx}
                             onClick={() => { setTimelineFocusIndex(cIdx); setBaseTime(cell.fullDate); setIsLive(false); }}
                             className={`w-10 sm:w-12 flex flex-col items-center justify-center border-r ${panelBorderSofter} cursor-pointer transition-all relative group/cell
-                              ${cell.cellType === 'night' ? (isDark ? 'bg-[#0c0c0e]' : 'bg-zinc-200/70') : (isDark ? 'bg-[#151518]' : 'bg-zinc-100')}
-                              ${isFocused ? (isDark ? 'bg-indigo-900/40' : 'bg-blue-200/50') : ''}
-                              ${cell.isWorkingHour ? 'ring-1 ring-zinc-700/30' : ''}
+                              ${isFocused
+                                ? (isDark ? 'bg-indigo-900/40' : 'bg-blue-200/50')
+                                : cell.isWorkingHour
+                                  ? (isDark ? 'bg-[#2a2a2e]' : 'bg-white')
+                                  : cell.cellType === 'night'
+                                    ? (isDark ? 'bg-[#0c0c0e]' : 'bg-zinc-200/70')
+                                    : (isDark ? 'bg-[#151518]' : 'bg-zinc-100')
+                              }
                               hover:bg-zinc-800/80`}
                           >
                             {cell.isDayStart && (
@@ -1144,9 +1131,13 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
                                 <div className={`text-[7px] sm:text-[8px] font-black ${subtleText}`}>{cell.monthDay}</div>
                               </div>
                             )}
-                            <div className={`text-[10px] sm:text-xs font-black transition-colors duration-200
-                              ${isFocused ? 'text-yellow-400 opacity-100 scale-110' : `${isDark ? 'text-white' : 'text-black'} opacity-100 group-hover/cell:text-yellow-400`}
-                              ${cell.isHalf ? 'text-[7px] sm:text-[8px] mt-1' : ''}`}>
+                            <div className={[
+                              'text-[10px] sm:text-xs font-black transition-colors duration-200 group-hover/cell:text-yellow-400',
+                              isFocused
+                                ? 'text-yellow-400 opacity-100 scale-110'
+                                : (isDark ? 'text-white opacity-100' : 'text-black opacity-100'),
+                              cell.isHalf ? 'text-[7px] sm:text-[8px] mt-1' : '',
+                            ].join(' ')}>
                               {cell.hourLabel}
                             </div>
                             {!cell.isHalf && (
@@ -1298,7 +1289,215 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
         Global resolution context • Wall-clock anchored drift-free engine
       </div>
 
+      {/* ══════════════════════════════════════════════════════════════════════
+          SEO CONTENT LAYER — DST / About / FAQ
+          Rendered only when a resolved city or tz-code pair is active.
+          All content is computed dynamically from ianaA + ianaB so every
+          page combination gets unique, accurate text.
+      ══════════════════════════════════════════════════════════════════════ */}
+
+      {cityPairContent && (
+        <>
+          {/* Inject FAQPage JSON-LD for rich results */}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: cityPairContent.faq.jsonLd }}
+          />
+
+          {/* ── DST Section ── */}
+          <section
+            aria-label={`Daylight Saving Time — ${cityPairContent.dst.cityA} & ${cityPairContent.dst.cityB}`}
+            className="max-w-6xl mx-auto mt-12 sm:mt-16"
+          >
+            {/* Section label */}
+            <h2 className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
+              <div className="w-10 sm:w-20 h-px bg-current"></div>
+              Daylight Saving Time — {cityPairContent.dst.cityA} &amp; {cityPairContent.dst.cityB}
+            </h2>
+
+            <div className={`border ${panelBorder} rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-6 sm:p-10`}>
+
+              {/* Intro paragraph */}
+              <p className={`text-sm sm:text-base ${subtleText} leading-relaxed mb-6 sm:mb-8`}>
+                {cityPairContent.dst.hasDst
+                  ? `Both ${cityPairContent.dst.cityA} and ${cityPairContent.dst.cityB} may observe Daylight Saving Time, which means the offset between them can change twice a year. Here is exactly what to expect.`
+                  : `The offset between ${cityPairContent.dst.cityA} and ${cityPairContent.dst.cityB} is fixed — no seasonal clock changes affect this pair.`
+                }
+              </p>
+
+              {/* DST table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs sm:text-sm border-collapse">
+                  <thead>
+                    <tr className={`border-b-2 ${panelBorder}`}>
+                      {(['Period', cityPairContent.dst.cityA, cityPairContent.dst.cityB, 'Offset'] as const).map(h => (
+                        <th
+                          key={h}
+                          className={`text-left text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] ${subtleText} pb-3 pr-4 sm:pr-6 whitespace-nowrap`}
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cityPairContent.dst.rows.map((row, i) => (
+                      <tr
+                        key={i}
+                        className={`border-b ${panelBorderSoft} last:border-0`}
+                      >
+                        {/* Period */}
+                        <td className="py-4 pr-4 sm:pr-6 align-top">
+                          <div className="font-bold text-xs sm:text-sm">{row.period}</div>
+                          <div className={`text-[10px] sm:text-xs ${subtleText} mt-0.5`}>{row.periodNote}</div>
+                        </td>
+
+                        {/* City A timezone */}
+                        <td className="py-4 pr-4 sm:pr-6 align-top">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-xs sm:text-sm">{row.tzALabel}</span>
+                            {row.isCurrent && !row.isTransitioning && (
+                              <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                                isDark ? 'bg-green-500/15 text-green-400' : 'bg-green-100 text-green-700'
+                              }`}>
+                                now
+                              </span>
+                            )}
+                            {row.isTransitioning && row.isCurrent && (
+                              <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                                isDark ? 'bg-yellow-500/15 text-yellow-400' : 'bg-yellow-100 text-yellow-700'
+                              }`}>
+                                transitioning
+                              </span>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* City B timezone */}
+                        <td className="py-4 pr-4 sm:pr-6 align-top">
+                          <span className="font-bold text-xs sm:text-sm">{row.tzBLabel}</span>
+                        </td>
+
+                        {/* Offset */}
+                        <td className="py-4 align-top">
+                          <span className="font-black text-xs sm:text-sm">{row.offsetLabel}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Footer note */}
+              <p className={`text-[10px] sm:text-xs ${subtleText} leading-relaxed mt-6 pt-6 border-t ${panelBorderSoft}`}>
+                {cityPairContent.dst.footerNote}
+              </p>
+            </div>
+          </section>
+
+          {/* ── About Timezones Section ── */}
+          <section
+            aria-label={`About ${cityPairContent.about.cityA} and ${cityPairContent.about.cityB} timezones`}
+            className="max-w-6xl mx-auto mt-12 sm:mt-16"
+          >
+            {/* Section label */}
+            <h2 className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
+              <div className="w-10 sm:w-20 h-px bg-current"></div>
+              About {cityPairContent.about.cityA} and {cityPairContent.about.cityB} Time Zones
+            </h2>
+
+            <div className={`border ${panelBorder} rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl p-6 sm:p-10`}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12">
+
+                {/* City A */}
+                <div className="space-y-3">
+                  <h2 className="text-sm sm:text-base font-black leading-tight">
+                    {cityPairContent.about.headingA}
+                  </h2>
+                  <p className={`text-xs sm:text-sm ${subtleText} leading-relaxed`}>
+                    {cityPairContent.about.paragraphA}
+                  </p>
+                </div>
+
+                {/* City B */}
+                <div className="space-y-3">
+                  <h2 className="text-sm sm:text-base font-black leading-tight">
+                    {cityPairContent.about.headingB}
+                  </h2>
+                  <p className={`text-xs sm:text-sm ${subtleText} leading-relaxed`}>
+                    {cityPairContent.about.paragraphB}
+                  </p>
+                </div>
+
+              </div>
+            </div>
+          </section>
+
+          {/* ── FAQ Section ── */}
+          <section
+            aria-label={`Frequently asked questions — ${cityPairContent.faq.cityA} to ${cityPairContent.faq.cityB}`}
+            className="max-w-6xl mx-auto mt-12 sm:mt-16"
+          >
+            {/* Section label */}
+            <h2 className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
+              <div className="w-10 sm:w-20 h-px bg-current"></div>
+              Frequently Asked Questions
+            </h2>
+
+            <div className={`border ${panelBorder} rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden ${panelBg} shadow-2xl`}>
+              {cityPairContent.faq.items.map((item, idx) => {
+                const isOpen = openFaqIdx === idx;
+                return (
+                  <div
+                    key={idx}
+                    className={`border-b ${panelBorderSoft} last:border-0`}
+                  >
+                    <button
+                      type="button"
+                      aria-expanded={isOpen}
+                      onClick={() => setOpenFaqIdx(isOpen ? null : idx)}
+                      className={`
+                        w-full flex items-start justify-between gap-4
+                        px-6 sm:px-10 py-5 sm:py-6 text-left
+                        transition-colors duration-150
+                        ${isDark ? 'hover:bg-zinc-900/40' : 'hover:bg-zinc-50/70'}
+                      `}
+                    >
+                      <span className="text-sm sm:text-base font-bold leading-snug flex-1">
+                        {item.question}
+                      </span>
+                      {/* Chevron icon — rotates when open */}
+                      <svg
+                        aria-hidden="true"
+                        className={`w-4 h-4 sm:w-5 sm:h-5 flex-none mt-0.5 transition-transform duration-200 ${
+                          isOpen ? 'rotate-180' : 'rotate-0'
+                        } ${subtleText}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    {/* Answer panel */}
+                    {isOpen && (
+                      <div className={`px-6 sm:px-10 pb-6 sm:pb-8`}>
+                        <p className={`text-xs sm:text-sm ${subtleText} leading-relaxed`}>
+                          {item.answer}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        </>
+      )}
+
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@1&display=swap');
         .scrollbar-custom::-webkit-scrollbar { height: 6px; }
         .scrollbar-custom::-webkit-scrollbar-track { background: #000000; border-radius: 10px; }
         .scrollbar-custom::-webkit-scrollbar-thumb { background: #333333; border-radius: 10px; }
@@ -1309,6 +1508,14 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
           .scrollbar-custom::-webkit-scrollbar-thumb:hover { background: #a1a1aa; }
         ` : ''}
         .timezone-no-shadow, .timezone-no-shadow * { box-shadow: none !important; }
+        .hero-italic {
+          font-family: 'Instrument Serif', Georgia, serif !important;
+          font-style: italic !important;
+          font-weight: 400 !important;
+          text-transform: none !important;
+          letter-spacing: 0 !important;
+          display: inline-block;
+        }
       `}</style>
     </div>
   );

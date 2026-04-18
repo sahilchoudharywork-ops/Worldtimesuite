@@ -237,11 +237,11 @@ export const getSeoData = (route: AppRouteState): SeoData => {
 
       const description =
         offsetPhrase === 'at the same time as'
-          ? `${from.code}, ${fromLongName} is at the same time as ${toLongName}. Convert time between ${from.code} and ${to.code}. See the exact time difference and best hours to schedule meetings.`
-          : `${from.code}, ${fromLongName} is ${offsetPhrase} ${toLongName}. Convert time between ${from.code} and ${to.code}. See the exact time difference and best hours to schedule meetings.`;
+          ? `${from.name} (${from.code}) is at the same time as ${to.name} (${to.code}). Convert any ${from.code} time to ${to.code} instantly — DST-aware, live clock, and best meeting hours included.`
+          : `${fromLongName} (${from.code}) is currently ${offsetPhrase} ${toLongName} (${to.code}). Convert any ${from.code} time to ${to.code} instantly — DST-aware, live clock, and best meeting hours included.`;
 
       return {
-        title: `${from.code} to ${to.code} Time Converter | Current Time & Difference`,
+        title: `${from.code} to ${to.code} Converter | Time Difference & Current Time`,
         description,
         canonicalPath: `/${from.slug}-to-${to.slug}`
       };
@@ -259,9 +259,9 @@ export const getSeoData = (route: AppRouteState): SeoData => {
     const description =
       fromIana && toIana
         ? offsetPhrase === 'at the same time as'
-          ? `${fromName} and ${toName} are currently at the same time. Convert time between ${fromName} and ${toName}. See the exact time difference and best hours to schedule meetings.`
-          : `${fromName} time is ${offsetPhrase} ${toName}. Convert time between ${fromName} and ${toName}. See the exact time difference and best hours to schedule meetings.`
-        : `Convert time between ${fromName} and ${toName}. See the exact time difference and best hours to schedule meetings.`;
+          ? `${fromName} and ${toName} are currently at the same time. Convert time between ${fromName} and ${toName}, see the exact difference, and find the best hours for calls and meetings.`
+          : `${fromName} is currently ${offsetPhrase} ${toName}. Convert time between ${fromName} and ${toName}, see the exact difference, and find the best hours for calls and meetings.`
+        : `Convert time between ${fromName} and ${toName}. See the exact time difference and find the best hours for calls and meetings.`;
 
     return {
       title: `${fromName} to ${toName} Time Converter | Current Time & Difference`,
