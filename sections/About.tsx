@@ -99,10 +99,10 @@ const About: React.FC<AboutProps> = ({ isDark }) => {
             Have feedback, a bug report, or a feature request? We would love to hear from you.
             Reach us at{' '}
             <a
-              href="mailto:hello@worldtimesuite.com"
+              href="mailto:support@worldtimesuite.com"
               className="text-blue-500 hover:opacity-70 transition-opacity"
             >
-              hello@worldtimesuite.com
+              support@worldtimesuite.com
             </a>
           </p>
         </div>
