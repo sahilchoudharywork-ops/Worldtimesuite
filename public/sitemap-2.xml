@@ -1,6 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://worldtimesuite.com/budapest-to-athens</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://worldtimesuite.com/budapest-to-bucharest</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://worldtimesuite.com/budapest-to-sofia</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://worldtimesuite.com/budapest-to-belgrade</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -24982,21 +24997,6 @@
   </url>
   <url>
     <loc>https://worldtimesuite.com/cairo-to-hanoi</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://worldtimesuite.com/cairo-to-tokyo</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://worldtimesuite.com/cairo-to-osaka</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://worldtimesuite.com/cairo-to-seoul</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

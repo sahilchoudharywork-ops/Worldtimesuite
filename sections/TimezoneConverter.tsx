@@ -1029,7 +1029,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       {/* ── Timeline ── */}
       <div id="timeline-section" className="max-w-6xl mx-auto mt-12 sm:mt-20 scroll-mt-24">
         <div className={`flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] ${mutedText} mb-6 sm:mb-8`}>
-          <div className="w-10 sm:w-20 h-px bg-current"></div>Business Hour Overlap
+          <div className="w-10 sm:w-20 h-px bg-current"></div>Meeting Planner and time zone overlap
         </div>
         <div className={`border ${borderClass} rounded-xl overflow-hidden ${timelineWrapBg}`}>
           <div className="flex flex-col lg:flex-row">
@@ -1092,8 +1092,8 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
                 <div className="relative flex-grow">
                   <input
                     type="text"
-                    aria-label="Add timezone to timeline"
-                    placeholder="ADD TIMEZONE..."
+                    aria-label="Add time zone to timeline"
+                    placeholder="ADD TIME ZONE..."
                     className={`w-full ${addInputBg} border rounded-lg px-4 py-3 sm:py-2 text-[10px] font-black tracking-[0.15em] sm:tracking-widest uppercase outline-none focus:border-blue-500 transition-colors`}
                     onKeyDown={e => {
                       if (e.key === 'Enter') {

@@ -3,7 +3,11 @@
   RewriteBase /
   Options -MultiViews
 
-  # 1) Legacy → Canonical redirects
+  # Prevent Apache from forcing /route -> /route/ for prerendered folders.
+  # We serve /route internally from /route/index.html instead.
+  DirectorySlash Off
+
+  # 1) Legacy timezone URLs -> canonical no-trailing-slash URLs
   RewriteRule ^timezone/([a-z0-9-]+)-to-([a-z0-9-]+)/?$ https://worldtimesuite.com/$1-to-$2 [R=301,L,NC]
 
   # 2) Force HTTPS + non-www
@@ -11,14 +15,27 @@
   RewriteCond %{HTTP_HOST} ^www\.worldtimesuite\.com$ [NC]
   RewriteRule ^ https://worldtimesuite.com%{REQUEST_URI} [R=301,L]
 
-  # 3) Allow SEO files
+  # 3) Remove trailing slash from every non-homepage URL
+  RewriteCond %{REQUEST_URI} !^/$
+  RewriteCond %{REQUEST_URI} .+/$
+  RewriteRule ^(.+)/$ https://worldtimesuite.com/$1 [R=301,L]
+
+  # 4) Allow SEO/static files directly
   RewriteRule ^(ads\.txt|robots\.txt|sitemap.*\.xml)$ - [L,NC]
 
-  # 4) Serve real files/folders directly
-  RewriteCond %{REQUEST_FILENAME} -f [OR]
-  RewriteCond %{REQUEST_FILENAME} -d
+  # 5) Serve real files directly
+  RewriteCond %{REQUEST_FILENAME} -f
   RewriteRule ^ - [L]
 
-  # 5) SPA fallback
+  # 6) Serve prerendered extensionless routes without exposing trailing slash
+  # Example: /timer internally serves /timer/index.html
+  # Example: /cst-to-est internally serves /cst-to-est/index.html
+  RewriteCond %{DOCUMENT_ROOT}/$1/index.html -f
+  RewriteRule ^(.+)$ $1/index.html [L]
+
+  # 7) Homepage
+  RewriteRule ^$ index.html [L]
+
+  # 8) SPA fallback
   RewriteRule ^ index.html [L]
 </IfModule>

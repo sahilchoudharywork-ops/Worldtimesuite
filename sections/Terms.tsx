@@ -144,10 +144,10 @@ const Terms: React.FC<TermsProps> = ({ isDark }) => {
           <p>
             If you have any questions about these Terms and Conditions, please contact us at{' '}
             <a
-              href="mailto:hello@worldtimesuite.com"
+              href="mailto:support@worldtimesuite.com"
               className="text-blue-500 hover:opacity-70 transition-opacity"
             >
-              hello@worldtimesuite.com
+              support@worldtimesuite.com
             </a>
           </p>
         </Section>

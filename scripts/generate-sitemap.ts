@@ -125,6 +125,9 @@ const staticUrls: UrlEntry[] = [
   { loc: `${BASE}/stopwatch`,  changefreq: 'weekly', priority: '0.8' },
   { loc: `${BASE}/timer`,      changefreq: 'weekly', priority: '0.8' },
   { loc: `${BASE}/calendar`,   changefreq: 'weekly', priority: '0.8' },
+  { loc: `${BASE}/about`,      changefreq: 'monthly', priority: '0.6' },
+  { loc: `${BASE}/terms`,      changefreq: 'monthly', priority: '0.4' },
+  { loc: `${BASE}/privacy`,    changefreq: 'monthly', priority: '0.4' },
 ];
 
 // ─── Timezone-to-timezone routes ─────────────────────────────────────────────

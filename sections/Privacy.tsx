@@ -238,10 +238,10 @@ const Privacy: React.FC<PrivacyProps> = ({ isDark }) => {
             If you have any questions about this Privacy Policy or our data practices,
             please contact us at{' '}
             <a
-              href="mailto:hello@worldtimesuite.com"
+              href="mailto:support@worldtimesuite.com"
               className="text-blue-500 hover:opacity-70 transition-opacity"
             >
-              hello@worldtimesuite.com
+              support@worldtimesuite.com
             </a>
           </p>
         </Section>
