@@ -1202,7 +1202,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
                 </div>
                 <div className="space-y-4">
                   <h4 className="text-xs font-black uppercase tracking-widest text-green-500">
-                    {faqData.srcName} to {faqData.tgtName} Call Time
+                    {faqData.srcName} to {faqData.tgtName} Meeting Planner
                   </h4>
                   <div className="space-y-2">
                     {faqData.overlap ? (
