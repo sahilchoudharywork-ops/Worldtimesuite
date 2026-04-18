@@ -563,7 +563,7 @@ const buildVisibleConversionTable = (
     const diffMinutes = Math.round((toOffsetHours - fromOffsetHours) * 60);
     const offsetPhrase = formatOffsetPhrase(fromIana, toIana);
     const firstToTime = formatTime12h(diffMinutes);
-    const keyHours = [0, 6, 9, 12, 15, 18, 21, 23];
+    const keyHours = Array.from({ length: 24 }, (_, i) => i);
 
     const rows = keyHours
       .map(hour => {
