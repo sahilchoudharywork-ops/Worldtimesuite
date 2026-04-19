@@ -1,6 +1,8 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Timezone } from '../types';
-import { buildCityPairContent } from '../lib/cityPairContent';
+import type { CityPairContentData } from '../lib/cityPairContent';
+
+type BuildCityPairContentFn = (ianaA: string, ianaB: string, labelA: string, labelB: string) => CityPairContentData;
 
 interface TimezoneConverterProps {
   isDark: boolean;
@@ -899,11 +901,22 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
     };
   }, [sourceTz, targets, baseTime, getTzInfo]);
 
+  const [buildCityPairContentFn, setBuildCityPairContentFn] = useState<BuildCityPairContentFn | null>(null);
+
+  useEffect(() => {
+    if (fromSlug || toSlug || isTimezoneCodeRoute) {
+      import('../lib/cityPairContent').then(m => {
+        setBuildCityPairContentFn(() => m.buildCityPairContent);
+      });
+    }
+  }, [fromSlug, toSlug, isTimezoneCodeRoute]);
+
   const cityPairContent = useMemo(() => {
+    if (!buildCityPairContentFn) return null;
     const target = targets[0];
     if (!target) return null;
     try {
-      return buildCityPairContent(
+      return buildCityPairContentFn(
         sourceTz.iana,
         target.iana,
         sourceTz.name,
@@ -912,7 +925,7 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
     } catch {
       return null;
     }
-  }, [sourceTz.iana, sourceTz.name, targets]);
+  }, [buildCityPairContentFn, sourceTz.iana, sourceTz.name, targets]);
 
   const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(null);
 
