@@ -1351,16 +1351,23 @@ const TimezoneConverter: React.FC<TimezoneConverterProps> = ({ isDark, fromSlug,
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          SEO CONTENT LAYER — DST / About / FAQ
+          SEO CONTENT LAYER — FAQPage schema + DST / About / FAQ sections
       ══════════════════════════════════════════════════════════════════════ */}
 
+      {/* FAQPage JSON-LD — rendered immediately so Googlebot sees it in
+          pre-rendered HTML. cityPairContent is computed unconditionally via
+          useMemo above, so this tag is present on first render / renderToString
+          and does not wait for the 600 ms showDeferredSections timer. */}
+      {cityPairContent && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: cityPairContent.faq.jsonLd }}
+        />
+      )}
+
+      {/* Visual SEO sections remain deferred to protect FCP / LCP scores */}
       {showDeferredSections && cityPairContent && (
         <>
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: cityPairContent.faq.jsonLd }}
-          />
-
           {/* ── DST Section ── */}
           <section
             aria-label={`Daylight Saving Time — ${cityPairContent.dst.cityA} & ${cityPairContent.dst.cityB}`}
