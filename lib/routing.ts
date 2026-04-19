@@ -11,11 +11,16 @@ export interface TimezoneRoute {
   toSlug: string;    // e.g. "ist"
 }
 
+export interface CityClockRoute {
+  citySlug: string;
+}
+
 export interface AppRouteState {
   page: Page;
   normalizedPath: string;
   cityRoute: CityRoute | null;
   timezoneRoute: TimezoneRoute | null;
+  cityClockRoute: CityClockRoute | null;
 }
 
 export const normalizePath = (path: string) => {
@@ -51,6 +56,14 @@ export const parseCityRoute = (path: string): CityRoute | null => {
   };
 };
 
+// Detects city clock routes like /time-in-london
+export const parseCityClockRoute = (path: string): CityClockRoute | null => {
+  const clean = normalizePath(path);
+  const match = clean.match(/^\/time-in-([a-z0-9-]+)$/i);
+  if (!match) return null;
+  return { citySlug: match[1].toLowerCase() };
+};
+
 export const toShortCityPath = (fromSlug: string, toSlug: string) => `/${fromSlug}-to-${toSlug}`;
 
 export const getLegacyRedirectPath = (path: string): string | null => {
@@ -69,7 +82,8 @@ export const pathToPage: Record<string, Page> = {
   '/settings': Page.SETTINGS,
   '/about': Page.ABOUT,
   '/terms': Page.TERMS,
-  '/privacy': Page.PRIVACY
+  '/privacy': Page.PRIVACY,
+  '/world-clock': Page.WORLD_CLOCK
 };
 
 export const pageToPath: Partial<Record<Page, string>> = {
@@ -80,7 +94,8 @@ export const pageToPath: Partial<Record<Page, string>> = {
   [Page.SETTINGS]: '/settings',
   [Page.ABOUT]: '/about',
   [Page.TERMS]: '/terms',
-  [Page.PRIVACY]: '/privacy'
+  [Page.PRIVACY]: '/privacy',
+  [Page.WORLD_CLOCK]: '/world-clock'
 };
 
 export const getRouteState = (path: string): AppRouteState => {
@@ -93,7 +108,20 @@ export const getRouteState = (path: string): AppRouteState => {
       page: Page.CONVERTER,
       normalizedPath,
       cityRoute: null,
-      timezoneRoute
+      timezoneRoute,
+      cityClockRoute: null
+    };
+  }
+
+  // Check city clock route — /time-in-london
+  const cityClockRoute = parseCityClockRoute(normalizedPath);
+  if (cityClockRoute) {
+    return {
+      page: Page.CITY_CLOCK,
+      normalizedPath,
+      cityRoute: null,
+      timezoneRoute: null,
+      cityClockRoute
     };
   }
 
@@ -104,7 +132,8 @@ export const getRouteState = (path: string): AppRouteState => {
       page: Page.CONVERTER,
       normalizedPath: toShortCityPath(cityRoute.fromSlug, cityRoute.toSlug),
       cityRoute,
-      timezoneRoute: null
+      timezoneRoute: null,
+      cityClockRoute: null
     };
   }
 
@@ -112,7 +141,8 @@ export const getRouteState = (path: string): AppRouteState => {
     page: pathToPage[normalizedPath] || Page.CONVERTER,
     normalizedPath,
     cityRoute: null,
-    timezoneRoute: null
+    timezoneRoute: null,
+    cityClockRoute: null
   };
 };
 

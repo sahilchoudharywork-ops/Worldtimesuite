@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { cities } from '../data/cities';
 
 const ROOT = process.cwd();
 const DIST_DIR = path.join(ROOT, 'dist');
@@ -10,7 +11,7 @@ const ORIGIN = 'https://worldtimesuite.com';
 
 // Routes
 
-const STATIC_ROUTES = ['/', '/timer', '/stopwatch', '/calendar', '/about', '/terms', '/privacy'];
+const STATIC_ROUTES = ['/', '/timer', '/stopwatch', '/calendar', '/about', '/terms', '/privacy', '/world-clock'];
 
 const TIMEZONE_ROUTES: string[] = [
   '/ist-to-gmt',
@@ -257,6 +258,60 @@ const CITY_ROUTES: string[] = [
   '/san-diego-to-atlanta',
   '/melbourne-to-washington-dc',
   '/brisbane-to-san-diego',
+];
+
+// City clock routes — top 50 by global search demand for "current time in [city]"
+const CITY_CLOCK_ROUTES: string[] = [
+  '/time-in-london',
+  '/time-in-new-york',
+  '/time-in-los-angeles',
+  '/time-in-tokyo',
+  '/time-in-paris',
+  '/time-in-dubai',
+  '/time-in-sydney',
+  '/time-in-toronto',
+  '/time-in-singapore',
+  '/time-in-chicago',
+  '/time-in-berlin',
+  '/time-in-mumbai',
+  '/time-in-delhi',
+  '/time-in-hong-kong',
+  '/time-in-bangkok',
+  '/time-in-istanbul',
+  '/time-in-seoul',
+  '/time-in-amsterdam',
+  '/time-in-madrid',
+  '/time-in-rome',
+  '/time-in-sao-paulo',
+  '/time-in-mexico-city',
+  '/time-in-melbourne',
+  '/time-in-moscow',
+  '/time-in-karachi',
+  '/time-in-shanghai',
+  '/time-in-beijing',
+  '/time-in-jakarta',
+  '/time-in-manila',
+  '/time-in-kuala-lumpur',
+  '/time-in-miami',
+  '/time-in-san-francisco',
+  '/time-in-vancouver',
+  '/time-in-cairo',
+  '/time-in-nairobi',
+  '/time-in-lagos',
+  '/time-in-johannesburg',
+  '/time-in-riyadh',
+  '/time-in-auckland',
+  '/time-in-stockholm',
+  '/time-in-vienna',
+  '/time-in-zurich',
+  '/time-in-brussels',
+  '/time-in-honolulu',
+  '/time-in-bangalore',
+  '/time-in-houston',
+  '/time-in-atlanta',
+  '/time-in-warsaw',
+  '/time-in-lisbon',
+  '/time-in-doha',
 ];
 
 // Route parsing
@@ -763,6 +818,10 @@ const staticSeo: Record<string, { title: string; description: string }> = {
     title: 'Privacy Policy | WorldTimeSuite',
     description: 'Read the WorldTimeSuite privacy policy, including how we handle data, cookies, Google AdSense advertising, analytics, and your privacy rights.',
   },
+  '/world-clock': {
+    title: 'World Clock — Current Time in Every Major City | WorldTimeSuite',
+    description: 'See the current local time in cities worldwide — New York, London, Dubai, Tokyo, Sydney and more. Free live world clock, always accurate.',
+  },
 };
 
 // HTML helpers
@@ -860,6 +919,11 @@ const buildBody = (route: string, parsed: ParsedConversionRoute | null, conversi
           </div>
         </div>
 ${visibleTable}
+        <div style="margin-top:32px;padding:24px 0;border-top:1px solid #27272a;display:flex;flex-wrap:wrap;gap:16px;">
+          <a href="/time-in-${esc(parsed.fromSlug)}" style="color:#a1a1aa;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">Current time in ${esc(fromName)}</a>
+          <a href="/time-in-${esc(parsed.toSlug)}" style="color:#a1a1aa;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">Current time in ${esc(toName)}</a>
+          <a href="/world-clock" style="color:#a1a1aa;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">World Clock</a>
+        </div>
       </div>
     </div>`;
   }
@@ -884,7 +948,261 @@ ${visibleTable}
     </div>`;
 };
 
+// ─── City clock page SEO helpers ─────────────────────────────────────────────
+
+const CITY_CLOCK_SEO_IANA_MAP: Record<string, string> = { ...CITY_IANA_MAP };
+
+// Also cover any cities whose slugs differ from the seo map but exist in cities list
+cities.forEach(c => {
+  if (!CITY_CLOCK_SEO_IANA_MAP[c.slug]) {
+    CITY_CLOCK_SEO_IANA_MAP[c.slug] = c.tz;
+  }
+});
+
+const buildCityClockDescription = (cityName: string, iana: string): string => {
+  const offsetHours = getOffsetHours(iana);
+  const longName = getCurrentTimeZoneName(iana, 'Local Time');
+  const now = new Date();
+  const timeStr = new Intl.DateTimeFormat('en-US', {
+    timeZone: iana,
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(now);
+
+  const janOffset = getOffsetHours(iana, new Date(now.getFullYear(), 0, 1));
+  const julOffset = getOffsetHours(iana, new Date(now.getFullYear(), 6, 1));
+  const hasDst = janOffset !== julOffset;
+  const dstOffset = Math.max(janOffset, julOffset);
+  const isInDst = hasDst && offsetHours === dstOffset;
+
+  const abs = Math.abs(offsetHours);
+  const sign = offsetHours >= 0 ? '+' : '-';
+  const h = Math.floor(abs);
+  const m = Math.round((abs - h) * 60);
+  const offsetStr = `UTC${sign}${h}${m > 0 ? ':' + String(m).padStart(2, '0') : ''}`;
+
+  const dstSentence = isInDst
+    ? `${cityName} is currently observing daylight saving time.`
+    : hasDst
+      ? `${cityName} does not currently observe daylight saving time.`
+      : '';
+
+  return `${cityName} current time is ${timeStr}. ${cityName} uses ${longName} at ${offsetStr}. ${dstSentence}`.trim();
+};
+
+const build24HourOffsetTable = (cityName: string, iana: string): string => {
+  try {
+    const offsetHours = getOffsetHours(iana);
+    const utcOffsetMins = Math.round(offsetHours * 60);
+    const rows = Array.from({ length: 24 }, (_, hour) => {
+      const utcMins = hour * 60;
+      const localMins = ((utcMins + utcOffsetMins) % 1440 + 1440) % 1440;
+      const localHour = Math.floor(localMins / 60);
+      const localMin = localMins % 60;
+      const period = localHour < 12 ? 'AM' : 'PM';
+      const displayHour = localHour % 12 === 0 ? 12 : localHour % 12;
+      const localTimeStr = `${displayHour}:${String(localMin).padStart(2, '0')} ${period}`;
+      const utcHour = Math.floor(hour);
+      const utcPeriod = utcHour < 12 ? 'AM' : 'PM';
+      const utcDisplayHour = utcHour % 12 === 0 ? 12 : utcHour % 12;
+      const utcTimeStr = `${utcDisplayHour}:00 ${utcPeriod}`;
+      return `          <tr>
+            <td style="padding:8px 16px;color:#a1a1aa;border-bottom:1px solid #18181b;">${esc(utcTimeStr)} UTC</td>
+            <td style="padding:8px 16px;color:#ffffff;border-bottom:1px solid #18181b;font-weight:600;">${esc(localTimeStr)} ${esc(cityName)}</td>
+          </tr>`;
+    }).join('\n');
+
+    return `
+        <div style="margin-top:32px;padding:32px;border:1px solid #27272a;border-radius:32px;background:#09090b;">
+          <h2 style="font-size:16px;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;color:#ffffff;margin:0 0 6px 0;">
+            UTC to ${esc(cityName)} Conversion Table
+          </h2>
+          <p style="font-size:13px;color:#71717a;margin:0 0 20px 0;">24-hour UTC offset reference for ${esc(cityName)}.</p>
+          <table style="width:100%;border-collapse:collapse;font-size:14px;">
+            <thead>
+              <tr>
+                <th style="text-align:left;padding:8px 16px;color:#71717a;font-weight:600;font-size:12px;letter-spacing:0.05em;text-transform:uppercase;border-bottom:1px solid #27272a;">UTC Time</th>
+                <th style="text-align:left;padding:8px 16px;color:#71717a;font-weight:600;font-size:12px;letter-spacing:0.05em;text-transform:uppercase;border-bottom:1px solid #27272a;">${esc(cityName)} Time</th>
+              </tr>
+            </thead>
+            <tbody>
+${rows}
+            </tbody>
+          </table>
+        </div>`;
+  } catch {
+    return '';
+  }
+};
+
+const buildCityClockBody = (citySlug: string, cityName: string, iana: string): string => {
+  const description = buildCityClockDescription(cityName, iana);
+  const offsetStr = getUtcOffsetString(iana);
+  const longName = getCurrentTimeZoneName(iana, 'Local Time');
+  const conversionTable = build24HourOffsetTable(cityName, iana);
+
+  return `
+    <div style="min-height:100vh;background:#000;color:#fff;font-family:Helvetica,Arial,sans-serif;padding:40px 24px;">
+      <div style="max-width:1100px;margin:0 auto;">
+        <h1 style="font-size:72px;font-weight:900;letter-spacing:-0.04em;line-height:0.95;text-transform:uppercase;color:#fff;margin:0;padding:0;">
+          Current Time in ${esc(cityName)}
+        </h1>
+        <p style="margin-top:16px;font-size:18px;color:#a1a1aa;">
+          ${esc(longName)} &bull; ${esc(offsetStr)}
+        </p>
+        <p style="margin-top:12px;font-size:16px;line-height:1.7;color:#a1a1aa;max-width:900px;">
+          ${esc(description)}
+        </p>
+        <div style="margin-top:32px;">
+          <a href="/time-in-${esc(citySlug)}" style="display:inline-block;padding:14px 22px;border-radius:999px;background:#fff;color:#000;text-decoration:none;font-size:12px;font-weight:900;letter-spacing:0.24em;text-transform:uppercase;">
+            Live ${esc(cityName)} Clock
+          </a>
+          &nbsp;
+          <a href="/${esc(citySlug)}-to-new-york" style="display:inline-block;padding:14px 22px;border-radius:999px;border:1px solid #27272a;color:#fff;text-decoration:none;font-size:12px;font-weight:900;letter-spacing:0.24em;text-transform:uppercase;">
+            ${esc(cityName)} to New York
+          </a>
+        </div>
+${conversionTable}
+        <div style="margin-top:32px;padding:24px 0;border-top:1px solid #27272a;">
+          <a href="/world-clock" style="color:#a1a1aa;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-right:24px;">&#8592; World Clock</a>
+          <a href="/" style="color:#a1a1aa;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">Time Zone Converter</a>
+        </div>
+      </div>
+    </div>`;
+};
+
+const WORLD_CLOCK_CITIES: { name: string; slug: string; tz: string }[] = [
+  { name: 'New York',    slug: 'new-york',     tz: 'America/New_York' },
+  { name: 'Los Angeles', slug: 'los-angeles',  tz: 'America/Los_Angeles' },
+  { name: 'Chicago',     slug: 'chicago',      tz: 'America/Chicago' },
+  { name: 'Toronto',     slug: 'toronto',      tz: 'America/Toronto' },
+  { name: 'Vancouver',   slug: 'vancouver',    tz: 'America/Vancouver' },
+  { name: 'São Paulo',   slug: 'sao-paulo',    tz: 'America/Sao_Paulo' },
+  { name: 'Mexico City', slug: 'mexico-city',  tz: 'America/Mexico_City' },
+  { name: 'London',      slug: 'london',       tz: 'Europe/London' },
+  { name: 'Paris',       slug: 'paris',        tz: 'Europe/Paris' },
+  { name: 'Berlin',      slug: 'berlin',       tz: 'Europe/Berlin' },
+  { name: 'Amsterdam',   slug: 'amsterdam',    tz: 'Europe/Amsterdam' },
+  { name: 'Dubai',       slug: 'dubai',        tz: 'Asia/Dubai' },
+  { name: 'Cairo',       slug: 'cairo',        tz: 'Africa/Cairo' },
+  { name: 'Lagos',       slug: 'lagos',        tz: 'Africa/Lagos' },
+  { name: 'Nairobi',     slug: 'nairobi',      tz: 'Africa/Nairobi' },
+  { name: 'Moscow',      slug: 'moscow',       tz: 'Europe/Moscow' },
+  { name: 'Mumbai',      slug: 'mumbai',       tz: 'Asia/Kolkata' },
+  { name: 'Delhi',       slug: 'delhi',        tz: 'Asia/Kolkata' },
+  { name: 'Singapore',   slug: 'singapore',    tz: 'Asia/Singapore' },
+  { name: 'Tokyo',       slug: 'tokyo',        tz: 'Asia/Tokyo' },
+  { name: 'Hong Kong',   slug: 'hong-kong',    tz: 'Asia/Hong_Kong' },
+  { name: 'Bangkok',     slug: 'bangkok',      tz: 'Asia/Bangkok' },
+  { name: 'Seoul',       slug: 'seoul',        tz: 'Asia/Seoul' },
+  { name: 'Karachi',     slug: 'karachi',      tz: 'Asia/Karachi' },
+  { name: 'Sydney',      slug: 'sydney',       tz: 'Australia/Sydney' },
+  { name: 'Melbourne',   slug: 'melbourne',    tz: 'Australia/Melbourne' },
+  { name: 'Auckland',    slug: 'auckland',     tz: 'Pacific/Auckland' },
+  { name: 'Honolulu',    slug: 'honolulu',     tz: 'Pacific/Honolulu' },
+];
+
+const getUtcOffsetString = (iana: string): string => {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: iana,
+      timeZoneName: 'longOffset',
+    }).formatToParts(new Date());
+    const offsetStr = parts.find(p => p.type === 'timeZoneName')?.value || 'GMT+0';
+    return offsetStr.replace('GMT', 'UTC');
+  } catch {
+    return 'UTC+0';
+  }
+};
+
+const buildWorldClockBody = (): string => {
+  const rows = WORLD_CLOCK_CITIES.map(city => {
+    const offsetStr = getUtcOffsetString(city.tz);
+    return `          <tr>
+            <td style="padding:10px 16px;color:#ffffff;border-bottom:1px solid #18181b;font-weight:600;">
+              <a href="/time-in-${esc(city.slug)}" style="color:#ffffff;text-decoration:none;">${esc(city.name)}</a>
+            </td>
+            <td style="padding:10px 16px;color:#a1a1aa;border-bottom:1px solid #18181b;">${esc(offsetStr)}</td>
+          </tr>`;
+  }).join('\n');
+
+  return `
+    <div style="min-height:100vh;background:#000;color:#fff;font-family:Helvetica,Arial,sans-serif;padding:40px 24px;">
+      <div style="max-width:1100px;margin:0 auto;">
+        <h1 style="font-size:72px;font-weight:900;letter-spacing:-0.04em;line-height:0.95;text-transform:uppercase;color:#fff;margin:0;padding:0;">
+          World Clock &mdash; Current Time Worldwide
+        </h1>
+        <p style="margin-top:24px;font-size:20px;line-height:1.6;color:#a1a1aa;max-width:900px;">
+          Live current times for major cities around the world. Click any city for a full clock, UTC offset, and DST status.
+        </p>
+        <div style="margin-top:40px;padding:32px;border:1px solid #27272a;border-radius:32px;background:#09090b;">
+          <h2 style="font-size:16px;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;color:#ffffff;margin:0 0 20px 0;">
+            World Clock — UTC Offsets
+          </h2>
+          <table style="width:100%;border-collapse:collapse;font-size:14px;">
+            <thead>
+              <tr>
+                <th style="text-align:left;padding:8px 16px;color:#71717a;font-weight:600;font-size:12px;letter-spacing:0.05em;text-transform:uppercase;border-bottom:1px solid #27272a;">City</th>
+                <th style="text-align:left;padding:8px 16px;color:#71717a;font-weight:600;font-size:12px;letter-spacing:0.05em;text-transform:uppercase;border-bottom:1px solid #27272a;">UTC Offset</th>
+              </tr>
+            </thead>
+            <tbody>
+${rows}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+};
+
 const buildHtml = (template: string, route: string): string => {
+  // City clock route: /time-in-[slug]
+  const cityClockMatch = route.match(/^\/time-in-([a-z0-9-]+)$/i);
+  if (cityClockMatch) {
+    const citySlug = cityClockMatch[1].toLowerCase();
+    const cityEntry = cities.find(c => c.slug === citySlug);
+    const cityName = cityEntry ? cityEntry.name : titleCase(citySlug);
+    const iana = cityEntry ? cityEntry.tz : (CITY_CLOCK_SEO_IANA_MAP[citySlug] || '');
+
+    const title = `Current Time in ${cityName} — World Clock & UTC Offset | WorldTimeSuite`;
+    const description = iana ? buildCityClockDescription(cityName, iana) : `See the current local time in ${cityName}. Live clock with UTC offset and DST status.`;
+    const canonicalPath = `/time-in-${citySlug}`;
+    const canonicalUrl = `${ORIGIN}${canonicalPath}`;
+    const body = iana ? buildCityClockBody(citySlug, cityName, iana) : buildBody(route, null);
+
+    let html = template;
+    html = html.replace(/<title>[^<]*<\/title>/, `<title>${esc(title)}</title>`);
+    html = html.replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${esc(description)}">`);
+    html = html.replace(/<meta property="og:title" content="[^"]*">/, `<meta property="og:title" content="${esc(title)}">`);
+    html = html.replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${esc(description)}">`);
+    html = html.replace(/<meta property="og:url" content="[^"]*">/, `<meta property="og:url" content="${canonicalUrl}">`);
+    html = html.replace(/<meta name="twitter:title" content="[^"]*">/, `<meta name="twitter:title" content="${esc(title)}">`);
+    html = html.replace(/<meta name="twitter:description" content="[^"]*">/, `<meta name="twitter:description" content="${esc(description)}">`);
+    html = html.replace(/<link rel="canonical" href="[^"]*">/, `<link rel="canonical" href="${canonicalUrl}">`);
+    html = html.replace('<!--app-html-->', body);
+    return html;
+  }
+
+  // World clock route
+  if (route === '/world-clock') {
+    const seo = staticSeo['/world-clock']!;
+    const canonicalUrl = `${ORIGIN}/world-clock`;
+    const body = buildWorldClockBody();
+
+    let html = template;
+    html = html.replace(/<title>[^<]*<\/title>/, `<title>${esc(seo.title)}</title>`);
+    html = html.replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${esc(seo.description)}">`);
+    html = html.replace(/<meta property="og:title" content="[^"]*">/, `<meta property="og:title" content="${esc(seo.title)}">`);
+    html = html.replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${esc(seo.description)}">`);
+    html = html.replace(/<meta property="og:url" content="[^"]*">/, `<meta property="og:url" content="${canonicalUrl}">`);
+    html = html.replace(/<meta name="twitter:title" content="[^"]*">/, `<meta name="twitter:title" content="${esc(seo.title)}">`);
+    html = html.replace(/<meta name="twitter:description" content="[^"]*">/, `<meta name="twitter:description" content="${esc(seo.description)}">`);
+    html = html.replace(/<link rel="canonical" href="[^"]*">/, `<link rel="canonical" href="${canonicalUrl}">`);
+    html = html.replace('<!--app-html-->', body);
+    return html;
+  }
+
   const parsed = parseConversionRoute(route);
 
   let title: string;
@@ -957,7 +1275,7 @@ const main = (): void => {
   fs.writeFileSync(backupPath, rawTemplate, 'utf8');
   console.log(`\nTemplate backed up to dist/_template.html`);
 
-  const allRoutes = [...new Set([...STATIC_ROUTES, ...TIMEZONE_ROUTES, ...CITY_ROUTES])];
+  const allRoutes = [...new Set([...STATIC_ROUTES, ...TIMEZONE_ROUTES, ...CITY_ROUTES, ...CITY_CLOCK_ROUTES])];
 
   const sample = parseConversionRoute('/delhi-to-london');
   console.log(`Sanity check: parseConversionRoute('/delhi-to-london') =`, JSON.stringify(sample));
@@ -974,10 +1292,11 @@ const main = (): void => {
   }
 
   console.log(`\nDone.`);
-  console.log(`Static:   ${STATIC_ROUTES.length}`);
-  console.log(`Timezone: ${TIMEZONE_ROUTES.length}`);
-  console.log(`City:     ${CITY_ROUTES.length}`);
-  console.log(`Total:    ${allRoutes.length}`);
+  console.log(`Static:     ${STATIC_ROUTES.length}`);
+  console.log(`Timezone:   ${TIMEZONE_ROUTES.length}`);
+  console.log(`City:       ${CITY_ROUTES.length}`);
+  console.log(`City clock: ${CITY_CLOCK_ROUTES.length}`);
+  console.log(`Total:      ${allRoutes.length}`);
 };
 
 main();

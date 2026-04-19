@@ -19,6 +19,8 @@ const Calendar = lazy(() => import('./sections/Calendar'));
 const About = lazy(() => import('./sections/About'));
 const Terms = lazy(() => import('./sections/Terms'));
 const Privacy = lazy(() => import('./sections/Privacy'));
+const WorldClock = lazy(() => import('./sections/WorldClock'));
+const CityClockPage = lazy(() => import('./sections/CityClockPage'));
 
 const upsertMeta = (attr: 'name' | 'property', key: string, content: string) => {
   let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
@@ -179,6 +181,8 @@ const App: React.FC<AppProps> = ({ initialPath = '/' }) => {
 
     // Don't override URL if we're already on a city or timezone route
     if (currentPage === Page.CONVERTER && (getRouteState(path).cityRoute || getRouteState(path).timezoneRoute)) return;
+    // Don't override URL for city clock pages — path is dynamic (/time-in-[slug])
+    if (currentPage === Page.CITY_CLOCK) return;
 
     if (path !== targetPath) {
       window.history.pushState({}, '', targetPath);
@@ -257,6 +261,10 @@ const App: React.FC<AppProps> = ({ initialPath = '/' }) => {
         return <Terms {...props} />;
       case Page.PRIVACY:
         return <Privacy {...props} />;
+      case Page.WORLD_CLOCK:
+        return <WorldClock {...props} />;
+      case Page.CITY_CLOCK:
+        return <CityClockPage citySlug={routeState.cityClockRoute?.citySlug || ''} {...props} />;
       default:
         return <TimezoneConverter {...props} />;
     }
@@ -265,7 +273,7 @@ const App: React.FC<AppProps> = ({ initialPath = '/' }) => {
   const isFullView = currentPage === Page.STOPWATCH || currentPage === Page.TIMER;
   const isCalendar = currentPage === Page.CALENDAR;
   const isConverter = currentPage === Page.CONVERTER;
-  const isStaticPage = currentPage === Page.ABOUT || currentPage === Page.TERMS || currentPage === Page.PRIVACY;
+  const isStaticPage = currentPage === Page.ABOUT || currentPage === Page.TERMS || currentPage === Page.PRIVACY || currentPage === Page.WORLD_CLOCK || currentPage === Page.CITY_CLOCK;
 
   const handleNavigate = (page: Page) => {
     setCurrentPage(page);

@@ -55,6 +55,8 @@ export enum Page {
   ABOUT = 'about',
   TERMS = 'terms',
   PRIVACY = 'privacy',
+  WORLD_CLOCK = 'world-clock',
+  CITY_CLOCK = 'city-clock',
 }
 
 export interface Task {

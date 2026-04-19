@@ -115,19 +115,20 @@ const CHUNK_SIZE = 5000;
 
 type UrlEntry = {
   loc: string;
-  changefreq: 'weekly' | 'monthly';
+  changefreq: 'daily' | 'weekly' | 'monthly';
   priority: string;
 };
 
 // ─── Static tool pages ────────────────────────────────────────────────────────
 const staticUrls: UrlEntry[] = [
-  { loc: `${BASE}/`,           changefreq: 'weekly', priority: '1.0' },
-  { loc: `${BASE}/stopwatch`,  changefreq: 'weekly', priority: '0.8' },
-  { loc: `${BASE}/timer`,      changefreq: 'weekly', priority: '0.8' },
-  { loc: `${BASE}/calendar`,   changefreq: 'weekly', priority: '0.8' },
-  { loc: `${BASE}/about`,      changefreq: 'monthly', priority: '0.6' },
-  { loc: `${BASE}/terms`,      changefreq: 'monthly', priority: '0.4' },
-  { loc: `${BASE}/privacy`,    changefreq: 'monthly', priority: '0.4' },
+  { loc: `${BASE}/`,             changefreq: 'weekly',  priority: '1.0' },
+  { loc: `${BASE}/stopwatch`,    changefreq: 'weekly',  priority: '0.8' },
+  { loc: `${BASE}/timer`,        changefreq: 'weekly',  priority: '0.8' },
+  { loc: `${BASE}/calendar`,     changefreq: 'weekly',  priority: '0.8' },
+  { loc: `${BASE}/world-clock`,  changefreq: 'daily',   priority: '0.9' },
+  { loc: `${BASE}/about`,        changefreq: 'monthly', priority: '0.6' },
+  { loc: `${BASE}/terms`,        changefreq: 'monthly', priority: '0.4' },
+  { loc: `${BASE}/privacy`,      changefreq: 'monthly', priority: '0.4' },
 ];
 
 // ─── Timezone-to-timezone routes ─────────────────────────────────────────────
@@ -230,6 +231,13 @@ const timezoneUrls: UrlEntry[] = TIMEZONE_PAIR_ROUTES.map(route => ({
   priority: '0.9',
 }));
 
+// ─── City clock pages — /time-in-[slug] ──────────────────────────────────────
+const cityClockUrls: UrlEntry[] = cities.map(c => ({
+  loc: `${BASE}/time-in-${c.slug}`,
+  changefreq: 'daily' as const,
+  priority: '0.85',
+}));
+
 // ─── City-to-city routes ──────────────────────────────────────────────────────
 // All permutations of cities array — 109 cities = 11,772 pairs
 const pairUrls: UrlEntry[] = [];
@@ -244,8 +252,8 @@ for (const from of cities) {
   }
 }
 
-// ─── Combine: static → timezone → city pairs ─────────────────────────────────
-const allUrls = [...staticUrls, ...timezoneUrls, ...pairUrls];
+// ─── Combine: static → timezone → city clocks → city pairs ───────────────────
+const allUrls = [...staticUrls, ...timezoneUrls, ...cityClockUrls, ...pairUrls];
 
 // ─── Write sitemap files ──────────────────────────────────────────────────────
 const toUrlset = (urls: UrlEntry[]) => `<?xml version="1.0" encoding="UTF-8"?>
@@ -290,5 +298,6 @@ fs.writeFileSync(path.join(PUBLIC_DIR, 'sitemap.xml'), sitemapIndex, 'utf8');
 console.log(`\nSitemap generated:`);
 console.log(`  Static pages:    ${staticUrls.length}`);
 console.log(`  Timezone routes: ${timezoneUrls.length}`);
+console.log(`  City clock pages:${cityClockUrls.length}`);
 console.log(`  City pair pages: ${pairUrls.length}`);
 console.log(`  Total:           ${allUrls.length} URLs across ${sitemapFiles.length} sitemap files`);

@@ -195,6 +195,10 @@ const seoByPage: Partial<Record<Page, Omit<SeoData, 'canonicalPath'>>> = {
     title: 'Time Zone Converter – Convert Time Between Any Two Cities',
     description: 'Free time zone converter for 500+ cities worldwide. Instantly see the time difference between any two cities, find meeting-friendly hours, and plan across time zones.'
   },
+  [Page.WORLD_CLOCK]: {
+    title: 'World Clock — Current Time in Every Major City | WorldTimeSuite',
+    description: 'See the current local time in cities worldwide — New York, London, Dubai, Tokyo, Sydney and more. Free live world clock, always accurate.'
+  },
   [Page.STOPWATCH]: {
     title: 'Online Stopwatch with Lap Timer – Free & Instant | WorldTimeSuite',
     description: 'Free online stopwatch with lap tracking. Start, stop and record laps instantly — no download needed. Works on desktop and mobile.'
@@ -267,6 +271,56 @@ export const getSeoData = (route: AppRouteState): SeoData => {
       title: `${fromName} to ${toName} Time Converter | Current Time & Difference`,
       description,
       canonicalPath: toShortCityPath(route.cityRoute.fromSlug, route.cityRoute.toSlug)
+    };
+  }
+
+  if (route.cityClockRoute) {
+    const { citySlug } = route.cityClockRoute;
+    const cityName = titleCase(citySlug);
+    const iana = CITY_IANA_MAP[citySlug];
+
+    if (iana) {
+      const now = new Date();
+      const offsetHours = getOffsetHours(iana, now);
+      const longName = getCurrentTimeZoneName(iana, 'Local Time');
+      const timeStr = new Intl.DateTimeFormat('en-US', {
+        timeZone: iana,
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      }).format(now);
+
+      const janOffset = getOffsetHours(iana, new Date(now.getFullYear(), 0, 1));
+      const julOffset = getOffsetHours(iana, new Date(now.getFullYear(), 6, 1));
+      const hasDst = janOffset !== julOffset;
+      const dstOffset = Math.max(janOffset, julOffset);
+      const isInDst = hasDst && offsetHours === dstOffset;
+
+      const abs = Math.abs(offsetHours);
+      const sign = offsetHours >= 0 ? '+' : '-';
+      const h = Math.floor(abs);
+      const m = Math.round((abs - h) * 60);
+      const offsetStr = `UTC${sign}${h}${m > 0 ? ':' + String(m).padStart(2, '0') : ''}`;
+
+      const dstSentence = isInDst
+        ? `${cityName} is currently observing daylight saving time.`
+        : hasDst
+          ? `${cityName} does not currently observe daylight saving time.`
+          : '';
+
+      const description = `${cityName} current time is ${timeStr}. ${cityName} uses ${longName} at ${offsetStr}. ${dstSentence}`.trim().replace(/\s+$/, '');
+
+      return {
+        title: `Current Time in ${cityName} — World Clock & UTC Offset | WorldTimeSuite`,
+        description,
+        canonicalPath: `/time-in-${citySlug}`
+      };
+    }
+
+    return {
+      title: `Current Time in ${cityName} — World Clock & UTC Offset | WorldTimeSuite`,
+      description: `See the current local time in ${cityName}. Live world clock with UTC offset, DST status, and timezone information.`,
+      canonicalPath: `/time-in-${citySlug}`
     };
   }
 
