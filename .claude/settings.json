@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(git push*)",
+      "Bash(git merge*)",
+      "Bash(git push --force*)",
+      "Bash(npm run build*)",
+      "Bash(vercel*)",
+      "Bash(netlify*)",
+      "Bash(gh pr merge*)",
+      "Bash(gh pr create*)"
+    ]
+  }
+}
