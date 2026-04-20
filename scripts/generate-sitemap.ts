@@ -239,11 +239,15 @@ const cityClockUrls: UrlEntry[] = cities.map(c => ({
 }));
 
 // ─── City-to-city routes ──────────────────────────────────────────────────────
-// All permutations of cities array — 109 cities = 11,772 pairs
+// All permutations of cities array, excluding same-timezone pairs.
+// Same-timezone pairs (e.g. london-to-manchester, delhi-to-mumbai) show a 0h
+// difference and are treated as thin/duplicate content by Google — omitting
+// them keeps the sitemap clean and preserves crawl budget.
 const pairUrls: UrlEntry[] = [];
 for (const from of cities) {
   for (const to of cities) {
     if (from.slug === to.slug) continue;
+    if (from.tz === to.tz) continue; // skip same-timezone pairs (thin content)
     pairUrls.push({
       loc: `${BASE}/${from.slug}-to-${to.slug}`,
       changefreq: 'monthly',
