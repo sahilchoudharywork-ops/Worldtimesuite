@@ -36,3 +36,6 @@ jobs:
           rsync -avz --delete \
             -e "ssh -p 65002 -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
             dist/ u849254065@147.93.42.122:/home/u849254065/domains/worldtimesuite.com/public_html/
+
+      - name: Notify IndexNow (Bing / DuckDuckGo / Yahoo)
+        run: npx tsx scripts/indexnow.ts
