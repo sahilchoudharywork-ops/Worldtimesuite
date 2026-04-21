@@ -121,7 +121,7 @@ type UrlEntry = {
 
 // ─── Static tool pages ────────────────────────────────────────────────────────
 const staticUrls: UrlEntry[] = [
-  { loc: `${BASE}/`,             changefreq: 'weekly',  priority: '1.0' },
+  { loc: `${BASE}`,              changefreq: 'weekly',  priority: '1.0' },
   { loc: `${BASE}/stopwatch`,    changefreq: 'weekly',  priority: '0.8' },
   { loc: `${BASE}/timer`,        changefreq: 'weekly',  priority: '0.8' },
   { loc: `${BASE}/calendar`,     changefreq: 'weekly',  priority: '0.8' },
