@@ -260,59 +260,158 @@ const CITY_ROUTES: string[] = [
   '/brisbane-to-san-diego',
 ];
 
-// City clock routes — top 50 by global search demand for "current time in [city]"
+// City clock routes — all 109 cities from cities.ts + moscow (legacy)
 const CITY_CLOCK_ROUTES: string[] = [
-  '/time-in-london',
+  // ── North America ──────────────────────────────────────────────────────────
   '/time-in-new-york',
   '/time-in-los-angeles',
-  '/time-in-tokyo',
-  '/time-in-paris',
-  '/time-in-dubai',
-  '/time-in-sydney',
-  '/time-in-toronto',
-  '/time-in-singapore',
   '/time-in-chicago',
-  '/time-in-berlin',
-  '/time-in-mumbai',
-  '/time-in-delhi',
-  '/time-in-hong-kong',
-  '/time-in-bangkok',
-  '/time-in-istanbul',
-  '/time-in-seoul',
-  '/time-in-amsterdam',
-  '/time-in-madrid',
-  '/time-in-rome',
-  '/time-in-sao-paulo',
+  '/time-in-san-francisco',
+  '/time-in-seattle',
+  '/time-in-boston',
+  '/time-in-miami',
+  '/time-in-washington-dc',
+  '/time-in-toronto',
+  '/time-in-vancouver',
+  '/time-in-montreal',
   '/time-in-mexico-city',
-  '/time-in-melbourne',
-  '/time-in-moscow',
+  '/time-in-houston',
+  '/time-in-dallas',
+  '/time-in-atlanta',
+  // ── South America ──────────────────────────────────────────────────────────
+  '/time-in-sao-paulo',
+  '/time-in-rio-de-janeiro',
+  '/time-in-buenos-aires',
+  '/time-in-santiago',
+  '/time-in-bogota',
+  '/time-in-lima',
+  '/time-in-caracas',
+  // ── UK & Ireland ───────────────────────────────────────────────────────────
+  '/time-in-london',
+  '/time-in-manchester',
+  '/time-in-birmingham',
+  '/time-in-dublin',
+  // ── Western Europe ─────────────────────────────────────────────────────────
+  '/time-in-paris',
+  '/time-in-berlin',
+  '/time-in-madrid',
+  '/time-in-barcelona',
+  '/time-in-rome',
+  '/time-in-milan',
+  '/time-in-amsterdam',
+  '/time-in-brussels',
+  '/time-in-zurich',
+  '/time-in-geneva',
+  '/time-in-vienna',
+  '/time-in-lisbon',
+  // ── Northern Europe ────────────────────────────────────────────────────────
+  '/time-in-stockholm',
+  '/time-in-oslo',
+  '/time-in-copenhagen',
+  '/time-in-helsinki',
+  '/time-in-reykjavik',
+  // ── Eastern Europe ─────────────────────────────────────────────────────────
+  '/time-in-warsaw',
+  '/time-in-prague',
+  '/time-in-budapest',
+  '/time-in-athens',
+  '/time-in-bucharest',
+  '/time-in-sofia',
+  '/time-in-belgrade',
+  '/time-in-kyiv',
+  // ── Middle East ────────────────────────────────────────────────────────────
+  '/time-in-dubai',
+  '/time-in-abu-dhabi',
+  '/time-in-riyadh',
+  '/time-in-doha',
+  '/time-in-kuwait-city',
+  '/time-in-muscat',
+  '/time-in-tel-aviv',
+  '/time-in-jerusalem',
+  '/time-in-istanbul',
+  // ── South Asia ─────────────────────────────────────────────────────────────
+  '/time-in-delhi',
+  '/time-in-mumbai',
+  '/time-in-bangalore',
+  '/time-in-hyderabad',
+  '/time-in-chennai',
+  '/time-in-kolkata',
   '/time-in-karachi',
-  '/time-in-shanghai',
-  '/time-in-beijing',
+  '/time-in-lahore',
+  '/time-in-dhaka',
+  '/time-in-colombo',
+  // ── Southeast Asia ─────────────────────────────────────────────────────────
+  '/time-in-singapore',
+  '/time-in-kuala-lumpur',
+  '/time-in-bangkok',
   '/time-in-jakarta',
   '/time-in-manila',
-  '/time-in-kuala-lumpur',
-  '/time-in-miami',
-  '/time-in-san-francisco',
-  '/time-in-vancouver',
-  '/time-in-cairo',
+  '/time-in-ho-chi-minh-city',
+  '/time-in-hanoi',
+  // ── East Asia ──────────────────────────────────────────────────────────────
+  '/time-in-tokyo',
+  '/time-in-osaka',
+  '/time-in-seoul',
+  '/time-in-beijing',
+  '/time-in-shanghai',
+  '/time-in-shenzhen',
+  '/time-in-hong-kong',
+  '/time-in-taipei',
+  // ── Central Asia ───────────────────────────────────────────────────────────
+  '/time-in-almaty',
+  '/time-in-tashkent',
+  // ── Africa ─────────────────────────────────────────────────────────────────
+  '/time-in-johannesburg',
+  '/time-in-cape-town',
   '/time-in-nairobi',
   '/time-in-lagos',
-  '/time-in-johannesburg',
-  '/time-in-riyadh',
+  '/time-in-cairo',
+  '/time-in-casablanca',
+  '/time-in-accra',
+  '/time-in-addis-ababa',
+  // ── Oceania ────────────────────────────────────────────────────────────────
+  '/time-in-sydney',
+  '/time-in-melbourne',
+  '/time-in-brisbane',
+  '/time-in-perth',
+  '/time-in-adelaide',
   '/time-in-auckland',
-  '/time-in-stockholm',
-  '/time-in-vienna',
-  '/time-in-zurich',
-  '/time-in-brussels',
+  '/time-in-wellington',
+  // ── Travel hubs ────────────────────────────────────────────────────────────
+  '/time-in-san-diego',
+  '/time-in-las-vegas',
+  '/time-in-orlando',
   '/time-in-honolulu',
-  '/time-in-bangalore',
-  '/time-in-houston',
-  '/time-in-atlanta',
-  '/time-in-warsaw',
-  '/time-in-lisbon',
-  '/time-in-doha',
+  '/time-in-frankfurt',
+  '/time-in-munich',
+  '/time-in-nice',
+  // ── Legacy (not in cities.ts but historically prerendered) ─────────────────
+  '/time-in-moscow',
 ];
+
+// ─── Generated pairs: top 30 cities × top 30 cities ──────────────────────────
+// All permutations between the 30 most globally-searched cities.
+// Same-timezone pairs are excluded (thin content) — identical to sitemap logic.
+// The Set in allRoutes deduplicates any overlap with CITY_ROUTES above.
+const TOP_30_SLUGS = new Set([
+  'new-york', 'london',   'tokyo',    'paris',      'dubai',
+  'sydney',   'toronto',  'singapore','chicago',    'berlin',
+  'mumbai',   'delhi',    'hong-kong','bangkok',    'istanbul',
+  'seoul',    'amsterdam','madrid',   'rome',       'sao-paulo',
+  'mexico-city','melbourne','los-angeles','san-francisco','miami',
+  'shanghai', 'beijing',  'cairo',    'vancouver',  'karachi',
+]);
+
+const top30Cities = cities.filter(c => TOP_30_SLUGS.has(c.slug));
+
+const GENERATED_CITY_ROUTES: string[] = [];
+for (const from of top30Cities) {
+  for (const to of top30Cities) {
+    if (from.slug === to.slug) continue;
+    if (from.tz === to.tz) continue; // skip same-timezone pairs (thin content)
+    GENERATED_CITY_ROUTES.push(`/${from.slug}-to-${to.slug}`);
+  }
+}
 
 // Route parsing
 
@@ -1275,7 +1374,7 @@ const main = (): void => {
   fs.writeFileSync(backupPath, rawTemplate, 'utf8');
   console.log(`\nTemplate backed up to dist/_template.html`);
 
-  const allRoutes = [...new Set([...STATIC_ROUTES, ...TIMEZONE_ROUTES, ...CITY_ROUTES, ...CITY_CLOCK_ROUTES])];
+  const allRoutes = [...new Set([...STATIC_ROUTES, ...TIMEZONE_ROUTES, ...CITY_ROUTES, ...GENERATED_CITY_ROUTES, ...CITY_CLOCK_ROUTES])];
 
   const sample = parseConversionRoute('/delhi-to-london');
   console.log(`Sanity check: parseConversionRoute('/delhi-to-london') =`, JSON.stringify(sample));
@@ -1292,11 +1391,12 @@ const main = (): void => {
   }
 
   console.log(`\nDone.`);
-  console.log(`Static:     ${STATIC_ROUTES.length}`);
-  console.log(`Timezone:   ${TIMEZONE_ROUTES.length}`);
-  console.log(`City:       ${CITY_ROUTES.length}`);
-  console.log(`City clock: ${CITY_CLOCK_ROUTES.length}`);
-  console.log(`Total:      ${allRoutes.length}`);
+  console.log(`Static:          ${STATIC_ROUTES.length}`);
+  console.log(`Timezone:        ${TIMEZONE_ROUTES.length}`);
+  console.log(`City (manual):   ${CITY_ROUTES.length}`);
+  console.log(`City (top-30×30):${GENERATED_CITY_ROUTES.length} → unique after dedup`);
+  console.log(`City clock:      ${CITY_CLOCK_ROUTES.length}`);
+  console.log(`Total unique:    ${allRoutes.length}`);
 };
 
 main();
