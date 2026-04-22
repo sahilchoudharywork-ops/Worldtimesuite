@@ -21,6 +21,7 @@ const Terms = lazy(() => import('./sections/Terms'));
 const Privacy = lazy(() => import('./sections/Privacy'));
 const WorldClock = lazy(() => import('./sections/WorldClock'));
 const CityClockPage = lazy(() => import('./sections/CityClockPage'));
+const GlobePage = lazy(() => import('./sections/Globe'));
 
 const upsertMeta = (attr: 'name' | 'property', key: string, content: string) => {
   let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
@@ -265,12 +266,14 @@ const App: React.FC<AppProps> = ({ initialPath = '/' }) => {
         return <WorldClock {...props} />;
       case Page.CITY_CLOCK:
         return <CityClockPage citySlug={routeState.cityClockRoute?.citySlug || ''} {...props} />;
+      case Page.GLOBE:
+        return <GlobePage {...props} />;
       default:
         return <TimezoneConverter {...props} />;
     }
   };
 
-  const isFullView = currentPage === Page.STOPWATCH || currentPage === Page.TIMER;
+  const isFullView = currentPage === Page.STOPWATCH || currentPage === Page.TIMER || currentPage === Page.GLOBE;
   const isCalendar = currentPage === Page.CALENDAR;
   const isConverter = currentPage === Page.CONVERTER;
   const isStaticPage = currentPage === Page.ABOUT || currentPage === Page.TERMS || currentPage === Page.PRIVACY || currentPage === Page.WORLD_CLOCK || currentPage === Page.CITY_CLOCK;
