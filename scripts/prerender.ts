@@ -1218,6 +1218,123 @@ const parseConversionRoute = (route: string): ParsedConversionRoute | null => {
   };
 };
 
+// ─── Related conversions — pre-built lookup structures ────────────────────────
+// All maps are built ONCE at module start — O(1) lookup per rendered route.
+
+// Priority-ordered city slugs for related route selection.
+// Cities earlier in this list are preferred as related suggestions,
+// so the most globally-searched pairs surface first.
+const RELATED_PRIORITY: readonly string[] = [
+  'london', 'new-york', 'dubai', 'sydney', 'singapore', 'tokyo', 'paris',
+  'berlin', 'toronto', 'mumbai', 'hong-kong', 'bangkok', 'istanbul',
+  'seoul', 'amsterdam', 'madrid', 'rome', 'sao-paulo', 'mexico-city',
+  'melbourne', 'los-angeles', 'san-francisco', 'miami', 'shanghai',
+  'beijing', 'cairo', 'vancouver', 'karachi', 'delhi', 'chicago',
+  'moscow', 'johannesburg', 'nairobi', 'riyadh', 'kuala-lumpur',
+  'jakarta', 'taipei', 'lagos', 'ho-chi-minh-city', 'doha',
+];
+
+// Merge cities[] + CITY_IANA_MAP into one Map — cities[] wins on conflicts
+// because it is the authoritative data source.
+const CITY_TZ_LOOKUP = new Map<string, string>([
+  ...Object.entries(CITY_IANA_MAP),
+  ...cities.map(c => [c.slug, c.tz] as [string, string]),
+]);
+
+// Slug → proper display name (e.g. "hong-kong" → "Hong Kong").
+// Prefers the curated name from cities.ts; falls back to titleCase.
+const CITY_NAME_LOOKUP = new Map<string, string>(
+  cities.map(c => [c.slug, c.name])
+);
+const getDisplayName = (slug: string): string =>
+  CITY_NAME_LOOKUP.get(slug) ?? titleCase(slug);
+
+// Returns up to `count` related city-pair route strings for a given pair.
+//   First half  → same "from" city,  different popular destinations.
+//   Second half → different popular origins, same "to" city.
+// Same-timezone pairs are excluded (they show 0h difference — thin content).
+const getRelatedCityRoutes = (
+  fromSlug: string,
+  toSlug: string,
+  count = 6,
+): string[] => {
+  const fromTz = CITY_TZ_LOOKUP.get(fromSlug);
+  const toTz   = CITY_TZ_LOOKUP.get(toSlug);
+  if (!fromTz || !toTz) return [];
+
+  const half    = Math.ceil(count / 2);
+  const results: string[] = [];
+  // Track seen pairs to avoid duplicates (in both directions).
+  const seen    = new Set([`${fromSlug}>${toSlug}`, `${toSlug}>${fromSlug}`]);
+
+  // Pass 1: same "from" → different destinations
+  for (const dest of RELATED_PRIORITY) {
+    if (results.length >= half) break;
+    if (dest === fromSlug || dest === toSlug) continue;
+    const destTz = CITY_TZ_LOOKUP.get(dest);
+    if (!destTz || destTz === fromTz) continue; // same-tz = thin content
+    const key = `${fromSlug}>${dest}`;
+    if (!seen.has(key)) { seen.add(key); results.push(`/${fromSlug}-to-${dest}`); }
+  }
+
+  // Pass 2: different origins → same "to"
+  for (const orig of RELATED_PRIORITY) {
+    if (results.length >= count) break;
+    if (orig === fromSlug || orig === toSlug) continue;
+    const origTz = CITY_TZ_LOOKUP.get(orig);
+    if (!origTz || origTz === toTz) continue; // same-tz = thin content
+    const key = `${orig}>${toSlug}`;
+    if (!seen.has(key)) { seen.add(key); results.push(`/${orig}-to-${toSlug}`); }
+  }
+
+  return results.slice(0, count);
+};
+
+// Returns up to `count` city-pair routes FROM a given city.
+// Used on city clock pages (/time-in-london) to link to conversion pages.
+const getTopRoutesFromCity = (fromSlug: string, count = 5): string[] => {
+  const fromTz = CITY_TZ_LOOKUP.get(fromSlug);
+  if (!fromTz) return [];
+
+  const results: string[] = [];
+  const seen    = new Set([fromSlug]);
+
+  for (const dest of RELATED_PRIORITY) {
+    if (results.length >= count) break;
+    if (seen.has(dest)) continue;
+    const destTz = CITY_TZ_LOOKUP.get(dest);
+    if (!destTz || destTz === fromTz) continue;
+    seen.add(dest);
+    results.push(`/${fromSlug}-to-${dest}`);
+  }
+
+  return results;
+};
+
+// Renders a pill-link grid section from an array of route paths.
+// heading — shown as a small label above the pills.
+const buildRelatedSection = (routes: string[], heading = 'Related Conversions'): string => {
+  if (routes.length === 0) return '';
+
+  const pills = routes
+    .map(route => {
+      const m = route.match(/^\/([a-z0-9-]+)-to-([a-z0-9-]+)$/);
+      if (!m) return '';
+      const label = `${getDisplayName(m[1])} → ${getDisplayName(m[2])}`;
+      return `<a href="${route}" style="display:inline-block;padding:9px 16px;border-radius:999px;border:1px solid #27272a;color:#a1a1aa;text-decoration:none;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;">${esc(label)}</a>`;
+    })
+    .filter(Boolean)
+    .join('\n            ');
+
+  return `
+        <div style="margin-top:32px;padding:28px 32px;border:1px solid #27272a;border-radius:32px;background:#09090b;">
+          <div style="font-size:11px;font-weight:800;letter-spacing:0.35em;text-transform:uppercase;color:#71717a;margin-bottom:14px;">${esc(heading)}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            ${pills}
+          </div>
+        </div>`;
+};
+
 // SEO helpers
 
 const formatHourValue = (value: number) => {
@@ -1600,8 +1717,8 @@ const getStaticCopy = (route: string): StaticCopy => {
       return {
         heading: 'Time Zone Converter',
         description: 'Convert time between 500+ cities worldwide. See the exact time difference and find the best hours to meet across time zones.',
-        ctaHref: '/london-to-new-york',
-        ctaLabel: 'Explore Popular Route',
+        ctaHref: '/',
+        ctaLabel: 'Open Time Zone Converter',
       };
   }
 };
@@ -1631,6 +1748,7 @@ const buildBody = (route: string, parsed: ParsedConversionRoute | null, conversi
           </div>
         </div>
 ${visibleTable}
+${buildRelatedSection(getRelatedCityRoutes(parsed.fromSlug, parsed.toSlug))}
         <div style="margin-top:32px;padding:24px 0;border-top:1px solid #27272a;display:flex;flex-wrap:wrap;gap:16px;">
           <a href="/time-in-${esc(parsed.fromSlug)}" style="color:#a1a1aa;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">Current time in ${esc(fromName)}</a>
           <a href="/time-in-${esc(parsed.toSlug)}" style="color:#a1a1aa;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">Current time in ${esc(toName)}</a>
@@ -1786,11 +1904,8 @@ const buildCityClockBody = (citySlug: string, cityName: string, iana: string): s
           <a href="/time-in-${esc(citySlug)}" style="display:inline-block;padding:14px 22px;border-radius:999px;background:#fff;color:#000;text-decoration:none;font-size:12px;font-weight:900;letter-spacing:0.24em;text-transform:uppercase;">
             Live ${esc(cityName)} Clock
           </a>
-          &nbsp;
-          <a href="/${esc(citySlug)}-to-new-york" style="display:inline-block;padding:14px 22px;border-radius:999px;border:1px solid #27272a;color:#fff;text-decoration:none;font-size:12px;font-weight:900;letter-spacing:0.24em;text-transform:uppercase;">
-            ${esc(cityName)} to New York
-          </a>
         </div>
+${buildRelatedSection(getTopRoutesFromCity(citySlug), `${cityName} Time Conversions`)}
 ${conversionTable}
         <div style="margin-top:32px;padding:24px 0;border-top:1px solid #27272a;">
           <a href="/world-clock" style="color:#a1a1aa;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-right:24px;">&#8592; World Clock</a>
