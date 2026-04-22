@@ -207,6 +207,65 @@ const GlobePage: React.FC<GlobePageProps> = ({ isDark }) => {
       .slice(0, 6);
   }, [searchQuery, geoData]);
 
+  // ── Canvas 2D space background — generated once, passed as Three.js texture ─
+  // Draws a star field on an offscreen canvas and converts to a JPEG data URL.
+  // react-globe.gl uses backgroundImageUrl as the equirectangular space texture,
+  // so this replaces the CDN image with our own Canvas 2D–drawn star field.
+  const spaceBgUrl = useMemo<string>(() => {
+    if (typeof document === 'undefined') return '';
+    const W = 2048, H = 1024;
+    const cvs = document.createElement('canvas');
+    cvs.width  = W;
+    cvs.height = H;
+    const ctx = cvs.getContext('2d');
+    if (!ctx) return '';
+
+    // Deep space base
+    ctx.fillStyle = '#00000a';
+    ctx.fillRect(0, 0, W, H);
+
+    // ~2800 stars — biased toward small sizes (more realistic distribution)
+    for (let i = 0; i < 2800; i++) {
+      const x = Math.random() * W;
+      const y = Math.random() * H;
+      const r = 0.3 + Math.random() * Math.random() * 1.6; // quadratic bias → mostly tiny
+      const a = 0.2 + Math.random() * 0.8;
+      // Realistic mix: ~85% white, ~10% blue-white, ~5% warm yellow
+      const col =
+        i % 10 === 0 ? `rgba(180,205,255,${a})` :   // blue-white
+        i % 20 === 0 ? `rgba(255,235,190,${a})` :   // warm
+        `rgba(255,255,255,${a})`;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = col;
+      ctx.fill();
+    }
+
+    // ~14 bright stars with soft radial glow
+    for (let i = 0; i < 14; i++) {
+      const x = Math.random() * W;
+      const y = Math.random() * H;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, 6);
+      g.addColorStop(0,   'rgba(255,255,255,1)');
+      g.addColorStop(0.3, 'rgba(255,255,255,0.35)');
+      g.addColorStop(1,   'rgba(255,255,255,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(x - 6, y - 6, 12, 12);
+    }
+
+    // Subtle Milky Way band — diagonal soft glow
+    const mw = ctx.createLinearGradient(0, H * 0.25, W, H * 0.75);
+    mw.addColorStop(0,    'rgba(255,255,255,0)');
+    mw.addColorStop(0.35, 'rgba(210,220,255,0.05)');
+    mw.addColorStop(0.5,  'rgba(210,225,255,0.09)');
+    mw.addColorStop(0.65, 'rgba(210,220,255,0.05)');
+    mw.addColorStop(1,    'rgba(255,255,255,0)');
+    ctx.fillStyle = mw;
+    ctx.fillRect(0, 0, W, H);
+
+    return cvs.toDataURL('image/jpeg', 0.92);
+  }, []); // empty deps — generated once per mount
+
   // ── Polygon colours — original isDark palette, +highlighted support ───────
   const getCapColor = useCallback(
     (d: object) => {
@@ -264,7 +323,10 @@ const GlobePage: React.FC<GlobePageProps> = ({ isDark }) => {
     : '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
 
   const bgColor    = isDark ? '#000000' : '#d4e4f7';
-  const bgImageUrl = isDark ? '//unpkg.com/three-globe/example/img/night-sky.png' : undefined;
+  // Use canvas-generated star field; fall back to CDN image if canvas unavailable
+  const bgImageUrl = isDark
+    ? (spaceBgUrl || '//unpkg.com/three-globe/example/img/night-sky.png')
+    : undefined;
 
   const utcTime = fmtUtc(now);
 
