@@ -223,6 +223,7 @@ const TIMEZONE_PAIR_ROUTES: string[] = [
   '/msk-to-gmt',
   '/cest-to-gmt',
   '/gmt-to-cest',
+  '/est-to-gst',
 ];
 
 const timezoneUrls: UrlEntry[] = TIMEZONE_PAIR_ROUTES.map(route => ({

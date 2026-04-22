@@ -68,6 +68,7 @@ export const cities = [
 { name: "Sofia", slug: "sofia", tz: "Europe/Sofia" },
 { name: "Belgrade", slug: "belgrade", tz: "Europe/Belgrade" },
 { name: "Kyiv", slug: "kyiv", tz: "Europe/Kyiv" },
+{ name: "Moscow", slug: "moscow", tz: "Europe/Moscow" },
 
 /* Middle East */
 
