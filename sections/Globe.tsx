@@ -230,10 +230,8 @@ const GlobePage: React.FC<GlobePageProps> = ({ isDark }) => {
 
   const utcTime = fmtUtc(now);
 
-  // Globe texture: night in dark mode, blue-marble in light mode (matches reference)
-  const GLOBE_IMAGE = isDark
-    ? '//unpkg.com/three-globe/example/img/earth-night.jpg'
-    : '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
+  // Globe texture: always blue-marble (day view) regardless of site theme
+  const GLOBE_IMAGE = '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
 
   return (
     <div
