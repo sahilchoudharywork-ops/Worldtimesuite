@@ -201,8 +201,8 @@ const GlobePage: React.FC<GlobePageProps> = ({ isDark }) => {
 
   const getStrokeColor = useCallback((d: object) => {
     if (d === highlightedCountry || d === hoveredCountry) return '#3b82f6';
-    return isDark ? '#333333' : '#cccccc';
-  }, [hoveredCountry, highlightedCountry, isDark]);
+    return '#cccccc';
+  }, [hoveredCountry, highlightedCountry]);
 
   const tooltipInfo = useMemo<TooltipInfo | null>(() => {
     if (!hoveredCountry) return null;
