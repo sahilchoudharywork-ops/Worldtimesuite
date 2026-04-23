@@ -11,7 +11,7 @@ const ORIGIN = 'https://worldtimesuite.com';
 
 // Routes
 
-const STATIC_ROUTES = ['/', '/timer', '/stopwatch', '/calendar', '/about', '/terms', '/privacy', '/world-clock'];
+const STATIC_ROUTES = ['/', '/timer', '/stopwatch', '/calendar', '/about', '/terms', '/privacy', '/world-clock', '/globe'];
 
 const TIMEZONE_ROUTES: string[] = [
   '/ist-to-gmt',
@@ -1651,6 +1651,10 @@ const staticSeo: Record<string, { title: string; description: string }> = {
     title: 'World Clock — Current Time in Every Major City | WorldTimeSuite',
     description: 'See the current local time in cities worldwide — New York, London, Dubai, Tokyo, Sydney and more. Free live world clock, always accurate.',
   },
+  '/globe': {
+    title: 'Interactive 3D World Globe — Time Zones & Country Clocks | WorldTimeSuite',
+    description: 'Explore an interactive 3D globe showing real-time local time and UTC offset for every country. Hover any country to see its timezone, drag to rotate, scroll to zoom.',
+  },
 };
 
 // HTML helpers
@@ -1999,6 +2003,79 @@ ${rows}
     </div>`;
 };
 
+const buildGlobeBody = (): string => {
+  const regions = [
+    { name: 'Americas',      countries: ['United States', 'Canada', 'Brazil', 'Mexico', 'Argentina', 'Chile', 'Colombia', 'Peru'] },
+    { name: 'Europe',        countries: ['United Kingdom', 'Germany', 'France', 'Italy', 'Spain', 'Netherlands', 'Sweden', 'Switzerland'] },
+    { name: 'Asia',          countries: ['China', 'Japan', 'India', 'South Korea', 'Singapore', 'United Arab Emirates', 'Saudi Arabia', 'Thailand'] },
+    { name: 'Africa & Middle East', countries: ['South Africa', 'Nigeria', 'Egypt', 'Kenya', 'Israel', 'Turkey', 'Pakistan', 'Bangladesh'] },
+    { name: 'Oceania',       countries: ['Australia', 'New Zealand', 'Philippines', 'Indonesia', 'Malaysia', 'Vietnam', 'Hong Kong', 'Taiwan'] },
+  ];
+
+  const regionCards = regions.map(r => `
+        <div style="padding:24px;border:1px solid #27272a;border-radius:24px;background:#09090b;">
+          <h3 style="font-size:13px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#3b82f6;margin:0 0 16px 0;">${esc(r.name)}</h3>
+          <ul style="list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px;">
+            ${r.countries.map(c => `<li style="font-size:13px;color:#a1a1aa;font-weight:600;">${esc(c)}</li>`).join('<li style="color:#27272a;">·</li>')}
+          </ul>
+        </div>`).join('\n');
+
+  return `
+    <div style="min-height:100vh;background:#000;color:#fff;font-family:Helvetica,Arial,sans-serif;padding:40px 24px;">
+      <div style="max-width:1100px;margin:0 auto;">
+
+        <h1 style="font-size:72px;font-weight:900;letter-spacing:-0.04em;line-height:0.95;text-transform:uppercase;color:#fff;margin:0;padding:0;">
+          Interactive 3D World Globe
+        </h1>
+        <p style="margin-top:24px;font-size:20px;line-height:1.6;color:#a1a1aa;max-width:900px;">
+          Explore a live interactive 3D globe showing real-time local time and UTC offset for every country.
+          Drag to rotate, scroll to zoom, and hover any country to see its timezone and current time.
+        </p>
+
+        <div style="margin-top:32px;display:flex;flex-wrap:wrap;gap:12px;">
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 18px;border:1px solid #27272a;border-radius:999px;background:#09090b;">
+            <span style="font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#a1a1aa;">Drag to rotate</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 18px;border:1px solid #27272a;border-radius:999px;background:#09090b;">
+            <span style="font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#a1a1aa;">Scroll to zoom</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 18px;border:1px solid #27272a;border-radius:999px;background:#09090b;">
+            <span style="font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#a1a1aa;">Hover to inspect timezone</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 18px;border:1px solid #27272a;border-radius:999px;background:#09090b;">
+            <span style="font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#a1a1aa;">Search any country</span>
+          </div>
+        </div>
+
+        <div style="margin-top:48px;">
+          <h2 style="font-size:28px;font-weight:900;letter-spacing:-0.02em;text-transform:uppercase;color:#fff;margin:0 0 24px 0;">
+            Countries &amp; Time Zones by Region
+          </h2>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;">
+            ${regionCards}
+          </div>
+        </div>
+
+        <div style="margin-top:48px;padding:32px;border:1px solid #27272a;border-radius:32px;background:#09090b;">
+          <h2 style="font-size:16px;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;color:#ffffff;margin:0 0 12px 0;">
+            About This Globe
+          </h2>
+          <p style="font-size:15px;line-height:1.7;color:#a1a1aa;margin:0;">
+            The WorldTimeSuite globe renders a photorealistic Earth in your browser using WebGL. Every country polygon
+            is mapped to its primary IANA timezone. When you hover a country, the globe shows the live local time and
+            UTC offset. Use the search bar to fly instantly to any country. The globe auto-rotates until you interact with it.
+          </p>
+        </div>
+
+        <div style="margin-top:32px;padding:24px 0;border-top:1px solid #27272a;display:flex;flex-wrap:wrap;gap:16px;">
+          <a href="/world-clock" style="color:#a1a1aa;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">World Clock</a>
+          <a href="/" style="color:#a1a1aa;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">Time Zone Converter</a>
+        </div>
+
+      </div>
+    </div>`;
+};
+
 const buildHtml = (template: string, route: string): string => {
   // City clock route: /time-in-[slug]
   const cityClockMatch = route.match(/^\/time-in-([a-z0-9-]+)$/i);
@@ -2032,6 +2109,25 @@ const buildHtml = (template: string, route: string): string => {
     const seo = staticSeo['/world-clock']!;
     const canonicalUrl = `${ORIGIN}/world-clock`;
     const body = buildWorldClockBody();
+
+    let html = template;
+    html = html.replace(/<title>[^<]*<\/title>/, `<title>${esc(seo.title)}</title>`);
+    html = html.replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${esc(seo.description)}">`);
+    html = html.replace(/<meta property="og:title" content="[^"]*">/, `<meta property="og:title" content="${esc(seo.title)}">`);
+    html = html.replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${esc(seo.description)}">`);
+    html = html.replace(/<meta property="og:url" content="[^"]*">/, `<meta property="og:url" content="${canonicalUrl}">`);
+    html = html.replace(/<meta name="twitter:title" content="[^"]*">/, `<meta name="twitter:title" content="${esc(seo.title)}">`);
+    html = html.replace(/<meta name="twitter:description" content="[^"]*">/, `<meta name="twitter:description" content="${esc(seo.description)}">`);
+    html = html.replace(/<link rel="canonical" href="[^"]*">/, `<link rel="canonical" href="${canonicalUrl}">`);
+    html = html.replace('<!--app-html-->', body);
+    return html;
+  }
+
+  // Globe route
+  if (route === '/globe') {
+    const seo = staticSeo['/globe']!;
+    const canonicalUrl = `${ORIGIN}/globe`;
+    const body = buildGlobeBody();
 
     let html = template;
     html = html.replace(/<title>[^<]*<\/title>/, `<title>${esc(seo.title)}</title>`);
