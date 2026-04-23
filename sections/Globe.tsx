@@ -42,7 +42,8 @@ const TZ_OVERRIDES: Record<string, string> = {
   AQ: 'Antarctica/McMurdo',
 };
 
-// Built once at module load — O(1) lookup at render time
+// Built once at module load — O(1) lookup at render time.
+// Runs when the lazy chunk is first imported, not at app start.
 const COUNTRY_TZ: Record<string, string> = (() => {
   const map: Record<string, string> = {};
   const all = getAllCountries();
@@ -54,6 +55,15 @@ const COUNTRY_TZ: Record<string, string> = (() => {
   return map;
 })();
 
+// ─── Stable module-level callbacks ───────────────────────────────────────────
+// Defined outside the component so their reference never changes.
+// react-globe.gl skips re-processing Three.js polygons when callbacks
+// are referentially stable — avoids O(180) Three.js material updates per render.
+
+const POLYGON_SIDE_COLOR  = () => 'rgba(0,0,0,0.04)';
+const POLYGON_LABEL_EMPTY = () => '';
+const GLOBE_IMAGE = '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
+const SKY_IMAGE   = '//unpkg.com/three-globe/example/img/night-sky.png';
 
 // ─── Geometry helper (fly-to on search) ──────────────────────────────────────
 
@@ -108,6 +118,8 @@ const GlobePage: React.FC<GlobePageProps> = ({ isDark }) => {
   const globeRef     = useRef<GlobeMethods | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
   const searchRef    = useRef<HTMLDivElement>(null);
+  // RAF handle for mousemove throttle
+  const mouseRAF     = useRef<number>(0);
 
   const [geoData, setGeoData]   = useState<{ features: object[] }>({ features: [] });
   const [geoError, setGeoError] = useState(false);
@@ -119,7 +131,7 @@ const GlobePage: React.FC<GlobePageProps> = ({ isDark }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen]   = useState(false);
 
-  const [now, setNow]             = useState(() => new Date());
+  const [now, setNow]               = useState(() => new Date());
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   // ── Fetch country polygons ────────────────────────────────────────────────
@@ -132,9 +144,10 @@ const GlobePage: React.FC<GlobePageProps> = ({ isDark }) => {
       .catch(() => setGeoError(true));
   }, []);
 
-  // ── 1-second clock ───────────────────────────────────────────────────────
+  // ── 1-second clock — paused when tab is hidden to save CPU ───────────────
   useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000);
+    const tick = () => { if (!document.hidden) setNow(new Date()); };
+    const t = setInterval(tick, 1000);
     return () => clearInterval(t);
   }, []);
 
@@ -148,7 +161,7 @@ const GlobePage: React.FC<GlobePageProps> = ({ isDark }) => {
     return () => obs.disconnect();
   }, []);
 
-  // ── Auto-rotate, stop on first drag ──────────────────────────────────────
+  // ── Auto-rotate, stop permanently on first user drag ─────────────────────
   useEffect(() => {
     if (!globeRef.current || dimensions.width === 0) return;
     const controls = globeRef.current.controls() as any;
@@ -171,8 +184,16 @@ const GlobePage: React.FC<GlobePageProps> = ({ isDark }) => {
     return () => document.removeEventListener('mousedown', onDown);
   }, []);
 
+  // ── Cleanup RAF on unmount ────────────────────────────────────────────────
+  useEffect(() => () => cancelAnimationFrame(mouseRAF.current), []);
+
+  // ── RAF-throttled mousemove — caps tooltip state updates at ~60 fps ───────
+  // Without this, every pixel of mouse movement fires a React setState,
+  // triggering a full re-render + tooltipStyle recomputation.
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    setMousePos({ x: e.clientX, y: e.clientY });
+    const x = e.clientX, y = e.clientY;
+    cancelAnimationFrame(mouseRAF.current);
+    mouseRAF.current = requestAnimationFrame(() => setMousePos({ x, y }));
   }, []);
 
   const selectCountry = useCallback((feature: any) => {
@@ -192,24 +213,28 @@ const GlobePage: React.FC<GlobePageProps> = ({ isDark }) => {
       .slice(0, 6);
   }, [searchQuery, geoData]);
 
-  // Polygon colours — blue hover/highlight (reference visual)
+  // Polygon cap colour — blue on hover/highlight, transparent otherwise.
+  // isDark removed from deps: globe is always rendered on a dark space
+  // background so the same blue opacity works in both themes.
   const getCapColor = useCallback((d: object) => {
-    if (d === highlightedCountry) return isDark ? 'rgba(59,130,246,0.4)' : 'rgba(59,130,246,0.2)';
-    if (d === hoveredCountry)     return isDark ? 'rgba(59,130,246,0.4)' : 'rgba(59,130,246,0.2)';
+    if (d === highlightedCountry || d === hoveredCountry) return 'rgba(59,130,246,0.4)';
     return 'rgba(0,0,0,0)';
-  }, [hoveredCountry, highlightedCountry, isDark]);
+  }, [hoveredCountry, highlightedCountry]);
 
+  // Stroke colour — stable, no isDark branch (borders always #cccccc on globe)
   const getStrokeColor = useCallback((d: object) => {
     if (d === highlightedCountry || d === hoveredCountry) return '#3b82f6';
     return '#cccccc';
   }, [hoveredCountry, highlightedCountry]);
 
+  // Tooltip data — only recomputes when hovered country or clock tick changes.
+  // Returns null immediately when nothing is hovered (no wasted work).
   const tooltipInfo = useMemo<TooltipInfo | null>(() => {
     if (!hoveredCountry) return null;
-    const props    = (hoveredCountry as any).properties ?? {};
-    const isoCode  = (props.ISO_A2 ?? '') as string;
-    const name     = (props.ADMIN  ?? 'Unknown') as string;
-    const iana     = COUNTRY_TZ[isoCode] ?? null;
+    const props   = (hoveredCountry as any).properties ?? {};
+    const isoCode = (props.ISO_A2 ?? '') as string;
+    const name    = (props.ADMIN  ?? 'Unknown') as string;
+    const iana    = COUNTRY_TZ[isoCode] ?? null;
     if (!iana) return { name, isoCode, iana: null, localTime: null, offset: null };
     try {
       return { name, isoCode, iana, localTime: fmtLocalTime(iana, now), offset: fmtOffset(iana, now) };
@@ -218,6 +243,8 @@ const GlobePage: React.FC<GlobePageProps> = ({ isDark }) => {
     }
   }, [hoveredCountry, now]);
 
+  // Tooltip position — flips left when near right edge.
+  // Only recomputes when mouse position changes (RAF-throttled above).
   const tooltipStyle = useMemo(() => {
     const W = typeof window !== 'undefined' ? window.innerWidth : 1200;
     const flipX = mousePos.x > W - 280;
@@ -229,9 +256,6 @@ const GlobePage: React.FC<GlobePageProps> = ({ isDark }) => {
   }, [mousePos]);
 
   const utcTime = fmtUtc(now);
-
-  // Globe texture: always blue-marble (day view) regardless of site theme
-  const GLOBE_IMAGE = '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
 
   return (
     <div
@@ -249,7 +273,6 @@ const GlobePage: React.FC<GlobePageProps> = ({ isDark }) => {
         </span>
 
         <div className="relative">
-          {/* Search pill — dark background always so it's readable on the star field */}
           <div className="flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-900/90 px-3 py-1.5 backdrop-blur-sm">
             <svg className="w-3 h-3 shrink-0 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
@@ -280,7 +303,6 @@ const GlobePage: React.FC<GlobePageProps> = ({ isDark }) => {
             )}
           </div>
 
-          {/* Dropdown results */}
           {searchOpen && searchResults.length > 0 && (
             <div className="absolute top-full left-0 mt-1.5 w-52 rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl overflow-hidden z-30">
               {searchResults.map((feature: any, i: number) => (
@@ -301,7 +323,6 @@ const GlobePage: React.FC<GlobePageProps> = ({ isDark }) => {
             </div>
           )}
 
-          {/* No results */}
           {searchOpen && searchQuery.length >= 2 && searchResults.length === 0 && (
             <div className="absolute top-full left-0 mt-1.5 w-52 rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 z-30">
               <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">No results</span>
@@ -310,14 +331,10 @@ const GlobePage: React.FC<GlobePageProps> = ({ isDark }) => {
         </div>
       </div>
 
-      {/* ── UTC Clock — always white, always readable ─────────────────────── */}
+      {/* ── UTC Clock ─────────────────────────────────────────────────────── */}
       <div className="absolute top-4 right-8 z-10 pointer-events-none select-none text-right">
-        <div className="text-[9px] font-black uppercase tracking-[0.35em] mb-0.5 text-zinc-500">
-          UTC
-        </div>
-        <div className="text-2xl font-black tabular-nums leading-none text-white">
-          {utcTime}
-        </div>
+        <div className="text-[9px] font-black uppercase tracking-[0.35em] mb-0.5 text-zinc-500">UTC</div>
+        <div className="text-2xl font-black tabular-nums leading-none text-white">{utcTime}</div>
       </div>
 
       {/* ── Interaction hint ──────────────────────────────────────────────── */}
@@ -343,15 +360,15 @@ const GlobePage: React.FC<GlobePageProps> = ({ isDark }) => {
           width={dimensions.width}
           height={dimensions.height}
           globeImageUrl={GLOBE_IMAGE}
-          backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
+          backgroundImageUrl={SKY_IMAGE}
           backgroundColor="#000000"
           atmosphereColor={isDark ? '#3b82f6' : '#93c5fd'}
           atmosphereAltitude={0.15}
           polygonsData={geoData.features}
           polygonCapColor={getCapColor}
-          polygonSideColor={() => 'rgba(0,0,0,0.04)'}
+          polygonSideColor={POLYGON_SIDE_COLOR}
           polygonStrokeColor={getStrokeColor}
-          polygonLabel={() => ''}
+          polygonLabel={POLYGON_LABEL_EMPTY}
           onPolygonHover={setHoveredCountry}
           polygonsTransitionDuration={180}
         />
