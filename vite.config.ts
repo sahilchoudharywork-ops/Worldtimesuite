@@ -52,7 +52,12 @@ export default defineConfig(({ mode }) => {
             // Split vendor code into a separate chunk so the main bundle is smaller.
             // React + ReactDOM go into vendor.js and are cached separately from your app code.
             manualChunks: {
+              // React — tiny, changes rarely, long cache lifetime
               vendor: ['react', 'react-dom'],
+              // Three.js + globe — ~900 KB gzipped, almost never changes.
+              // Own chunk = browser caches it independently of app code.
+              // App code edits no longer bust this large cache entry.
+              globe: ['three', 'react-globe.gl'],
             }
           }
         }

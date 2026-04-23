@@ -83,7 +83,8 @@ export const pathToPage: Record<string, Page> = {
   '/about': Page.ABOUT,
   '/terms': Page.TERMS,
   '/privacy': Page.PRIVACY,
-  '/world-clock': Page.WORLD_CLOCK
+  '/world-clock': Page.WORLD_CLOCK,
+  '/globe': Page.GLOBE
 };
 
 export const pageToPath: Partial<Record<Page, string>> = {
@@ -95,7 +96,8 @@ export const pageToPath: Partial<Record<Page, string>> = {
   [Page.ABOUT]: '/about',
   [Page.TERMS]: '/terms',
   [Page.PRIVACY]: '/privacy',
-  [Page.WORLD_CLOCK]: '/world-clock'
+  [Page.WORLD_CLOCK]: '/world-clock',
+  [Page.GLOBE]: '/globe'
 };
 
 export const getRouteState = (path: string): AppRouteState => {
