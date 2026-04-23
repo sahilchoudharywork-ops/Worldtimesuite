@@ -54,55 +54,6 @@ const COUNTRY_TZ: Record<string, string> = (() => {
   return map;
 })();
 
-// ─── Star field — generated once per page load as a data URL ─────────────────
-// Passed to react-globe.gl's backgroundImageUrl which maps it onto the
-// Three.js sky sphere surrounding the globe. Runs in an IIFE so the canvas
-// is created exactly once regardless of how many times the component mounts.
-
-const STAR_BG_URL: string = (() => {
-  if (typeof document === 'undefined') return '';
-  const W = 2048, H = 1024;
-  const cvs = document.createElement('canvas');
-  cvs.width = W;
-  cvs.height = H;
-  const ctx = cvs.getContext('2d');
-  if (!ctx) return '';
-
-  // Deep space base
-  ctx.fillStyle = '#00000c';
-  ctx.fillRect(0, 0, W, H);
-
-  // ~2000 stars with varied size + colour
-  for (let i = 0; i < 2000; i++) {
-    const x = Math.random() * W;
-    const y = Math.random() * H;
-    const r = 0.3 + Math.random() * Math.random() * 1.5;
-    const a = 0.2 + Math.random() * 0.8;
-    const roll = i % 20;
-    const col =
-      roll === 0 ? `rgba(180,210,255,${a})` :   // blue-white
-      roll === 1 ? `rgba(255,220,170,${a})` :   // warm yellow
-                   `rgba(255,255,255,${a})`;    // white
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fillStyle = col;
-    ctx.fill();
-  }
-
-  // 12 bright stars with a subtle glow halo
-  for (let i = 0; i < 12; i++) {
-    const x = Math.random() * W;
-    const y = Math.random() * H;
-    const g = ctx.createRadialGradient(x, y, 0, x, y, 5);
-    g.addColorStop(0, 'rgba(255,255,255,1)');
-    g.addColorStop(0.4, 'rgba(255,255,255,0.3)');
-    g.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(x - 5, y - 5, 10, 10);
-  }
-
-  return cvs.toDataURL('image/jpeg', 0.92);
-})();
 
 // ─── Geometry helper (fly-to on search) ──────────────────────────────────────
 
@@ -241,17 +192,17 @@ const GlobePage: React.FC<GlobePageProps> = ({ isDark }) => {
       .slice(0, 6);
   }, [searchQuery, geoData]);
 
-  // Polygon colours — white hover/highlight, subtle stroke always
+  // Polygon colours — blue hover/highlight (reference visual)
   const getCapColor = useCallback((d: object) => {
-    if (d === highlightedCountry) return 'rgba(255,255,255,0.20)';
-    if (d === hoveredCountry)     return 'rgba(255,255,255,0.13)';
+    if (d === highlightedCountry) return isDark ? 'rgba(59,130,246,0.4)' : 'rgba(59,130,246,0.2)';
+    if (d === hoveredCountry)     return isDark ? 'rgba(59,130,246,0.4)' : 'rgba(59,130,246,0.2)';
     return 'rgba(0,0,0,0)';
-  }, [hoveredCountry, highlightedCountry]);
+  }, [hoveredCountry, highlightedCountry, isDark]);
 
   const getStrokeColor = useCallback((d: object) => {
-    if (d === highlightedCountry || d === hoveredCountry) return '#ffffff';
-    return '#3a3a3a';
-  }, [hoveredCountry, highlightedCountry]);
+    if (d === highlightedCountry || d === hoveredCountry) return '#3b82f6';
+    return isDark ? '#333333' : '#cccccc';
+  }, [hoveredCountry, highlightedCountry, isDark]);
 
   const tooltipInfo = useMemo<TooltipInfo | null>(() => {
     if (!hoveredCountry) return null;
@@ -279,8 +230,10 @@ const GlobePage: React.FC<GlobePageProps> = ({ isDark }) => {
 
   const utcTime = fmtUtc(now);
 
-  // Globe always shows the blue-marble (day) texture — same in dark and light mode
-  const GLOBE_IMAGE = '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
+  // Globe texture: night in dark mode, blue-marble in light mode (matches reference)
+  const GLOBE_IMAGE = isDark
+    ? '//unpkg.com/three-globe/example/img/earth-night.jpg'
+    : '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
 
   return (
     <div
@@ -392,10 +345,10 @@ const GlobePage: React.FC<GlobePageProps> = ({ isDark }) => {
           width={dimensions.width}
           height={dimensions.height}
           globeImageUrl={GLOBE_IMAGE}
-          backgroundImageUrl={STAR_BG_URL || '//unpkg.com/three-globe/example/img/night-sky.png'}
+          backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
           backgroundColor="#000000"
-          atmosphereColor="rgba(100,160,255,0.35)"
-          atmosphereAltitude={0.13}
+          atmosphereColor={isDark ? '#3b82f6' : '#93c5fd'}
+          atmosphereAltitude={0.15}
           polygonsData={geoData.features}
           polygonCapColor={getCapColor}
           polygonSideColor={() => 'rgba(0,0,0,0.04)'}
