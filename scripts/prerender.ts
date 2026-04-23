@@ -1652,8 +1652,8 @@ const staticSeo: Record<string, { title: string; description: string }> = {
     description: 'See the current local time in cities worldwide — New York, London, Dubai, Tokyo, Sydney and more. Free live world clock, always accurate.',
   },
   '/globe': {
-    title: 'World Time Zone Map — Interactive 3D Globe with Live Country Clocks | WorldTimeSuite',
-    description: 'Free interactive 3D world time zone map. See live local time and UTC offset for every country. Hover any country, search, rotate and zoom the globe. No sign-up required.',
+    title: 'Globe - Time Zone Map - Interactive 3D Globe with Time Zone Converter | WorldTimeSuite',
+    description: 'Free interactive 3D Globe with Time Zone Conversion. See live local time and UTC offset for every country. Hover any country, search, rotate and zoom the globe. No sign-up required.',
   },
 };
 
