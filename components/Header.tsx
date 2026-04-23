@@ -96,8 +96,8 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, theme, onToggl
 
   const navItems = [
     { id: Page.CONVERTER, label: 'Time Zone Converter' },
-    { id: Page.WORLD_CLOCK, label: 'World Clock' },
     { id: Page.GLOBE, label: 'Globe' },
+    { id: Page.WORLD_CLOCK, label: 'World Clock' },
     { id: Page.CALENDAR, label: 'Calendar' },
     { id: Page.TIMER, label: 'Timer' },
     { id: Page.STOPWATCH, label: 'Stopwatch' },

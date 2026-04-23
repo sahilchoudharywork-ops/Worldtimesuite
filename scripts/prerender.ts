@@ -1652,8 +1652,8 @@ const staticSeo: Record<string, { title: string; description: string }> = {
     description: 'See the current local time in cities worldwide — New York, London, Dubai, Tokyo, Sydney and more. Free live world clock, always accurate.',
   },
   '/globe': {
-    title: 'Interactive 3D World Globe — Time Zones & Country Clocks | WorldTimeSuite',
-    description: 'Explore an interactive 3D globe showing real-time local time and UTC offset for every country. Hover any country to see its timezone, drag to rotate, scroll to zoom.',
+    title: 'World Time Zone Map — Interactive 3D Globe with Live Country Clocks | WorldTimeSuite',
+    description: 'Free interactive 3D world time zone map. See live local time and UTC offset for every country. Hover any country, search, rotate and zoom the globe. No sign-up required.',
   },
 };
 
@@ -2005,66 +2005,183 @@ ${rows}
 
 const buildGlobeBody = (): string => {
   const regions = [
-    { name: 'Americas',      countries: ['United States', 'Canada', 'Brazil', 'Mexico', 'Argentina', 'Chile', 'Colombia', 'Peru'] },
-    { name: 'Europe',        countries: ['United Kingdom', 'Germany', 'France', 'Italy', 'Spain', 'Netherlands', 'Sweden', 'Switzerland'] },
-    { name: 'Asia',          countries: ['China', 'Japan', 'India', 'South Korea', 'Singapore', 'United Arab Emirates', 'Saudi Arabia', 'Thailand'] },
-    { name: 'Africa & Middle East', countries: ['South Africa', 'Nigeria', 'Egypt', 'Kenya', 'Israel', 'Turkey', 'Pakistan', 'Bangladesh'] },
-    { name: 'Oceania',       countries: ['Australia', 'New Zealand', 'Philippines', 'Indonesia', 'Malaysia', 'Vietnam', 'Hong Kong', 'Taiwan'] },
+    {
+      name: 'Americas',
+      tz: 'UTC−12 to UTC−3',
+      countries: [
+        { name: 'United States', offset: 'UTC−5 / UTC−8', tz: 'ET / PT' },
+        { name: 'Canada',        offset: 'UTC−3.5 to UTC−8', tz: 'ET / PT' },
+        { name: 'Brazil',        offset: 'UTC−3',  tz: 'BRT' },
+        { name: 'Mexico',        offset: 'UTC−6',  tz: 'CST' },
+        { name: 'Argentina',     offset: 'UTC−3',  tz: 'ART' },
+        { name: 'Colombia',      offset: 'UTC−5',  tz: 'COT' },
+        { name: 'Chile',         offset: 'UTC−4',  tz: 'CLT' },
+        { name: 'Peru',          offset: 'UTC−5',  tz: 'PET' },
+      ],
+    },
+    {
+      name: 'Europe',
+      tz: 'UTC to UTC+3',
+      countries: [
+        { name: 'United Kingdom', offset: 'UTC+0', tz: 'GMT' },
+        { name: 'Germany',        offset: 'UTC+1', tz: 'CET' },
+        { name: 'France',         offset: 'UTC+1', tz: 'CET' },
+        { name: 'Italy',          offset: 'UTC+1', tz: 'CET' },
+        { name: 'Spain',          offset: 'UTC+1', tz: 'CET' },
+        { name: 'Netherlands',    offset: 'UTC+1', tz: 'CET' },
+        { name: 'Sweden',         offset: 'UTC+1', tz: 'CET' },
+        { name: 'Switzerland',    offset: 'UTC+1', tz: 'CET' },
+      ],
+    },
+    {
+      name: 'Middle East & Africa',
+      tz: 'UTC+2 to UTC+4',
+      countries: [
+        { name: 'United Arab Emirates', offset: 'UTC+4', tz: 'GST' },
+        { name: 'Saudi Arabia',         offset: 'UTC+3', tz: 'AST' },
+        { name: 'Israel',               offset: 'UTC+2', tz: 'IST' },
+        { name: 'Turkey',               offset: 'UTC+3', tz: 'TRT' },
+        { name: 'Egypt',                offset: 'UTC+2', tz: 'EET' },
+        { name: 'South Africa',         offset: 'UTC+2', tz: 'SAST' },
+        { name: 'Nigeria',              offset: 'UTC+1', tz: 'WAT' },
+        { name: 'Kenya',                offset: 'UTC+3', tz: 'EAT' },
+      ],
+    },
+    {
+      name: 'Asia',
+      tz: 'UTC+5 to UTC+9',
+      countries: [
+        { name: 'India',       offset: 'UTC+5:30', tz: 'IST' },
+        { name: 'Pakistan',    offset: 'UTC+5',    tz: 'PKT' },
+        { name: 'China',       offset: 'UTC+8',    tz: 'CST' },
+        { name: 'Japan',       offset: 'UTC+9',    tz: 'JST' },
+        { name: 'South Korea', offset: 'UTC+9',    tz: 'KST' },
+        { name: 'Singapore',   offset: 'UTC+8',    tz: 'SGT' },
+        { name: 'Thailand',    offset: 'UTC+7',    tz: 'ICT' },
+        { name: 'Indonesia',   offset: 'UTC+7',    tz: 'WIB' },
+      ],
+    },
+    {
+      name: 'Oceania & Pacific',
+      tz: 'UTC+8 to UTC+13',
+      countries: [
+        { name: 'Australia',   offset: 'UTC+10',   tz: 'AEST' },
+        { name: 'New Zealand', offset: 'UTC+12',   tz: 'NZST' },
+        { name: 'Hong Kong',   offset: 'UTC+8',    tz: 'HKT' },
+        { name: 'Malaysia',    offset: 'UTC+8',    tz: 'MYT' },
+        { name: 'Philippines', offset: 'UTC+8',    tz: 'PHT' },
+        { name: 'Vietnam',     offset: 'UTC+7',    tz: 'ICT' },
+        { name: 'Taiwan',      offset: 'UTC+8',    tz: 'CST' },
+        { name: 'Bangladesh',  offset: 'UTC+6',    tz: 'BST' },
+      ],
+    },
   ];
 
   const regionCards = regions.map(r => `
         <div style="padding:24px;border:1px solid #27272a;border-radius:24px;background:#09090b;">
-          <h3 style="font-size:13px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#3b82f6;margin:0 0 16px 0;">${esc(r.name)}</h3>
-          <ul style="list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px;">
-            ${r.countries.map(c => `<li style="font-size:13px;color:#a1a1aa;font-weight:600;">${esc(c)}</li>`).join('<li style="color:#27272a;">·</li>')}
-          </ul>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+            <h3 style="font-size:13px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#3b82f6;margin:0;">${esc(r.name)}</h3>
+            <span style="font-size:11px;font-weight:700;color:#52525b;">${esc(r.tz)}</span>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            ${r.countries.map(c => `
+            <tr>
+              <td style="padding:5px 0;color:#a1a1aa;font-weight:600;">${esc(c.name)}</td>
+              <td style="padding:5px 0;color:#52525b;text-align:right;">${esc(c.tz)}</td>
+              <td style="padding:5px 0;color:#3b82f6;text-align:right;padding-left:12px;">${esc(c.offset)}</td>
+            </tr>`).join('')}
+          </table>
         </div>`).join('\n');
+
+  const faqItems = [
+    {
+      q: 'What is a world time zone map?',
+      a: 'A world time zone map shows the 24 standard time zones used across the globe, each offset from UTC (Coordinated Universal Time) by a whole or half hour. Our interactive 3D globe lets you explore every country\'s current local time visually.',
+    },
+    {
+      q: 'How many time zones are there in the world?',
+      a: 'There are 38 recognised time zones worldwide, ranging from UTC−12 (Baker Island) to UTC+14 (Line Islands, Kiribati). Some countries like India (UTC+5:30) and Nepal (UTC+5:45) use non-standard half and quarter-hour offsets.',
+    },
+    {
+      q: 'Which country has the most time zones?',
+      a: 'France has the most time zones of any country — 12 — due to its overseas territories. Russia spans 11 time zones across its landmass. The United States covers 6 primary time zones.',
+    },
+    {
+      q: 'What is UTC offset?',
+      a: 'A UTC offset is the difference in hours and minutes between a location\'s local time and Coordinated Universal Time (UTC). For example, India is UTC+5:30, meaning it is 5 hours and 30 minutes ahead of UTC.',
+    },
+    {
+      q: 'How do I find the current time in any country?',
+      a: 'On this globe, hover over any country to instantly see its current local time, IANA timezone name, and UTC offset. You can also use the search bar to fly to a specific country.',
+    },
+  ];
+
+  const faqHtml = faqItems.map(f => `
+        <div style="padding:20px 0;border-bottom:1px solid #18181b;">
+          <h3 style="font-size:15px;font-weight:800;color:#fff;margin:0 0 8px 0;">${esc(f.q)}</h3>
+          <p style="font-size:14px;line-height:1.7;color:#a1a1aa;margin:0;">${esc(f.a)}</p>
+        </div>`).join('');
 
   return `
     <div style="min-height:100vh;background:#000;color:#fff;font-family:Helvetica,Arial,sans-serif;padding:40px 24px;">
       <div style="max-width:1100px;margin:0 auto;">
 
-        <h1 style="font-size:72px;font-weight:900;letter-spacing:-0.04em;line-height:0.95;text-transform:uppercase;color:#fff;margin:0;padding:0;">
-          Interactive 3D World Globe
+        <h1 style="font-size:64px;font-weight:900;letter-spacing:-0.04em;line-height:0.95;text-transform:uppercase;color:#fff;margin:0;padding:0;">
+          World Time Zone Map
         </h1>
-        <p style="margin-top:24px;font-size:20px;line-height:1.6;color:#a1a1aa;max-width:900px;">
-          Explore a live interactive 3D globe showing real-time local time and UTC offset for every country.
-          Drag to rotate, scroll to zoom, and hover any country to see its timezone and current time.
+        <p style="margin-top:8px;font-size:22px;font-weight:700;color:#3b82f6;letter-spacing:-0.01em;">
+          Interactive 3D Globe with Live Country Clocks
+        </p>
+        <p style="margin-top:20px;font-size:18px;line-height:1.7;color:#a1a1aa;max-width:860px;">
+          The free WorldTimeSuite globe shows the <strong style="color:#fff;">current local time and UTC offset for every country</strong> on an
+          interactive 3D Earth. Drag to rotate, scroll to zoom, hover any country for its live timezone clock,
+          or use the search bar to fly instantly to any nation. No sign-up, no install — works in any browser.
         </p>
 
-        <div style="margin-top:32px;display:flex;flex-wrap:wrap;gap:12px;">
-          <div style="display:flex;align-items:center;gap:8px;padding:10px 18px;border:1px solid #27272a;border-radius:999px;background:#09090b;">
-            <span style="font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#a1a1aa;">Drag to rotate</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;padding:10px 18px;border:1px solid #27272a;border-radius:999px;background:#09090b;">
-            <span style="font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#a1a1aa;">Scroll to zoom</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;padding:10px 18px;border:1px solid #27272a;border-radius:999px;background:#09090b;">
-            <span style="font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#a1a1aa;">Hover to inspect timezone</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;padding:10px 18px;border:1px solid #27272a;border-radius:999px;background:#09090b;">
-            <span style="font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#a1a1aa;">Search any country</span>
-          </div>
+        <div style="margin-top:28px;display:flex;flex-wrap:wrap;gap:10px;">
+          ${['Live local time by country', 'UTC offset for all 195 countries', 'Interactive world time zone map', 'Country timezone search', '38 world time zones', 'Free — no sign-up'].map(f =>
+            `<span style="padding:8px 16px;border:1px solid #27272a;border-radius:999px;background:#09090b;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#a1a1aa;">${esc(f)}</span>`
+          ).join('\n          ')}
         </div>
 
-        <div style="margin-top:48px;">
-          <h2 style="font-size:28px;font-weight:900;letter-spacing:-0.02em;text-transform:uppercase;color:#fff;margin:0 0 24px 0;">
-            Countries &amp; Time Zones by Region
+        <div style="margin-top:56px;">
+          <h2 style="font-size:32px;font-weight:900;letter-spacing:-0.02em;color:#fff;margin:0 0 8px 0;">
+            Time Zones by Region
           </h2>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;">
+          <p style="font-size:15px;color:#71717a;margin:0 0 28px 0;">
+            Live UTC offsets and timezone codes for every major country — hover the globe to see current local time.
+          </p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;">
             ${regionCards}
           </div>
         </div>
 
-        <div style="margin-top:48px;padding:32px;border:1px solid #27272a;border-radius:32px;background:#09090b;">
-          <h2 style="font-size:16px;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;color:#ffffff;margin:0 0 12px 0;">
-            About This Globe
+        <div style="margin-top:56px;padding:32px;border:1px solid #27272a;border-radius:32px;background:#09090b;">
+          <h2 style="font-size:20px;font-weight:800;letter-spacing:0.02em;text-transform:uppercase;color:#fff;margin:0 0 16px 0;">
+            How to Use the World Time Zone Globe
           </h2>
-          <p style="font-size:15px;line-height:1.7;color:#a1a1aa;margin:0;">
-            The WorldTimeSuite globe renders a photorealistic Earth in your browser using WebGL. Every country polygon
-            is mapped to its primary IANA timezone. When you hover a country, the globe shows the live local time and
-            UTC offset. Use the search bar to fly instantly to any country. The globe auto-rotates until you interact with it.
-          </p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;">
+            ${[
+              ['Hover a country', 'See its live local time, IANA timezone name, and UTC offset instantly.'],
+              ['Drag to rotate', 'Spin the globe freely to navigate to any region on Earth.'],
+              ['Scroll to zoom', 'Zoom in on any country or continent for a closer view.'],
+              ['Search bar', 'Type a country name to fly the camera directly to it on the globe.'],
+            ].map(([title, desc]) => `
+            <div style="padding:16px;border:1px solid #18181b;border-radius:16px;background:#000;">
+              <div style="font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#3b82f6;margin-bottom:8px;">${esc(title)}</div>
+              <div style="font-size:13px;line-height:1.6;color:#71717a;">${esc(desc)}</div>
+            </div>`).join('')}
+          </div>
+        </div>
+
+        <div style="margin-top:56px;">
+          <h2 style="font-size:32px;font-weight:900;letter-spacing:-0.02em;color:#fff;margin:0 0 4px 0;">
+            Frequently Asked Questions
+          </h2>
+          <p style="font-size:15px;color:#71717a;margin:0 0 8px 0;">World time zones, UTC offsets, and the globe explained.</p>
+          <div style="border:1px solid #27272a;border-radius:24px;padding:0 24px;background:#09090b;">
+            ${faqHtml}
+          </div>
         </div>
 
         <div style="margin-top:32px;padding:24px 0;border-top:1px solid #27272a;display:flex;flex-wrap:wrap;gap:16px;">
