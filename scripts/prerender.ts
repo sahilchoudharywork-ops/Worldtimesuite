@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { cities } from '../data/cities';
+import { BLOG_POSTS, BLOG_POST_BY_SLUG } from '../data/blogPosts';
 
 const ROOT = process.cwd();
 const DIST_DIR = path.join(ROOT, 'dist');
@@ -11,7 +12,9 @@ const ORIGIN = 'https://worldtimesuite.com';
 
 // Routes
 
-const STATIC_ROUTES = ['/', '/timer', '/stopwatch', '/calendar', '/about', '/terms', '/privacy', '/world-clock', '/globe'];
+const STATIC_ROUTES = ['/', '/timer', '/stopwatch', '/calendar', '/about', '/terms', '/privacy', '/world-clock', '/globe', '/blog', '/about-author'];
+
+const BLOG_POST_ROUTES: string[] = BLOG_POSTS.map(p => `/blog/${p.slug}`);
 
 const TIMEZONE_ROUTES: string[] = [
   '/ist-to-gmt',
@@ -1655,7 +1658,23 @@ const staticSeo: Record<string, { title: string; description: string }> = {
     title: 'Globe - Time Zone Map - Interactive 3D Globe with Time Zone Converter | WorldTimeSuite',
     description: 'Free interactive 3D Globe with Time Zone Conversion. See live local time and UTC offset for every country. Hover any country, search, rotate and zoom the globe. No sign-up required.',
   },
+  '/blog': {
+    title: 'Blog — Time Zones, Scheduling & Global Productivity | WorldTimeSuite',
+    description: 'Guides, explainers, and deep dives on time zones, daylight saving time, scheduling across borders, and global productivity — from the WorldTimeSuite editorial team.',
+  },
+  '/about-author': {
+    title: 'About the Author — Sahil Choudhary, Creator of WorldTimeSuite',
+    description: 'Meet Sahil Choudhary, the engineer and creator behind WorldTimeSuite — a free global time zone converter, world clock, and scheduling suite built with AI.',
+  },
 };
+
+// Populate blog post SEO entries dynamically so new posts are covered automatically
+BLOG_POSTS.forEach(p => {
+  staticSeo[`/blog/${p.slug}`] = {
+    title: `${p.title} | WorldTimeSuite Blog`,
+    description: p.metaDescription,
+  };
+});
 
 // HTML helpers
 
@@ -1674,6 +1693,19 @@ interface StaticCopy {
 }
 
 const getStaticCopy = (route: string): StaticCopy => {
+  if (route.startsWith('/blog/')) {
+    const slug = route.slice(6);
+    const post = BLOG_POST_BY_SLUG[slug];
+    if (post) {
+      return {
+        heading: post.title,
+        description: post.metaDescription,
+        ctaHref: '/blog',
+        ctaLabel: 'More Articles',
+      };
+    }
+  }
+
   switch (route) {
     case '/timer':
       return {
@@ -1695,6 +1727,20 @@ const getStaticCopy = (route: string): StaticCopy => {
         description: 'Plan meetings and tasks across time zones. Compare overlapping hours between cities and avoid scheduling mistakes.',
         ctaHref: '/calendar',
         ctaLabel: 'Open Calendar',
+      };
+    case '/blog':
+      return {
+        heading: 'Time Zones, Explained.',
+        description: 'Guides, explainers, and deep dives on time zones, daylight saving time, scheduling across borders, and global productivity.',
+        ctaHref: '/blog',
+        ctaLabel: 'Read the Blog',
+      };
+    case '/about-author':
+      return {
+        heading: 'From the Author',
+        description: 'Meet Sahil Choudhary, the engineer behind WorldTimeSuite — a free global time zone converter and productivity suite.',
+        ctaHref: '/',
+        ctaLabel: 'Back to Tools',
       };
     case '/about':
       return {
@@ -2296,6 +2342,27 @@ const buildHtml = (template: string, route: string): string => {
   html = html.replace(/<link rel="canonical" href="[^"]*">/, `<link rel="canonical" href="${canonicalUrl}">`);
   html = html.replace('<!--app-html-->', `${body}\n${noscriptTable}`);
 
+  // Inject JSON-LD for blog post pages into the static HTML so Google sees it on first crawl
+  if (route.startsWith('/blog/')) {
+    const slug = route.slice(6);
+    const post = BLOG_POST_BY_SLUG[slug];
+    if (post) {
+      const jsonLd = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: post.title,
+        description: post.metaDescription,
+        author: { '@type': 'Organization', name: 'WorldTimeSuite' },
+        publisher: { '@type': 'Organization', name: 'WorldTimeSuite', url: 'https://worldtimesuite.com' },
+        datePublished: post.dateIso,
+        dateModified: post.dateIso,
+        url: `https://worldtimesuite.com/blog/${post.slug}`,
+        keywords: post.tags.join(', '),
+      });
+      html = html.replace('</head>', `<script type="application/ld+json">${jsonLd}</script>\n</head>`);
+    }
+  }
+
   return html;
 };
 
@@ -2332,7 +2399,7 @@ const main = (): void => {
   fs.writeFileSync(backupPath, rawTemplate, 'utf8');
   console.log(`\nTemplate backed up to dist/_template.html`);
 
-  const allRoutes = [...new Set([...STATIC_ROUTES, ...TIMEZONE_ROUTES, ...CITY_ROUTES, ...GENERATED_CITY_ROUTES, ...CITY_CLOCK_ROUTES])];
+  const allRoutes = [...new Set([...STATIC_ROUTES, ...BLOG_POST_ROUTES, ...TIMEZONE_ROUTES, ...CITY_ROUTES, ...GENERATED_CITY_ROUTES, ...CITY_CLOCK_ROUTES])];
 
   const sample = parseConversionRoute('/delhi-to-london');
   console.log(`Sanity check: parseConversionRoute('/delhi-to-london') =`, JSON.stringify(sample));
@@ -2353,6 +2420,7 @@ const main = (): void => {
   console.log(`Timezone:        ${TIMEZONE_ROUTES.length}`);
   console.log(`City (manual):   ${CITY_ROUTES.length}`);
   console.log(`City (top-30×30):${GENERATED_CITY_ROUTES.length} → unique after dedup`);
+  console.log(`Blog posts:      ${BLOG_POST_ROUTES.length}`);
   console.log(`City clock:      ${CITY_CLOCK_ROUTES.length}`);
   console.log(`Total unique:    ${allRoutes.length}`);
 };

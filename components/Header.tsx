@@ -101,6 +101,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, theme, onToggl
     { id: Page.CALENDAR, label: 'Calendar' },
     { id: Page.TIMER, label: 'Timer' },
     { id: Page.STOPWATCH, label: 'Stopwatch' },
+    { id: Page.BLOG, label: 'Blog' },
   ];
 
   return (
@@ -138,9 +139,9 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, theme, onToggl
               key={item.id}
               type="button"
               onClick={() => onNavigate(item.id)}
-              aria-current={currentPage === item.id ? 'page' : undefined}
+              aria-current={currentPage === item.id || (item.id === Page.BLOG && currentPage === Page.BLOG_POST) ? 'page' : undefined}
               className={`px-3 py-2 rounded-full text-sm font-bold transition-all ${
-                currentPage === item.id
+                currentPage === item.id || (item.id === Page.BLOG && currentPage === Page.BLOG_POST)
                   ? isDark
                     ? 'bg-white text-black'
                     : 'bg-black text-white'

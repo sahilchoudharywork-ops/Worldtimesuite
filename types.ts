@@ -58,6 +58,9 @@ export enum Page {
   WORLD_CLOCK = 'world-clock',
   CITY_CLOCK = 'city-clock',
   GLOBE = 'globe',
+  BLOG = 'blog',
+  BLOG_POST = 'blog-post',
+  ABOUT_AUTHOR = 'about-author',
 }
 
 export interface Task {

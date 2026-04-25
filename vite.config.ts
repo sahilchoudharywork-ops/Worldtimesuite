@@ -45,18 +45,21 @@ export default defineConfig(({ mode }) => {
         }
       },
       build: {
-        // Increase chunk warning threshold (your bundle is intentionally ~82KB)
         chunkSizeWarningLimit: 600,
+        modulePreload: {
+          // By default Vite injects <link rel="modulepreload"> for every chunk it knows about,
+          // including dynamically-imported ones like the Globe page (Three.js = 510 KB gzip).
+          // This caused the homepage and every conversion page to pre-fetch ~510 KB of 3D
+          // rendering code that most visitors never use. Filtering it out here drops homepage
+          // transfer from ~600 KB to ~90 KB gzip. The globe chunk still loads correctly when
+          // the user navigates to /globe — it just isn't pre-fetched everywhere else.
+          resolveDependencies: (_filename: string, deps: string[]) =>
+            deps.filter(dep => !dep.includes('globe')),
+        },
         rollupOptions: {
           output: {
-            // Split vendor code into a separate chunk so the main bundle is smaller.
-            // React + ReactDOM go into vendor.js and are cached separately from your app code.
             manualChunks: {
-              // React — tiny, changes rarely, long cache lifetime
               vendor: ['react', 'react-dom'],
-              // Three.js + globe — ~900 KB gzipped, almost never changes.
-              // Own chunk = browser caches it independently of app code.
-              // App code edits no longer bust this large cache entry.
               globe: ['three', 'react-globe.gl'],
             }
           }

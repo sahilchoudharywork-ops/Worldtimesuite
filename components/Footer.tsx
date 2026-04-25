@@ -142,7 +142,12 @@ const Footer: React.FC<FooterProps> = ({ theme, onNavigate }) => {
                 </a>
               </li>
               <li>
-                <a href="mailto:hello@worldtimesuite.com" className="hover:opacity-50 transition">
+                <a href="/about-author" onClick={handleNav(Page.ABOUT_AUTHOR)} className="hover:opacity-50 transition">
+                  About Author
+                </a>
+              </li>
+              <li>
+                <a href="mailto:sahil.choudhary@worldtimesuite.com" className="hover:opacity-50 transition">
                   Contact
                 </a>
               </li>

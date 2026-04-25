@@ -108,6 +108,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { cities } from '../data/cities';
+import { BLOG_POSTS } from '../data/blogPosts';
 
 const BASE = 'https://worldtimesuite.com';
 const PUBLIC_DIR = path.resolve(process.cwd(), 'public');
@@ -127,6 +128,8 @@ const staticUrls: UrlEntry[] = [
   { loc: `${BASE}/calendar`,     changefreq: 'weekly',  priority: '0.8' },
   { loc: `${BASE}/world-clock`,  changefreq: 'daily',   priority: '0.9' },
   { loc: `${BASE}/about`,        changefreq: 'monthly', priority: '0.6' },
+  { loc: `${BASE}/about-author`, changefreq: 'monthly', priority: '0.6' },
+  { loc: `${BASE}/blog`,         changefreq: 'weekly',  priority: '0.8' },
   { loc: `${BASE}/terms`,        changefreq: 'monthly', priority: '0.4' },
   { loc: `${BASE}/privacy`,      changefreq: 'monthly', priority: '0.4' },
 ];
@@ -257,8 +260,15 @@ for (const from of cities) {
   }
 }
 
-// ─── Combine: static → timezone → city clocks → city pairs ───────────────────
-const allUrls = [...staticUrls, ...timezoneUrls, ...cityClockUrls, ...pairUrls];
+// ─── Blog post pages ──────────────────────────────────────────────────────────
+const blogUrls: UrlEntry[] = BLOG_POSTS.map(post => ({
+  loc: `${BASE}/blog/${post.slug}`,
+  changefreq: 'weekly' as const,
+  priority: '0.8',
+}));
+
+// ─── Combine: static → blog → timezone → city clocks → city pairs ────────────
+const allUrls = [...staticUrls, ...blogUrls, ...timezoneUrls, ...cityClockUrls, ...pairUrls];
 
 // ─── Write sitemap files ──────────────────────────────────────────────────────
 const toUrlset = (urls: UrlEntry[]) => `<?xml version="1.0" encoding="UTF-8"?>
@@ -302,6 +312,7 @@ fs.writeFileSync(path.join(PUBLIC_DIR, 'sitemap.xml'), sitemapIndex, 'utf8');
 
 console.log(`\nSitemap generated:`);
 console.log(`  Static pages:    ${staticUrls.length}`);
+console.log(`  Blog posts:      ${blogUrls.length}`);
 console.log(`  Timezone routes: ${timezoneUrls.length}`);
 console.log(`  City clock pages:${cityClockUrls.length}`);
 console.log(`  City pair pages: ${pairUrls.length}`);

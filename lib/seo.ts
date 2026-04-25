@@ -1,11 +1,13 @@
 import { Page } from '../types';
 import { AppRouteState, toShortCityPath } from './routing';
 import { TIMEZONE_BY_SLUG } from '../data/timezones';
+import { BLOG_POST_META_BY_SLUG } from '../data/blogPostsMeta';
 
 export interface SeoData {
   title: string;
   description: string;
   canonicalPath: string;
+  jsonLd?: string;
 }
 
 type TimezoneSeoEntry = {
@@ -226,7 +228,19 @@ const seoByPage: Partial<Record<Page, Omit<SeoData, 'canonicalPath'>>> = {
   [Page.PRIVACY]: {
     title: 'Privacy Policy | WorldTimeSuite',
     description: 'WorldTimeSuite privacy policy — how we handle data, cookies, Google AdSense advertising, and your privacy rights.'
-  }
+  },
+  [Page.BLOG]: {
+    title: 'Blog — Time Zones, Scheduling & Global Productivity | WorldTimeSuite',
+    description: 'Guides, explainers, and deep dives on time zones, daylight saving time, scheduling across borders, and global productivity — from the WorldTimeSuite editorial team.'
+  },
+  [Page.GLOBE]: {
+    title: 'Interactive World Time Zone Globe | WorldTimeSuite',
+    description: 'Explore time zones around the world with an interactive 3D globe. Click any city to see the current local time.'
+  },
+  [Page.ABOUT_AUTHOR]: {
+    title: 'About the Author — Sahil Choudhary | WorldTimeSuite',
+    description: 'Meet Sahil Choudhary, the creator of WorldTimeSuite. An engineer building things with AI, one side project at a time.'
+  },
 };
 
 export const getSeoData = (route: AppRouteState): SeoData => {
@@ -322,6 +336,38 @@ export const getSeoData = (route: AppRouteState): SeoData => {
       description: `See the current local time in ${cityName}. Live world clock with UTC offset, DST status, and timezone information.`,
       canonicalPath: `/time-in-${citySlug}`
     };
+  }
+
+  if (route.page === Page.BLOG_POST && route.blogSlug) {
+    const post = BLOG_POST_META_BY_SLUG[route.blogSlug];
+    if (post) {
+      const jsonLd = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: post.title,
+        description: post.metaDescription,
+        author: {
+          '@type': 'Organization',
+          name: 'WorldTimeSuite',
+        },
+        publisher: {
+          '@type': 'Organization',
+          name: 'WorldTimeSuite',
+          url: 'https://worldtimesuite.com',
+        },
+        datePublished: post.dateIso,
+        dateModified: post.dateIso,
+        url: `https://worldtimesuite.com/blog/${post.slug}`,
+        keywords: post.tags.join(', '),
+      });
+
+      return {
+        title: `${post.title} | WorldTimeSuite Blog`,
+        description: post.metaDescription,
+        canonicalPath: `/blog/${post.slug}`,
+        jsonLd,
+      };
+    }
   }
 
   const pageSeo = seoByPage[route.page] || seoByPage[Page.CONVERTER]!;

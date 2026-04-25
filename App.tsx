@@ -22,6 +22,9 @@ const Privacy = lazy(() => import('./sections/Privacy'));
 const WorldClock = lazy(() => import('./sections/WorldClock'));
 const CityClockPage = lazy(() => import('./sections/CityClockPage'));
 const GlobePage = lazy(() => import('./sections/Globe'));
+const BlogIndex = lazy(() => import('./sections/BlogIndex'));
+const BlogPost = lazy(() => import('./sections/BlogPost'));
+const AboutAuthor = lazy(() => import('./sections/AboutAuthor'));
 
 const upsertMeta = (attr: 'name' | 'property', key: string, content: string) => {
   let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
@@ -182,8 +185,9 @@ const App: React.FC<AppProps> = ({ initialPath = '/' }) => {
 
     // Don't override URL if we're already on a city or timezone route
     if (currentPage === Page.CONVERTER && (getRouteState(path).cityRoute || getRouteState(path).timezoneRoute)) return;
-    // Don't override URL for city clock pages — path is dynamic (/time-in-[slug])
+    // Don't override URL for dynamic path pages
     if (currentPage === Page.CITY_CLOCK) return;
+    if (currentPage === Page.BLOG_POST) return;
 
     if (path !== targetPath) {
       window.history.pushState({}, '', targetPath);
@@ -226,11 +230,26 @@ const App: React.FC<AppProps> = ({ initialPath = '/' }) => {
     upsertMeta('property', 'og:title', seo.title);
     upsertMeta('property', 'og:description', seo.description);
     upsertMeta('property', 'og:url', canonicalUrl);
-    upsertMeta('property', 'og:type', 'website');
+    upsertMeta('property', 'og:type', seo.jsonLd ? 'article' : 'website');
     upsertMeta('name', 'twitter:title', seo.title);
     upsertMeta('name', 'twitter:description', seo.description);
     upsertMeta('name', 'twitter:card', 'summary_large_image');
     upsertLink('canonical', canonicalUrl);
+
+    const existingJsonLd = document.getElementById('blog-post-jsonld');
+    if (seo.jsonLd) {
+      if (existingJsonLd) {
+        existingJsonLd.textContent = seo.jsonLd;
+      } else {
+        const script = document.createElement('script');
+        script.id = 'blog-post-jsonld';
+        script.type = 'application/ld+json';
+        script.textContent = seo.jsonLd;
+        document.head.appendChild(script);
+      }
+    } else if (existingJsonLd) {
+      existingJsonLd.remove();
+    }
   }, [routeState]);
 
   const isDark = theme === 'dark';
@@ -268,6 +287,12 @@ const App: React.FC<AppProps> = ({ initialPath = '/' }) => {
         return <CityClockPage citySlug={routeState.cityClockRoute?.citySlug || ''} {...props} />;
       case Page.GLOBE:
         return <GlobePage {...props} />;
+      case Page.BLOG:
+        return <BlogIndex {...props} onNavigate={handleNavigatePath} />;
+      case Page.BLOG_POST:
+        return <BlogPost {...props} slug={routeState.blogSlug || ''} onNavigate={handleNavigatePath} />;
+      case Page.ABOUT_AUTHOR:
+        return <AboutAuthor {...props} />;
       default:
         return <TimezoneConverter {...props} />;
     }
@@ -276,11 +301,20 @@ const App: React.FC<AppProps> = ({ initialPath = '/' }) => {
   const isFullView = currentPage === Page.STOPWATCH || currentPage === Page.TIMER || currentPage === Page.GLOBE;
   const isCalendar = currentPage === Page.CALENDAR;
   const isConverter = currentPage === Page.CONVERTER;
-  const isStaticPage = currentPage === Page.ABOUT || currentPage === Page.TERMS || currentPage === Page.PRIVACY || currentPage === Page.WORLD_CLOCK || currentPage === Page.CITY_CLOCK;
+  const isStaticPage = currentPage === Page.ABOUT || currentPage === Page.TERMS || currentPage === Page.PRIVACY || currentPage === Page.WORLD_CLOCK || currentPage === Page.CITY_CLOCK || currentPage === Page.BLOG || currentPage === Page.BLOG_POST || currentPage === Page.ABOUT_AUTHOR;
 
   const handleNavigate = (page: Page) => {
     setCurrentPage(page);
     setRoutePath(pageToPath[page] || '/');
+  };
+
+  const handleNavigatePath = (path: string) => {
+    const nextRoute = getRouteState(path);
+    setCurrentPage(nextRoute.page);
+    setRoutePath(nextRoute.normalizedPath);
+    if (typeof window !== 'undefined') {
+      window.history.pushState({}, '', path);
+    }
   };
 
   return (
