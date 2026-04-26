@@ -45,22 +45,18 @@ export default defineConfig(({ mode }) => {
         }
       },
       build: {
-        chunkSizeWarningLimit: 600,
-        modulePreload: {
-          // By default Vite injects <link rel="modulepreload"> for every chunk it knows about,
-          // including dynamically-imported ones like the Globe page (Three.js = 510 KB gzip).
-          // This caused the homepage and every conversion page to pre-fetch ~510 KB of 3D
-          // rendering code that most visitors never use. Filtering it out here drops homepage
-          // transfer from ~600 KB to ~90 KB gzip. The globe chunk still loads correctly when
-          // the user navigates to /globe — it just isn't pre-fetched everywhere else.
-          resolveDependencies: (_filename: string, deps: string[]) =>
-            deps.filter(dep => !dep.includes('globe')),
-        },
+        chunkSizeWarningLimit: 2000,
         rollupOptions: {
           output: {
             manualChunks: {
+              // React is tiny and changes rarely — own chunk for long cache lifetime.
+              // Three.js is intentionally NOT listed here. Keeping it out of manualChunks
+              // lets Rollup bundle it inside the lazily-imported Globe section chunk,
+              // so it is only downloaded when the user actually navigates to /globe.
+              // Listing it in manualChunks caused Rollup to promote the globe chunk into
+              // the main module graph, making it load on every page (confirmed via PSI:
+              // 483 KB transferred, 344 KB unused on /london-to-new-york).
               vendor: ['react', 'react-dom'],
-              globe: ['three', 'react-globe.gl'],
             }
           }
         }
