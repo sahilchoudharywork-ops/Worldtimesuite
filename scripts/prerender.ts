@@ -2399,6 +2399,20 @@ const main = (): void => {
   fs.writeFileSync(backupPath, rawTemplate, 'utf8');
   console.log(`\nTemplate backed up to dist/_template.html`);
 
+  // Inject a <link rel="preload" as="style"> for the Vite CSS bundle early in <head>
+  // so the browser starts fetching it while parsing the top of the HTML, rather than
+  // waiting until it encounters <link rel="stylesheet"> at the bottom of <body>.
+  const cssHrefMatch = rawTemplate.match(/<link rel="stylesheet" crossorigin href="(\/assets\/[^"]+\.css)">/);
+  const template = cssHrefMatch
+    ? rawTemplate.replace(
+        '<meta charset="UTF-8">',
+        `<meta charset="UTF-8">\n  <link rel="preload" as="style" crossorigin href="${cssHrefMatch[1]}">`
+      )
+    : rawTemplate;
+  if (cssHrefMatch) {
+    console.log(`CSS preload hint injected: ${cssHrefMatch[1]}`);
+  }
+
   const allRoutes = [...new Set([...STATIC_ROUTES, ...BLOG_POST_ROUTES, ...TIMEZONE_ROUTES, ...CITY_ROUTES, ...GENERATED_CITY_ROUTES, ...CITY_CLOCK_ROUTES])];
 
   const sample = parseConversionRoute('/delhi-to-london');
@@ -2411,7 +2425,7 @@ const main = (): void => {
   console.log(`Prerendering ${allRoutes.length} routes...\n`);
 
   for (const route of allRoutes) {
-    const html = buildHtml(rawTemplate, route);
+    const html = buildHtml(template, route);
     writeRoute(route, html);
   }
 
