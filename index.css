@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Override cdnfonts.com which doesn't set font-display, causing a render-blocking
+   delay. This declaration wins due to cascade order (appears after the external sheet)
+   and forces swap so text is always visible during font load. */
+@font-face {
+  font-family: 'Helvetica Neue';
+  font-display: swap;
+}
