@@ -1074,6 +1074,38 @@ const TIMEZONE_DATA_BY_SLUG: Record<string, TimezoneData> = {
   ast: { code: 'AST', name: 'Atlantic Standard Time', iana: 'America/Halifax' },
 };
 
+// Maps each timezone slug to the most representative city that has a /time-in-[slug] page.
+// Used on timezone pair pages so footer links point to real pages, not broken /time-in-ist URLs.
+const TIMEZONE_REPRESENTATIVE_CITY: Record<string, string> = {
+  ist: 'delhi',
+  est: 'new-york',
+  edt: 'new-york',
+  pst: 'los-angeles',
+  pdt: 'los-angeles',
+  cst: 'chicago',
+  cdt: 'chicago',
+  mst: 'denver',
+  mdt: 'denver',
+  gmt: 'london',
+  bst: 'london',
+  cet: 'berlin',
+  cest: 'berlin',
+  jst: 'tokyo',
+  aest: 'sydney',
+  aedt: 'sydney',
+  sgt: 'singapore',
+  gst: 'dubai',
+  msk: 'moscow',
+  hkt: 'hong-kong',
+  wet: 'lisbon',
+  brt: 'sao-paulo',
+  pht: 'manila',
+  eet: 'helsinki',
+  kst: 'seoul',
+  nzdt: 'auckland',
+  nzst: 'auckland',
+};
+
 const CITY_IANA_MAP: Record<string, string> = {
   london: 'Europe/London',
   'new-york': 'America/New_York',
@@ -1367,6 +1399,16 @@ const getOffsetHours = (iana: string, date: Date = new Date()) => {
   }
 };
 
+// Returns true if the IANA zone shifts between Jan and Jul (i.e. observes DST).
+const observesDst = (iana: string): boolean => {
+  try {
+    const year = new Date().getFullYear();
+    return getOffsetHours(iana, new Date(year, 0, 15)) !== getOffsetHours(iana, new Date(year, 6, 15));
+  } catch {
+    return false;
+  }
+};
+
 const getCurrentTimeZoneName = (iana: string, fallback: string) => {
   try {
     const parts = new Intl.DateTimeFormat('en-US', {
@@ -1619,6 +1661,81 @@ const buildNoscriptTableForRoute = (parsed: ParsedConversionRoute | null): strin
   return '';
 };
 
+// Builds a FAQPage JSON-LD block for city pair and timezone pair pages.
+// All values are computed at prerender time from IANA data — zero runtime cost.
+const buildConversionFaqJsonLd = (
+  fromIana: string,
+  toIana: string,
+  fromName: string,
+  toName: string,
+): string => {
+  const diffMinutes = Math.round((getOffsetHours(toIana) - getOffsetHours(fromIana)) * 60);
+  const absDiff = Math.abs(diffMinutes);
+  const absDiffHours = formatHourValue(absDiff / 60);
+  const offsetPhrase = formatOffsetPhrase(fromIana, toIana);
+
+  const nineAmTo    = formatTime12h(9  * 60 + diffMinutes);
+  const noonTo      = formatTime12h(12 * 60 + diffMinutes);
+
+  // Compute business-hour overlap (09:00–18:00 in both zones).
+  const fromStart = 9 * 60;
+  const fromEnd   = 18 * 60;
+  const toStartInFrom = 9  * 60 - diffMinutes;
+  const toEndInFrom   = 18 * 60 - diffMinutes;
+  const overlapStart = Math.max(fromStart, toStartInFrom);
+  const overlapEnd   = Math.min(fromEnd,   toEndInFrom);
+
+  const bestMeetingAnswer = overlapStart < overlapEnd
+    ? `The best overlap for a meeting is ${formatTime12h(overlapStart)}–${formatTime12h(overlapEnd)} ${fromName} time (${formatTime12h(overlapStart + diffMinutes)}–${formatTime12h(overlapEnd + diffMinutes)} ${toName} time), when both locations are within standard business hours.`
+    : `There is no business-hour overlap between ${fromName} and ${toName} given the ${absDiffHours}-hour difference. Consider an early-morning or late-evening slot for one party.`;
+
+  const fromDst = observesDst(fromIana);
+  const toDst   = observesDst(toIana);
+  const dstAnswer =
+    fromDst && toDst
+      ? `Both ${fromName} and ${toName} observe Daylight Saving Time, though their clock-change dates may differ. The gap between them can shift by up to one hour during spring and autumn transitions.`
+      : fromDst
+      ? `${fromName} observes Daylight Saving Time but ${toName} does not, so the difference between them shifts by one hour during ${fromName}'s DST period.`
+      : toDst
+      ? `${toName} observes Daylight Saving Time but ${fromName} does not, so the difference between them shifts by one hour during ${toName}'s DST period.`
+      : `Neither ${fromName} nor ${toName} observes Daylight Saving Time, so their time difference stays the same all year.`;
+
+  const faqs = [
+    {
+      question: `What is the time difference between ${fromName} and ${toName}?`,
+      answer: diffMinutes === 0
+        ? `${fromName} and ${toName} share the same time zone — there is no difference between them.`
+        : `${fromName} is ${offsetPhrase} ${toName}, a difference of ${absDiffHours} hour${absDiff === 60 ? '' : 's'}.`,
+    },
+    {
+      question: `What time is it in ${toName} when it is 9:00 AM in ${fromName}?`,
+      answer: `When it is 9:00 AM in ${fromName}, it is ${nineAmTo} in ${toName}.`,
+    },
+    {
+      question: `What time is it in ${toName} when it is 12:00 PM (noon) in ${fromName}?`,
+      answer: `When it is 12:00 PM (noon) in ${fromName}, it is ${noonTo} in ${toName}.`,
+    },
+    {
+      question: `What is the best time to schedule a meeting between ${fromName} and ${toName}?`,
+      answer: bestMeetingAnswer,
+    },
+    {
+      question: `Does ${fromName} or ${toName} observe Daylight Saving Time?`,
+      answer: dstAnswer,
+    },
+  ];
+
+  return JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map(f => ({
+      '@type': 'Question',
+      name: f.question,
+      acceptedAnswer: { '@type': 'Answer', text: f.answer },
+    })),
+  });
+};
+
 // Static page SEO
 
 const staticSeo: Record<string, { title: string; description: string }> = {
@@ -1800,8 +1917,25 @@ const buildBody = (route: string, parsed: ParsedConversionRoute | null, conversi
 ${visibleTable}
 ${buildRelatedSection(getRelatedCityRoutes(parsed.fromSlug, parsed.toSlug))}
         <div style="margin-top:32px;padding:24px 0;border-top:1px solid #27272a;display:flex;flex-wrap:wrap;gap:16px;">
-          <a href="/time-in-${esc(parsed.fromSlug)}" style="color:#a1a1aa;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">Current time in ${esc(fromName)}</a>
-          <a href="/time-in-${esc(parsed.toSlug)}" style="color:#a1a1aa;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">Current time in ${esc(toName)}</a>
+          ${(() => {
+            // For timezone pair pages the slug is e.g. "ist" — there's no /time-in-ist page.
+            // Use the representative city for that timezone instead.
+            const fromCitySlug = TIMEZONE_DATA_BY_SLUG[parsed.fromSlug]
+              ? (TIMEZONE_REPRESENTATIVE_CITY[parsed.fromSlug] || null)
+              : parsed.fromSlug;
+            const toCitySlug = TIMEZONE_DATA_BY_SLUG[parsed.toSlug]
+              ? (TIMEZONE_REPRESENTATIVE_CITY[parsed.toSlug] || null)
+              : parsed.toSlug;
+            const fromCityName = fromCitySlug ? getDisplayName(fromCitySlug) : fromName;
+            const toCityName   = toCitySlug   ? getDisplayName(toCitySlug)   : toName;
+            const fromLink = fromCitySlug
+              ? `<a href="/time-in-${esc(fromCitySlug)}" style="color:#a1a1aa;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">Current time in ${esc(fromCityName)}</a>`
+              : '';
+            const toLink = toCitySlug
+              ? `<a href="/time-in-${esc(toCitySlug)}" style="color:#a1a1aa;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">Current time in ${esc(toCityName)}</a>`
+              : '';
+            return `${fromLink}\n          ${toLink}`;
+          })()}
           <a href="/world-clock" style="color:#a1a1aa;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">World Clock</a>
         </div>
       </div>
@@ -2360,6 +2494,23 @@ const buildHtml = (template: string, route: string): string => {
         keywords: post.tags.join(', '),
       });
       html = html.replace('</head>', `<script type="application/ld+json">${jsonLd}</script>\n</head>`);
+    }
+  }
+
+  // Inject FAQPage JSON-LD for city pair and timezone pair pages.
+  // Computed entirely at prerender time — no runtime cost, zero impact on page speed.
+  if (parsed) {
+    const fromTimezone = TIMEZONE_DATA_BY_SLUG[parsed.fromSlug];
+    const toTimezone   = TIMEZONE_DATA_BY_SLUG[parsed.toSlug];
+
+    const fromIana = fromTimezone ? fromTimezone.iana : CITY_IANA_MAP[parsed.fromSlug];
+    const toIana   = toTimezone   ? toTimezone.iana   : CITY_IANA_MAP[parsed.toSlug];
+
+    if (fromIana && toIana) {
+      const fromLabel = fromTimezone ? fromTimezone.code : parsed.fromName;
+      const toLabel   = toTimezone   ? toTimezone.code   : parsed.toName;
+      const faqJsonLd = buildConversionFaqJsonLd(fromIana, toIana, fromLabel, toLabel);
+      html = html.replace('</head>', `<script type="application/ld+json">${faqJsonLd}</script>\n</head>`);
     }
   }
 
