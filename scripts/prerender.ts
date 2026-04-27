@@ -1744,12 +1744,12 @@ const staticSeo: Record<string, { title: string; description: string }> = {
     description: 'Free time zone converter for 500+ cities worldwide. Instantly see the time difference between any two cities, find meeting-friendly hours, and plan across time zones.',
   },
   '/stopwatch': {
-    title: 'Online Stopwatch with Lap Timer - Free & Instant | WorldTimeSuite',
-    description: 'Free online stopwatch with lap tracking. Start, stop and record laps instantly - no download needed. Works on desktop and mobile.',
+    title: 'Online Stopwatch — Free, with Lap Timer | WorldTimeSuite',
+    description: 'Free online stopwatch with lap times and split tracking. Instant start, no download. Works on desktop and mobile — ideal for workouts, sports, running, and cooking.',
   },
   '/timer': {
-    title: 'Online Countdown Timer - Free, Fast & No Sign-up | WorldTimeSuite',
-    description: 'Set a free online countdown timer in seconds. Simple, distraction-free timer that works instantly on any device - no app or account needed.',
+    title: 'Online Timer — Free Countdown Timer, No Sign-up | WorldTimeSuite',
+    description: 'Free online countdown timer — set in seconds, runs instantly on any device. No download, no account. Use as a classroom timer, meeting timer, or study timer.',
   },
   '/calendar': {
     title: 'Time Zone Calendar - Plan Meetings Across Time Zones | WorldTimeSuite',
@@ -1768,16 +1768,16 @@ const staticSeo: Record<string, { title: string; description: string }> = {
     description: 'Read the WorldTimeSuite privacy policy, including how we handle data, cookies, Google AdSense advertising, analytics, and your privacy rights.',
   },
   '/world-clock': {
-    title: 'World Clock — Current Time in Every Major City | WorldTimeSuite',
-    description: 'See the current local time in cities worldwide — New York, London, Dubai, Tokyo, Sydney and more. Free live world clock, always accurate.',
+    title: 'World Clock — Live Time in 100+ Cities Worldwide | WorldTimeSuite',
+    description: 'World clock showing live local time in New York, London, Dubai, Tokyo, Sydney and 23 more cities. Grouped by region, with UTC offset and DST status. Always accurate.',
   },
   '/globe': {
-    title: 'Globe - Time Zone Map - Interactive 3D Globe with Time Zone Converter | WorldTimeSuite',
-    description: 'Free interactive 3D Globe with Time Zone Conversion. See live local time and UTC offset for every country. Hover any country, search, rotate and zoom the globe. No sign-up required.',
+    title: 'Globe — Interactive 3D Globe for World time zone | WorldTimeSuite',
+    description: 'Interactive 3D Globe showing current local time for every country. Spin the globe, hover any nation for its UTC offset and live clock. Free, no sign-up.',
   },
   '/blog': {
-    title: 'Blog — Time Zones, Scheduling & Global Productivity | WorldTimeSuite',
-    description: 'Guides, explainers, and deep dives on time zones, daylight saving time, scheduling across borders, and global productivity — from the WorldTimeSuite editorial team.',
+    title: 'Time Zone Blog — DST, World Clocks & Scheduling Guides | WorldTimeSuite',
+    description: 'Guides on daylight saving time, world time zones, UTC offsets, and scheduling across borders. Practical articles for remote teams, travellers, and global professionals.',
   },
   '/about-author': {
     title: 'About the Author — Sahil Choudhary, Creator of WorldTimeSuite',
