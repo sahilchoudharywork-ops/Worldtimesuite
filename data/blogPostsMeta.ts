@@ -209,6 +209,76 @@ export const BLOG_POSTS_META: BlogPostMeta[] = [
       "The best world clock tools do more than show the time — they handle DST automatically, show overlap windows, and convert between any two time zones instantly. Here's what to look for.",
     tags: ["world clock", "time zone converter", "tools", "remote work", "scheduling"],
   },
+  {
+    slug: "what-time-zone-is-london",
+    title: "What Time Zone Is London? GMT, BST, and Why It Changes Twice a Year",
+    date: "April 1, 2025",
+    dateIso: "2025-04-01",
+    author: "WorldTimeSuite Editorial",
+    metaDescription:
+      "London doesn't stay in one time zone year-round. Here's why it switches between GMT and BST, what that means for international scheduling, and how to always get it right.",
+    tags: ["London time zone", "GMT", "BST", "British Summer Time", "UK time", "what time is it in London"],
+  },
+  {
+    slug: "time-difference-between-usa-and-india",
+    title: "Time Difference Between USA and India: Every State, Every Season",
+    date: "April 4, 2025",
+    dateIso: "2025-04-04",
+    author: "WorldTimeSuite Editorial",
+    metaDescription:
+      "The US-India time difference isn't simple — it varies by US state, by season, and always ends on a half-hour. The complete reference guide for every combination.",
+    tags: ["USA India time difference", "IST to EST", "IST to PST", "India US time", "IST time difference"],
+  },
+  {
+    slug: "what-is-pst-pacific-standard-time",
+    title: "What Is PST? The Complete Guide to Pacific Standard Time",
+    date: "April 7, 2025",
+    dateIso: "2025-04-07",
+    author: "WorldTimeSuite Editorial",
+    metaDescription:
+      "PST powers Silicon Valley, Hollywood, and the Pacific Northwest. Here's everything about Pacific Standard Time — UTC offset, which states use it, and how it compares globally.",
+    tags: ["PST", "Pacific Standard Time", "Pacific Time", "UTC-8", "California time zone", "what is PST"],
+  },
+  {
+    slug: "new-york-to-dubai-time-difference",
+    title: "New York to Dubai Time Difference: The Complete Guide",
+    date: "April 9, 2025",
+    dateIso: "2025-04-09",
+    author: "WorldTimeSuite Editorial",
+    metaDescription:
+      "New York to Dubai is a 9-hour gap in winter and 8 hours in summer. Here's the complete guide — conversion table, business overlap, DST impact, and scheduling tips.",
+    tags: ["New York Dubai time", "EST to GST", "NYC Dubai time difference", "US UAE time", "Dubai time zone"],
+  },
+  {
+    slug: "sydney-to-london-time-difference",
+    title: "Sydney to London Time Difference: What You Need to Know Year-Round",
+    date: "April 11, 2025",
+    dateIso: "2025-04-11",
+    author: "WorldTimeSuite Editorial",
+    metaDescription:
+      "The Sydney to London time gap shifts seasonally and is rarely the same number twice. Here's the complete year-round guide with conversion table, overlap hours, and DST calendar.",
+    tags: ["Sydney London time", "AEST GMT", "Australia UK time difference", "Sydney to London", "Australian time UK"],
+  },
+  {
+    slug: "ist-to-pst-complete-guide",
+    title: "IST to PST: India to California Time Conversion Guide",
+    date: "April 14, 2025",
+    dateIso: "2025-04-14",
+    author: "WorldTimeSuite Editorial",
+    metaDescription:
+      "IST to PST: India is 12.5 or 13.5 hours ahead of California depending on the season. The complete guide with conversion table, overlap hours, and tips for India-US West Coast teams.",
+    tags: ["IST to PST", "India California time", "IST PST difference", "India Silicon Valley time", "IST to PDT"],
+  },
+  {
+    slug: "countries-that-dont-use-daylight-saving-time",
+    title: "Countries That Don't Use Daylight Saving Time (And Why They're Right)",
+    date: "April 16, 2025",
+    dateIso: "2025-04-16",
+    author: "WorldTimeSuite Editorial",
+    metaDescription:
+      "Most of the world's countries don't change their clocks. Here's which countries skip DST, why they dropped it, and the growing global movement to abolish it for good.",
+    tags: ["countries without DST", "no daylight saving time", "countries that don't change clocks", "DST abolish"],
+  },
 ];
 
 export const BLOG_POST_META_BY_SLUG: Record<string, BlogPostMeta> = Object.fromEntries(
