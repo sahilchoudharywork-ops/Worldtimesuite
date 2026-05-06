@@ -1916,12 +1916,12 @@ const buildSeoContentSectionsHtml = (
     const aboutHtml = `
 <section style="${sectionStyle}" aria-label="About ${esc(about.cityA)} and ${esc(about.cityB)} time zones">
   <h2 style="${h2Style}">About ${esc(about.cityA)} and ${esc(about.cityB)} Time Zones</h2>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;">
-    <div>
+  <div style="display:flex;flex-wrap:wrap;gap:32px;">
+    <div style="flex:1;min-width:260px;">
       <div style="${labelStyle}">${esc(about.headingA)}</div>
       <p style="${pStyle}">${esc(about.paragraphA)}</p>
     </div>
-    <div>
+    <div style="flex:1;min-width:260px;">
       <div style="${labelStyle}">${esc(about.headingB)}</div>
       <p style="${pStyle}">${esc(about.paragraphB)}</p>
     </div>
@@ -1973,7 +1973,7 @@ const buildSeoContentSectionsHtml = (
 </section>`;
 
     // ── FAQ section ──────────────────────────────────────────────────────────
-    const faqItems = faq.items.map((item, i) => `
+    const faqItems = faq.items.map(item => `
   <div style="padding:24px 0;border-bottom:1px solid #27272a;">
     <h3 style="${h3Style}font-size:17px;">${esc(item.question)}</h3>
     <p style="${pStyle}margin-bottom:0;">${esc(item.answer)}</p>
