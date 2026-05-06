@@ -8,6 +8,8 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -40,3 +42,11 @@ jobs:
       - name: Notify IndexNow (Bing / DuckDuckGo / Yahoo)
         continue-on-error: true
         run: npx tsx scripts/indexnow.ts
+
+      - name: Commit updated URL tracking file
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add submitted-urls.json
+          git diff --staged --quiet || git commit -m "update submitted-urls.json" && git push
