@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { cities } from '../data/cities';
 import { BLOG_POSTS, BLOG_POST_BY_SLUG } from '../data/blogPosts';
+import { buildCityPairContent } from '../lib/cityPairContent';
 
 const ROOT = process.cwd();
 const DIST_DIR = path.join(ROOT, 'dist');
@@ -1890,13 +1891,128 @@ const getStaticCopy = (route: string): StaticCopy => {
   }
 };
 
+// ─── SEO Content Sections ─────────────────────────────────────────────────────
+// Generates visible HTML for About, DST, and FAQ sections for every conversion
+// page. Called at prerender time so the content is in the static HTML that
+// Googlebot and AdSense reviewers see — not hidden behind a JS timer.
+const buildSeoContentSectionsHtml = (
+  fromIana: string,
+  toIana: string,
+  fromLabel: string,
+  toLabel: string,
+): string => {
+  try {
+    const content = buildCityPairContent(fromIana, toIana, fromLabel, toLabel);
+    const { about, dst, faq } = content;
+
+    const S = 'font-family:Helvetica,Arial,sans-serif;';
+    const sectionStyle = `${S}margin-top:48px;padding-top:40px;border-top:1px solid #27272a;`;
+    const h2Style = 'font-size:22px;font-weight:800;letter-spacing:-0.02em;color:#fff;margin:0 0 20px 0;';
+    const h3Style = 'font-size:16px;font-weight:700;color:#e4e4e7;margin:0 0 8px 0;';
+    const pStyle  = 'font-size:16px;line-height:1.7;color:#a1a1aa;margin:0 0 24px 0;';
+    const labelStyle = 'font-size:11px;font-weight:800;letter-spacing:0.25em;text-transform:uppercase;color:#71717a;margin-bottom:6px;';
+
+    // ── About section ────────────────────────────────────────────────────────
+    const aboutHtml = `
+<section style="${sectionStyle}" aria-label="About ${esc(about.cityA)} and ${esc(about.cityB)} time zones">
+  <h2 style="${h2Style}">About ${esc(about.cityA)} and ${esc(about.cityB)} Time Zones</h2>
+  <div style="display:flex;flex-wrap:wrap;gap:32px;">
+    <div style="flex:1;min-width:260px;">
+      <div style="${labelStyle}">${esc(about.headingA)}</div>
+      <p style="${pStyle}">${esc(about.paragraphA)}</p>
+    </div>
+    <div style="flex:1;min-width:260px;">
+      <div style="${labelStyle}">${esc(about.headingB)}</div>
+      <p style="${pStyle}">${esc(about.paragraphB)}</p>
+    </div>
+  </div>
+</section>`;
+
+    // ── DST section ──────────────────────────────────────────────────────────
+    const dstIntro = dst.hasDst
+      ? `Both ${esc(dst.cityA)} and ${esc(dst.cityB)} may observe Daylight Saving Time, which means the offset between them can change twice a year. Here is what to expect each season.`
+      : `The offset between ${esc(dst.cityA)} and ${esc(dst.cityB)} is fixed — neither location observes Daylight Saving Time.`;
+
+    const thStyle = 'text-align:left;padding:8px 16px;color:#71717a;font-weight:700;font-size:12px;letter-spacing:0.05em;text-transform:uppercase;border-bottom:1px solid #27272a;';
+    const tdStyle = 'padding:10px 16px;color:#e4e4e7;border-bottom:1px solid #18181b;font-size:14px;';
+    const tdMutedStyle = 'padding:10px 16px;color:#71717a;border-bottom:1px solid #18181b;font-size:13px;';
+
+    const dstRows = dst.rows.map(row => {
+      const rowBg = row.isCurrent ? 'background:#18181b;' : '';
+      const currentBadge = row.isCurrent ? ' <span style="font-size:11px;background:#3f3f46;color:#a1a1aa;padding:2px 6px;border-radius:4px;margin-left:4px;">current</span>' : '';
+      return `
+    <tr style="${rowBg}">
+      <td style="${tdStyle}font-weight:600;">${esc(row.period)}${currentBadge}</td>
+      <td style="${tdMutedStyle}">${esc(row.periodNote)}</td>
+      <td style="${tdStyle}">${esc(row.tzALabel)}</td>
+      <td style="${tdStyle}">${esc(row.tzBLabel)}</td>
+      <td style="${tdStyle}font-weight:700;color:#fff;">${esc(row.offsetLabel)}</td>
+    </tr>`;
+    }).join('');
+
+    const dstHtml = `
+<section style="${sectionStyle}" aria-label="Daylight Saving Time — ${esc(dst.cityA)} and ${esc(dst.cityB)}">
+  <h2 style="${h2Style}">Daylight Saving Time — ${esc(dst.cityA)} &amp; ${esc(dst.cityB)}</h2>
+  <p style="${pStyle}">${dstIntro}</p>
+  <div style="overflow-x:auto;border-radius:12px;border:1px solid #27272a;">
+    <table style="width:100%;border-collapse:collapse;background:#09090b;">
+      <thead>
+        <tr>
+          <th style="${thStyle}">Period</th>
+          <th style="${thStyle}">Note</th>
+          <th style="${thStyle}">${esc(dst.cityA)}</th>
+          <th style="${thStyle}">${esc(dst.cityB)}</th>
+          <th style="${thStyle}">Offset</th>
+        </tr>
+      </thead>
+      <tbody>${dstRows}
+      </tbody>
+    </table>
+  </div>
+  <p style="margin-top:16px;font-size:14px;color:#71717a;">${esc(dst.footerNote)}</p>
+</section>`;
+
+    // ── FAQ section ──────────────────────────────────────────────────────────
+    const faqItems = faq.items.map(item => `
+  <div style="padding:24px 0;border-bottom:1px solid #27272a;">
+    <h3 style="${h3Style}font-size:17px;">${esc(item.question)}</h3>
+    <p style="${pStyle}margin-bottom:0;">${esc(item.answer)}</p>
+  </div>`).join('');
+
+    const faqHtml = `
+<section style="${sectionStyle}" aria-label="Frequently asked questions — ${esc(faq.cityA)} to ${esc(faq.cityB)}">
+  <h2 style="${h2Style}">Frequently Asked Questions — ${esc(faq.cityA)} to ${esc(faq.cityB)}</h2>
+  ${faqItems}
+</section>`;
+
+    return aboutHtml + dstHtml + faqHtml;
+  } catch {
+    // Never break the prerender — just omit the sections if something goes wrong.
+    return '';
+  }
+};
+
 const buildBody = (route: string, parsed: ParsedConversionRoute | null, conversionDescription?: string): string => {
   if (parsed) {
-    const { fromName, toName } = parsed;
+    const { fromName, toName, fromSlug, toSlug } = parsed;
     const descText =
       conversionDescription ||
       `Convert time between ${fromName} and ${toName}. See the exact time difference and best hours to schedule meetings.`;
     const visibleTable = buildVisibleConversionTableForRoute(parsed);
+
+    // Resolve IANA codes — timezone-code routes (e.g. /ist-to-gmt) go through
+    // TIMEZONE_DATA_BY_SLUG first; city routes use CITY_IANA_MAP directly.
+    const fromTzData = TIMEZONE_DATA_BY_SLUG[fromSlug];
+    const toTzData   = TIMEZONE_DATA_BY_SLUG[toSlug];
+    const fromIana   = fromTzData ? fromTzData.iana : CITY_IANA_MAP[fromSlug];
+    const toIana     = toTzData   ? toTzData.iana   : CITY_IANA_MAP[toSlug];
+    const fromLabel  = fromTzData ? fromTzData.code  : fromName;
+    const toLabel    = toTzData   ? toTzData.code    : toName;
+
+    // Build the rich content sections (About + DST + FAQ) if IANA codes resolved.
+    const seoSections = (fromIana && toIana)
+      ? buildSeoContentSectionsHtml(fromIana, toIana, fromLabel, toLabel)
+      : '';
 
     return `
     <div style="min-height:100vh;background:#000;color:#fff;font-family:Helvetica,Arial,sans-serif;padding:40px 24px;">
@@ -1916,6 +2032,7 @@ const buildBody = (route: string, parsed: ParsedConversionRoute | null, conversi
         </div>
 ${visibleTable}
 ${buildRelatedSection(getRelatedCityRoutes(parsed.fromSlug, parsed.toSlug))}
+${seoSections}
         <div style="margin-top:32px;padding:24px 0;border-top:1px solid #27272a;display:flex;flex-wrap:wrap;gap:16px;">
           ${(() => {
             // For timezone pair pages the slug is e.g. "ist" — there's no /time-in-ist page.

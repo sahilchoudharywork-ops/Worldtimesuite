@@ -279,6 +279,106 @@ export const BLOG_POSTS_META: BlogPostMeta[] = [
       "Most of the world's countries don't change their clocks. Here's which countries skip DST, why they dropped it, and the growing global movement to abolish it for good.",
     tags: ["countries without DST", "no daylight saving time", "countries that don't change clocks", "DST abolish"],
   },
+  {
+    slug: "london-to-new-york-time-conversion",
+    title: "London to New York Time: The Complete Conversion Guide",
+    date: "April 18, 2025",
+    dateIso: "2025-04-18",
+    author: "WorldTimeSuite Editorial",
+    metaDescription:
+      "London to New York is one of the world's most searched time conversions. Here's the complete guide — current time gap, conversion table, DST calendar, and business overlap hours.",
+    tags: ["London to New York time", "GMT to EST", "UK US time difference", "London New York", "GMT EST conversion"],
+  },
+  {
+    slug: "singapore-time-zone-sgt-explained",
+    title: "Singapore Time Zone Explained: SGT, UTC+8, and Why It Never Changes",
+    date: "April 20, 2025",
+    dateIso: "2025-04-20",
+    author: "WorldTimeSuite Editorial",
+    metaDescription:
+      "Singapore uses SGT (UTC+8) year-round and has never observed DST. Here's why — and what it means for scheduling with one of the world's most important business hubs.",
+    tags: ["Singapore time zone", "SGT", "UTC+8", "Singapore Standard Time", "what time zone is Singapore"],
+  },
+  {
+    slug: "best-time-to-call-india-from-us",
+    title: "Best Time to Call India From the US (Without Waking Anyone Up)",
+    date: "April 22, 2025",
+    dateIso: "2025-04-22",
+    author: "WorldTimeSuite Editorial",
+    metaDescription:
+      "Calling India from the US means navigating a 9.5–13.5 hour gap with no real overlap in standard hours. Here's the practical guide to the best calling windows from every US time zone.",
+    tags: ["best time to call India from US", "India US calling hours", "IST to EST calling", "call India from America"],
+  },
+  {
+    slug: "tokyo-time-zone-jst-explained",
+    title: "Tokyo Time Zone: Everything You Need to Know About JST",
+    date: "April 24, 2025",
+    dateIso: "2025-04-24",
+    author: "WorldTimeSuite Editorial",
+    metaDescription:
+      "Tokyo and Japan operate on JST (UTC+9), year-round, no DST — ever. Here's the complete guide to Japan Standard Time, its history, and how it compares to every major world city.",
+    tags: ["Tokyo time zone", "JST", "Japan Standard Time", "UTC+9", "what time is it in Tokyo", "Japan time"],
+  },
+  {
+    slug: "dubai-time-zone-gst-explained",
+    title: "Dubai Time Zone: Why the UAE Never Changes Its Clocks",
+    date: "April 26, 2025",
+    dateIso: "2025-04-26",
+    author: "WorldTimeSuite Editorial",
+    metaDescription:
+      "Dubai uses GST (UTC+4) year-round — no Daylight Saving Time, ever. Here's the complete guide to Gulf Standard Time, why it's fixed, and how it compares to London, New York, and Mumbai.",
+    tags: ["Dubai time zone", "GST", "Gulf Standard Time", "UTC+4", "Dubai time", "UAE time zone", "what time is Dubai"],
+  },
+  {
+    slug: "how-to-read-utc-offset",
+    title: "How to Read a UTC Offset: A Beginner's Guide to +5:30, -8, and Everything In Between",
+    date: "April 28, 2025",
+    dateIso: "2025-04-28",
+    author: "WorldTimeSuite Editorial",
+    metaDescription:
+      "UTC offsets like UTC+5:30 or UTC-8 appear everywhere — but what do they actually mean? A clear, jargon-free guide to reading, understanding, and using UTC offsets.",
+    tags: ["UTC offset", "how to read UTC", "UTC+5:30", "UTC-8", "time zone offset explained", "UTC guide"],
+  },
+  {
+    slug: "time-zones-and-remote-work-productivity",
+    title: "How Time Zones Are Reshaping Remote Work Productivity in 2025",
+    date: "April 30, 2025",
+    dateIso: "2025-04-30",
+    author: "WorldTimeSuite Editorial",
+    metaDescription:
+      "Remote work has made time zone management a core business skill. Here's how leading companies are rethinking workflows, async culture, and global hiring because of time zones.",
+    tags: ["remote work time zones", "distributed teams 2025", "async work", "global remote teams", "time zone productivity"],
+  },
+  {
+    slug: "los-angeles-to-london-time",
+    title: "Los Angeles to London Time Difference: The 8-Hour Challenge",
+    date: "May 2, 2025",
+    dateIso: "2025-05-02",
+    author: "WorldTimeSuite Editorial",
+    metaDescription:
+      "Los Angeles and London are 8 hours apart — and that gap creates real scheduling challenges. Complete guide with conversion table, business overlap hours, and DST calendar.",
+    tags: ["Los Angeles London time", "PST GMT time difference", "LA London time", "Los Angeles to London", "California UK time"],
+  },
+  {
+    slug: "new-york-to-sydney-time-difference",
+    title: "New York to Sydney Time Difference: Navigating the 15-Hour Gap",
+    date: "May 4, 2025",
+    dateIso: "2025-05-04",
+    author: "WorldTimeSuite Editorial",
+    metaDescription:
+      "New York and Sydney are separated by about 15 hours — but the gap fluctuates dramatically throughout the year. Here's the complete seasonal guide with conversion table and overlap analysis.",
+    tags: ["New York Sydney time", "EST to AEST", "US Australia time difference", "NYC Sydney time gap", "New York to Sydney"],
+  },
+  {
+    slug: "what-time-is-it-in-california",
+    title: "What Time Is It in California Right Now? PST, PDT, and How to Convert",
+    date: "May 6, 2025",
+    dateIso: "2025-05-06",
+    author: "WorldTimeSuite Editorial",
+    metaDescription:
+      "California uses PST in winter (UTC-8) and PDT in summer (UTC-7). Here's how to always know the current California time and convert it to or from anywhere in the world.",
+    tags: ["what time is it in California", "California time zone", "PST PDT California", "California time now", "Pacific time"],
+  },
 ];
 
 export const BLOG_POST_META_BY_SLUG: Record<string, BlogPostMeta> = Object.fromEntries(
